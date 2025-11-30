@@ -38,25 +38,15 @@ Analysis of the codebase identified the following opportunities to reduce comple
 
 **Suggestion:** Create a `calculate_pass_rate()` helper that takes the base stats and groupby columns, reducing ~25 lines to ~5 per call.
 
-### 3. ~~Unify `parallel_fetch` and `parallel_fetch_to_writer` in `rdw_client.py`~~ DONE
+### 3. ~~Unify `parallel_fetch` and `parallel_fetch_to_writer`~~ DONE
 
-**Location:** `rdw_client.py`
-
-**Status:** Merged into a single `parallel_fetch()` function with a `stream_to_disk` boolean parameter.
+**Status:** Merged into `items_fetch_parallel()` with `stream_to_disk` boolean. Also merged `rdw_client.py` into `download.py`.
 
 ## Medium Priority
 
-### 4. Simplify `fetch_dataset()` Branching in `download.py`
+### 4. ~~Simplify `fetch_dataset()` Branching in `download.py`~~ DONE
 
-**Location:** `download.py`, lines ~75-155
-
-**Issue:** The function has complex conditional logic:
-
-- Special case for `defect_codes`
-- Kentekens vs offset pagination branch
-- Each branch defines a nested `@retry_with_backoff` decorated function
-
-**Suggestion:** Extract kenteken-batch fetching and offset-pagination fetching into separate helper functions. This would reduce `fetch_dataset()` from ~80 lines to ~30 lines.
+**Status:** Extracted `_kenteken_batches_build()` and `_offset_pages_build()` helpers. Reduced `dataset_fetch()` to ~30 lines.
 
 ### 5. Reduce Repetitive Table Rendering in `app.js`
 
@@ -127,6 +117,33 @@ function createSortHandler(tableId, sortState) {
 - `1000` batch size for kenteken queries
 
 **Suggestion:** Define these as named constants at module level with brief comments.
+
+## Coding Standards
+
+### Python Function Naming Convention
+
+All Python functions should follow the `<subject>_<verb>` naming pattern.
+
+**Examples:**
+
+- `dataset_download()` - downloads a dataset
+- `metadata_load()` - loads metadata
+- `vehicles_enrich()` - enriches vehicle data
+- `defects_calculate()` - calculates defects
+- `results_save()` - saves results
+
+**Current violations to fix:**
+
+- `load_metadata()` → `metadata_load()`
+- `load_data()` → `data_load()`
+- `load_kentekens()` → `kentekens_load()`
+- `enrich_vehicles()` → `vehicles_enrich()`
+- `calculate_defects_by_brand()` → `defects_by_brand_calculate()`
+- `calculate_defects_by_model()` → `defects_by_model_calculate()`
+- `save_results()` → `results_save()`
+- `fetch_dataset()` → `dataset_fetch()`
+- `fetch_all()` → `datasets_fetch_all()`
+- `generate_site()` → `site_generate()`
 
 ## Refactoring Notes
 

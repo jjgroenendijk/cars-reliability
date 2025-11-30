@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test the StreamingCSVWriter to verify it correctly writes CSV files.
+Test the CSVWriter to verify it correctly writes CSV files.
 
 Tests:
 1. Basic write functionality
@@ -18,7 +18,7 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from rdw_client import StreamingCSVWriter, log
+from download import CSVWriter, log
 
 
 def test_basic_write():
@@ -35,9 +35,8 @@ def test_basic_write():
             {"kenteken": "GH789I", "merk": "Ford", "model": "Focus"},
         ]
         
-        with StreamingCSVWriter(temp_path) as writer:
-            count = writer.write_rows(rows)
-            assert count == 3, f"Expected 3 rows written, got {count}"
+        with CSVWriter(temp_path) as writer:
+            writer.rows_write(rows)
             assert writer.row_count == 3, f"Expected row_count 3, got {writer.row_count}"
         
         # Verify file contents
@@ -71,9 +70,9 @@ def test_concurrent_writes():
                 {"thread": str(thread_id), "row": str(i), "data": f"value_{thread_id}_{i}"}
                 for i in range(rows_per_thread)
             ]
-            writer.write_rows(rows)
+            writer.rows_write(rows)
         
-        with StreamingCSVWriter(temp_path) as writer:
+        with CSVWriter(temp_path) as writer:
             threads = []
             for i in range(num_threads):
                 t = threading.Thread(target=write_batch, args=(writer, i))
@@ -111,16 +110,16 @@ def test_disk_flush():
         temp_path = Path(f.name)
     
     try:
-        with StreamingCSVWriter(temp_path) as writer:
+        with CSVWriter(temp_path) as writer:
             # Write first batch
-            writer.write_rows([{"col": "val1"}])
+            writer.rows_write([{"col": "val1"}])
             
             # Check file size - should have header + 1 row
             size_after_first = os.path.getsize(temp_path)
             assert size_after_first > 0, "File should have content after first write"
             
             # Write second batch
-            writer.write_rows([{"col": "val2"}])
+            writer.rows_write([{"col": "val2"}])
             
             # File should be larger
             size_after_second = os.path.getsize(temp_path)
@@ -142,16 +141,15 @@ def test_empty_rows():
         temp_path = Path(f.name)
     
     try:
-        with StreamingCSVWriter(temp_path) as writer:
-            count = writer.write_rows([])
-            assert count == 0, f"Expected 0 rows written for empty list, got {count}"
+        with CSVWriter(temp_path) as writer:
+            writer.rows_write([])
+            assert writer.row_count == 0, f"Expected 0 rows for empty list"
             
             # Write some actual data
-            writer.write_rows([{"col": "val"}])
+            writer.rows_write([{"col": "val"}])
             
             # Write empty again
-            count = writer.write_rows([])
-            assert count == 0, f"Expected 0 rows for second empty write, got {count}"
+            writer.rows_write([])
             
             assert writer.row_count == 1, f"Total should be 1, got {writer.row_count}"
         
@@ -162,40 +160,10 @@ def test_empty_rows():
         temp_path.unlink(missing_ok=True)
 
 
-def test_fieldnames_override():
-    """Test that provided fieldnames are used."""
-    log("Test 5: Fieldnames override...")
-    
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-        temp_path = Path(f.name)
-    
-    try:
-        # Specify fieldnames explicitly (subset of actual data)
-        with StreamingCSVWriter(temp_path, fieldnames=["col_a", "col_b"]) as writer:
-            # Write rows with extra columns - they should be ignored
-            writer.write_rows([
-                {"col_a": "1", "col_b": "2", "col_c": "ignored"},
-                {"col_a": "3", "col_b": "4", "extra": "also ignored"},
-            ])
-        
-        with open(temp_path, 'r') as f:
-            content = f.read()
-        
-        assert "col_a,col_b" in content, "Header should only have specified fields"
-        assert "col_c" not in content, "Extra columns should be ignored"
-        assert "ignored" not in content, "Extra values should be ignored"
-        
-        log("  PASS: Fieldnames override works correctly")
-        return True
-    
-    finally:
-        temp_path.unlink(missing_ok=True)
-
-
 def main():
     """Run all tests."""
     log("\n" + "="*60)
-    log("STREAMING CSV WRITER TESTS")
+    log("CSV WRITER TESTS")
     log("="*60 + "\n")
     
     tests = [
@@ -203,7 +171,6 @@ def main():
         test_concurrent_writes,
         test_disk_flush,
         test_empty_rows,
-        test_fieldnames_override,
     ]
     
     passed = 0

@@ -71,7 +71,7 @@ Starting from `inspections.csv` (all APK results) avoids sample bias. Starting f
 
 ### Directory Structure
 
-- `src/rdw_client.py` - Shared utilities (Socrata client, streaming CSV, retry logic)
+- `src/download.py` - Data fetching (API client, streaming CSV, retry logic)
 - `src/download.py` - Unified data fetching script
 - `src/process_data.py` - Metrics calculation (defects per inspection, pass rate)
 - `src/generate_site.py` - Template copying to site/
@@ -82,7 +82,7 @@ Starting from `inspections.csv` (all APK results) avoids sample bias. Starting f
 
 ### RDW API Conventions
 
-Dataset IDs are defined in `src/rdw_client.py:DATASETS`:
+Dataset IDs are defined in `src/download.py:DATASETS`:
 
 ```python
 "vehicles": "m9d7-ebf2",       # Gekentekende voertuigen
@@ -107,7 +107,7 @@ All scripts use `Path(__file__).parent.parent / "subdir"` for paths relative to 
 Load with `dtype=str` to avoid type coercion issues with kentekens (license plates).
 
 **Streaming writes:**
-`src/rdw_client.py:StreamingCSVWriter` flushes to disk immediately for resilience and memory efficiency.
+`src/download.py:CSVWriter` flushes to disk immediately for resilience and memory efficiency.
 
 **Retry logic:**
 `@retry_with_backoff` decorator with exponential backoff (5 retries, base 2s delay, 2x multiplier).
@@ -147,4 +147,7 @@ Run the full pipeline locally with `DATA_SAMPLE_PERCENT=1` to catch issues befor
 - Dutch field names from RDW (e.g., `merk`, `kenteken`, `handelsbenaming`) are preserved
 - English for code, comments, and documentation
 - DataFrames always use `dtype=str` for kenteken columns
-- Use `rdw_client.log()` for console output (includes flush for CI visibility)
+- Use `download.log()` for console output (includes flush for CI visibility)
+- Python functions must use `<subject>_<verb>` naming convention (e.g., `dataset_download`, `metadata_load`, `results_save`)
+- Simplicity is paramount: avoid deep nesting and complexity
+- Prefer feature flags (boolean parameters) over nested conditionals

@@ -31,7 +31,7 @@ This project calculates reliability metrics for car brands and models using offi
 cars/
 ├── src/
 │   ├── download.py        # Unified data fetching script
-│   ├── rdw_client.py      # Shared utilities (API client, streaming CSV)
+│   ├── download.py        # Data fetching (API client, streaming CSV)
 │   ├── process_data.py    # Metrics calculation
 │   ├── generate_site.py   # Template copying to site/
 │   └── templates/         # HTML/JS templates

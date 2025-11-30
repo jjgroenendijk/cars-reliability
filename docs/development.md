@@ -72,7 +72,7 @@ python -m http.server 8000
 ```text
 src/
 ├── download.py        # Unified data fetching script
-├── rdw_client.py      # Shared utilities (API, streaming CSV)
+├── download.py        # Data fetching (API, streaming CSV)
 ├── process_data.py    # Data processing and metrics
 ├── generate_site.py   # Template copying
 └── templates/         # HTML/JS templates

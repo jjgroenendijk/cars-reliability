@@ -21,7 +21,7 @@
 cars/
 ├── src/                    # Python source code
 │   ├── download.py         # Unified data fetching script
-│   ├── rdw_client.py       # Shared utilities (API, streaming CSV)
+│   ├── download.py         # Data fetching (API, streaming CSV)
 │   ├── process_data.py     # Metrics calculation
 │   ├── generate_site.py    # Site generation
 │   └── templates/          # HTML/JS templates

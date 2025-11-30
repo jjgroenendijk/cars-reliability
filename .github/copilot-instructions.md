@@ -10,7 +10,7 @@ This project analyzes Dutch vehicle inspection (APK) data from RDW Open Data to 
 
 Key directories:
 - `src/` - Python pipeline scripts (fetch → process → generate)
-- `src/rdw_client.py` - Shared utilities (Socrata client, streaming CSV, retry logic)
+- `src/download.py` - Data fetching (API client, streaming CSV, parallel fetch)
 - `src/templates/` - HTML and JavaScript templates
 - `data/` - Raw CSV files (gitignored, regenerated on each run)
 - `site/` - Generated website deployed to GitHub Pages
@@ -18,7 +18,7 @@ Key directories:
 
 ## RDW API Conventions
 
-The RDW uses Socrata's SODA API. Dataset IDs are defined in `src/rdw_client.py`:
+The RDW uses Socrata's SODA API. Dataset IDs are defined in `src/download.py`:
 ```python
 DATASETS = {
     "vehicles": "m9d7-ebf2",      # Gekentekende voertuigen
@@ -80,6 +80,9 @@ GitHub Actions workflow (`.github/workflows/update.yml`):
 - No emojis in code or generated output
 - Dutch field names from RDW (e.g., `merk`, `kenteken`, `handelsbenaming`) are preserved
 - English for code, comments, and documentation
+- Python functions must use `<subject>_<verb>` naming convention (e.g., `dataset_download`, `metadata_load`, `results_save`)
+- Simplicity is paramount: avoid deep nesting and complexity
+- Prefer feature flags (boolean parameters) over nested conditionals
 
 ## Contributing to This File
 
