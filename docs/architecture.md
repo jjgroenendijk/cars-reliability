@@ -73,7 +73,9 @@ Stage 2 (parallel):
 
 Key features:
 - **Streaming CSV writes** - Flushes to disk immediately, survives interruption
-- **Per-dataset caching** - Each dataset cached separately in CI
+- **Resume support** - Detects partial downloads and continues from where it left off
+- **Per-dataset caching** - Each dataset cached separately in CI with `.complete` markers
+- **Memory-efficient** - Small page sizes (10k records) and chunked parallel processing
 - **Exponential backoff** - Retries with increasing delays on API errors
 
 ### 2. Process (`src/process_data.py`)
@@ -91,15 +93,17 @@ Key features:
 
 ### 4. Deploy (GitHub Actions)
 
-Single workflow with per-dataset caching:
+Single workflow with per-dataset caching and resume support:
 
 ```text
-Restore caches → Fetch missing datasets → Save caches → Process → Generate → Deploy
+Restore caches → Check .complete markers → Fetch/Resume incomplete → Save caches → Process → Generate → Deploy
 ```
 
-- **Per-dataset caching**: Each dataset cached independently
-- **Sample percentage**: Adjustable via workflow input (1%, 10%, 50%, 100%)
+- **Per-dataset caching**: Each dataset cached independently with `.complete` marker
+- **Resume on failure**: Partial downloads are cached and resumed on next run
+- **Sample percentage**: Adjustable via workflow input (1%, 10%, 50%, 100%) - default 10%
 - **Weekly refresh**: Scheduled run every Sunday at midnight UTC
+- **Continue on error**: Each dataset fetch continues even if previous ones fail
 
 ## Key Design Decisions
 
@@ -153,6 +157,15 @@ GitHub Actions caches fetched data to speed up repeated runs:
 - Script changes invalidate cache automatically
 - Manual workflow dispatch has "force fetch" option to bypass cache
 
+### Resume Support
+
+Downloads can be resumed across workflow runs:
+
+- **`.complete` marker** - Created only when download finishes successfully
+- **Partial caching** - If download fails, partial CSV is cached for next run
+- **Automatic resume** - Download script detects existing records and skips completed pages
+- **Flow**: Run 1 downloads 50% → times out → caches partial. Run 2 restores partial → resumes from 50% → completes
+
 ## Data Sampling
 
 The `DATA_SAMPLE_PERCENT` environment variable controls how much of the full dataset to fetch.
@@ -171,8 +184,9 @@ Dataset size is queried dynamically from the API at runtime using `SELECT count(
 
 All batch operations use `ThreadPoolExecutor` for parallel requests:
 
-- Defects: Fetched in 50k record pages
-- Vehicles/Fuel/Inspections: Fetched in 1k kenteken batches
+- Inspections: Fetched in 10k record pages (reduced from 50k for memory efficiency)
+- Vehicles/Fuel/Defects: Fetched in 1k kenteken batches
+- Chunked processing: Max 20 concurrent items to limit memory usage
 
 Default is 2 workers to avoid overwhelming the RDW API.
 

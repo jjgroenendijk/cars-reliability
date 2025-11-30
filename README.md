@@ -30,8 +30,7 @@ This project calculates reliability metrics for car brands and models using offi
 ```text
 cars/
 ├── src/
-│   ├── download.py        # Unified data fetching script
-│   ├── download.py        # Data fetching (API client, streaming CSV)
+│   ├── download.py        # Data fetching (API client, streaming CSV, resume support)
 │   ├── process_data.py    # Metrics calculation
 │   ├── generate_site.py   # Template copying to site/
 │   └── templates/         # HTML/JS templates

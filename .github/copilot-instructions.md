@@ -10,7 +10,7 @@ This project analyzes Dutch vehicle inspection (APK) data from RDW Open Data to 
 
 Key directories:
 - `src/` - Python pipeline scripts (fetch → process → generate)
-- `src/download.py` - Data fetching (API client, streaming CSV, parallel fetch)
+- `src/download.py` - Data fetching (API client, streaming CSV, resume support, memory-efficient)
 - `src/templates/` - HTML and JavaScript templates
 - `data/` - Raw CSV files (gitignored, regenerated on each run)
 - `site/` - Generated website deployed to GitHub Pages
@@ -70,10 +70,18 @@ GitHub Actions workflow (`.github/workflows/update.yml`):
 
 ## Sample Percentage
 
-- Default: 100% (full dataset)
+- Default: 10% (reduced from 100% to avoid GitHub Actions timeouts)
 - Adjustable via workflow_dispatch input: 1%, 10%, 50%, or 100%
 - Use `DATA_SAMPLE_PERCENT=1` locally for quick testing
 - Run the full pipeline locally before pushing to catch issues
+
+## Resume Support
+
+Downloads support resumption across workflow runs:
+- Partial CSV files are cached even on failure
+- Next run detects existing records and skips completed pages
+- `.complete` marker file indicates successful completion
+- Cache includes both CSV and marker for completed downloads
 
 ## Style Guidelines
 
