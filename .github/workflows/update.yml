@@ -130,77 +130,103 @@ jobs:
           key: ${{ steps.cache-keys.outputs.defect_codes }}
       
       # Fetch datasets in order: smallest first, then dependencies
+      # Each dataset is saved to cache immediately after fetch (continue-on-error preserves partial progress)
       # Order: defect_codes (tiny) -> inspections (primary) -> vehicles -> fuel -> defects_found
       
       - name: Fetch defect_codes (smallest)
         if: steps.cache-defect-codes.outputs.cache-hit != 'true'
+        id: fetch-defect-codes
+        continue-on-error: true
         run: python src/download.py defect_codes
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
       
+      - name: Save defect_codes cache
+        if: steps.cache-defect-codes.outputs.cache-hit != 'true' && steps.fetch-defect-codes.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: data/defect_codes.csv
+          key: ${{ steps.cache-keys.outputs.defect_codes }}
+      
       - name: Fetch inspections (primary dataset)
         if: steps.cache-inspections.outputs.cache-hit != 'true'
+        id: fetch-inspections
+        continue-on-error: true
         run: python src/download.py inspections
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           FETCH_WORKERS: 2
       
-      - name: Fetch vehicles
-        if: steps.cache-vehicles.outputs.cache-hit != 'true'
-        run: python src/download.py vehicles --kentekens-from data/inspections.csv
-        env:
-          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
-          FETCH_WORKERS: 2
-      
-      - name: Fetch fuel
-        if: steps.cache-fuel.outputs.cache-hit != 'true'
-        run: python src/download.py fuel --kentekens-from data/inspections.csv
-        env:
-          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
-          FETCH_WORKERS: 2
-      
-      - name: Fetch defects_found
-        if: steps.cache-defects-found.outputs.cache-hit != 'true'
-        run: python src/download.py defects_found --kentekens-from data/inspections.csv
-        env:
-          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
-          FETCH_WORKERS: 2
-      
-      # Save caches for datasets that were fetched
       - name: Save inspections cache
-        if: steps.cache-inspections.outputs.cache-hit != 'true'
+        if: steps.cache-inspections.outputs.cache-hit != 'true' && steps.fetch-inspections.outcome == 'success'
         uses: actions/cache/save@v4
         with:
           path: data/inspections.csv
           key: ${{ steps.cache-keys.outputs.inspections }}
       
+      - name: Fetch vehicles
+        if: steps.cache-vehicles.outputs.cache-hit != 'true' && (steps.cache-inspections.outputs.cache-hit == 'true' || steps.fetch-inspections.outcome == 'success')
+        id: fetch-vehicles
+        continue-on-error: true
+        run: python src/download.py vehicles --kentekens-from data/inspections.csv
+        env:
+          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
+          FETCH_WORKERS: 2
+      
       - name: Save vehicles cache
-        if: steps.cache-vehicles.outputs.cache-hit != 'true'
+        if: steps.fetch-vehicles.outcome == 'success'
         uses: actions/cache/save@v4
         with:
           path: data/vehicles.csv
           key: ${{ steps.cache-keys.outputs.vehicles }}
       
+      - name: Fetch fuel
+        if: steps.cache-fuel.outputs.cache-hit != 'true' && (steps.cache-inspections.outputs.cache-hit == 'true' || steps.fetch-inspections.outcome == 'success')
+        id: fetch-fuel
+        continue-on-error: true
+        run: python src/download.py fuel --kentekens-from data/inspections.csv
+        env:
+          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
+          FETCH_WORKERS: 2
+      
       - name: Save fuel cache
-        if: steps.cache-fuel.outputs.cache-hit != 'true'
+        if: steps.fetch-fuel.outcome == 'success'
         uses: actions/cache/save@v4
         with:
           path: data/fuel.csv
           key: ${{ steps.cache-keys.outputs.fuel }}
       
+      - name: Fetch defects_found
+        if: steps.cache-defects-found.outputs.cache-hit != 'true' && (steps.cache-inspections.outputs.cache-hit == 'true' || steps.fetch-inspections.outcome == 'success')
+        id: fetch-defects-found
+        continue-on-error: true
+        run: python src/download.py defects_found --kentekens-from data/inspections.csv
+        env:
+          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
+          FETCH_WORKERS: 2
+      
       - name: Save defects_found cache
-        if: steps.cache-defects-found.outputs.cache-hit != 'true'
+        if: steps.fetch-defects-found.outcome == 'success'
         uses: actions/cache/save@v4
         with:
           path: data/defects_found.csv
           key: ${{ steps.cache-keys.outputs.defects_found }}
       
-      - name: Save defect_codes cache
-        if: steps.cache-defect-codes.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: data/defect_codes.csv
-          key: ${{ steps.cache-keys.outputs.defect_codes }}
+      # Check if all required datasets are available (either cached or fetched)
+      - name: Verify all datasets available
+        id: verify-data
+        run: |
+          missing=""
+          for f in inspections vehicles fuel defects_found defect_codes; do
+            if [ ! -f "data/${f}.csv" ]; then
+              missing="${missing} ${f}"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            echo "Missing datasets:$missing"
+            exit 1
+          fi
+          echo "All datasets available"
       
       - name: Create fetch metadata
         run: |
