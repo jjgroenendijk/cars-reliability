@@ -1,5 +1,9 @@
 # Dutch Car Reliability Analysis
 
+[![Update Data](https://github.com/jjgroenendijk/cars-reliability/actions/workflows/update.yml/badge.svg)](https://github.com/jjgroenendijk/cars-reliability/actions/workflows/update.yml)
+
+🔗 **[View the Live Site](https://jjgroenendijk.nl/cars-reliability/)**
+
 Investigating car reliability using data from the Dutch RDW (Rijksdienst voor het Wegverkeer).
 
 ## Overview
