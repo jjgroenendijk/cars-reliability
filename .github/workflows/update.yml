@@ -68,11 +68,18 @@ jobs:
       - name: Set data sample percentage
         id: sample
         run: |
-          # Use input if provided (manual trigger), otherwise default to 100%
-          SAMPLE="${{ inputs.sample_percent || '100' }}"
+          # Use input if provided (manual trigger)
+          # Default: 100% for schedule, 10% for push events to avoid timeout
+          if [ -n "${{ inputs.sample_percent }}" ]; then
+            SAMPLE="${{ inputs.sample_percent }}"
+          elif [ "${{ github.event_name }}" = "schedule" ]; then
+            SAMPLE="100"
+          else
+            SAMPLE="10"
+          fi
           echo "DATA_SAMPLE_PERCENT=${SAMPLE}" >> $GITHUB_ENV
           echo "sample=${SAMPLE}" >> $GITHUB_OUTPUT
-          echo "Sample: ${SAMPLE}%"
+          echo "Sample: ${SAMPLE}% (event: ${{ github.event_name }})"
       
       - name: Generate cache keys
         id: cache-keys
