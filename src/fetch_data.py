@@ -82,6 +82,11 @@ def fetch_vehicles_for_kentekens(
         "voertuigsoort",
         "datum_eerste_toelating",
         "vervaldatum_apk",
+        "cilinderinhoud",
+        "aantal_cilinders",
+        "massa_rijklaar",
+        "eerste_kleur",
+        "inrichting",
     ]
     
     all_results = []
@@ -133,6 +138,49 @@ def fetch_defect_codes(client: Socrata) -> pd.DataFrame:
     return df
 
 
+def fetch_fuel_for_kentekens(
+    client: Socrata,
+    kentekens: list[str],
+    batch_size: int = 1000
+) -> pd.DataFrame:
+    """
+    Fetch fuel type info for specific license plates.
+    
+    Args:
+        client: Socrata client
+        kentekens: List of license plates to fetch
+        batch_size: Number of kentekens per API call
+    
+    Returns:
+        DataFrame with fuel data
+    """
+    print(f"Fetching fuel info for {len(kentekens)} unique kentekens...")
+    
+    all_results = []
+    unique_kentekens = list(set(kentekens))
+    
+    for i in range(0, len(unique_kentekens), batch_size):
+        batch = unique_kentekens[i:i + batch_size]
+        kenteken_list = ",".join(f"'{k}'" for k in batch)
+        
+        try:
+            results = client.get(
+                "8ys7-d773",  # Fuel dataset
+                where=f"kenteken IN ({kenteken_list}) AND brandstof_volgnummer='1'",  # Primary fuel only
+                limit=batch_size,
+            )
+            all_results.extend(results)
+        except Exception as e:
+            print(f"  Warning: fuel batch {i//batch_size} failed: {e}")
+        
+        if (i // batch_size) % 10 == 0:
+            print(f"  Processed {min(i + batch_size, len(unique_kentekens))}/{len(unique_kentekens)} kentekens...")
+    
+    df = pd.DataFrame.from_records(all_results)
+    print(f"  Fetched fuel info for {len(df)} vehicles")
+    return df
+
+
 def main():
     """Fetch all data and save to CSV files."""
     # Ensure data directory exists
@@ -148,15 +196,20 @@ def main():
     kentekens = defects_df["kenteken"].unique().tolist()
     vehicles_df = fetch_vehicles_for_kentekens(client, kentekens)
     
+    # Fetch fuel data for these vehicles
+    fuel_df = fetch_fuel_for_kentekens(client, kentekens)
+    
     # Save to CSV
     vehicles_df.to_csv(DATA_DIR / "vehicles.csv", index=False)
     defects_df.to_csv(DATA_DIR / "defects_found.csv", index=False)
     defect_codes_df.to_csv(DATA_DIR / "defect_codes.csv", index=False)
+    fuel_df.to_csv(DATA_DIR / "fuel.csv", index=False)
     
     print(f"\nData saved to {DATA_DIR}/")
     print(f"  - vehicles.csv: {len(vehicles_df)} records")
     print(f"  - defects_found.csv: {len(defects_df)} records")
     print(f"  - defect_codes.csv: {len(defect_codes_df)} records")
+    print(f"  - fuel.csv: {len(fuel_df)} records")
     
     client.close()
 
