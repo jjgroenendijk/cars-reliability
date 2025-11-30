@@ -67,6 +67,12 @@ GitHub Actions workflow (`.github/workflows/update.yml`):
 - Commits generated `site/` files and deploys to GitHub Pages
 - Uses `[skip ci]` in commit messages to avoid infinite loops
 
+## Branch Workflow
+
+- All changes must be tested and verified on the `dev` branch before merging to `main`
+- Run the full pipeline locally on `dev` to catch issues before they affect production
+- CI/CD runs on push to validate changes
+
 ## Style Guidelines
 
 - No emojis in code or generated output
