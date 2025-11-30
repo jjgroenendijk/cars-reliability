@@ -1,17 +1,18 @@
 name: Update Car Reliability Data
 
 on:
-  # Run weekly on Sunday at midnight UTC
+  # Run weekly on Sunday at midnight UTC (main branch only)
   schedule:
     - cron: '0 0 * * 0'
   
   # Allow manual trigger
   workflow_dispatch:
   
-  # Run on push to main (for initial setup)
+  # Run on push to main or dev branches
   push:
     branches:
       - main
+      - dev
     paths:
       - 'src/**'
       - '.github/workflows/update.yml'
@@ -22,9 +23,15 @@ permissions:
   pages: write
   id-token: write
 
+# Allow only one concurrent deployment per branch
+concurrency:
+  group: "pages-${{ github.ref_name }}"
+  cancel-in-progress: true
+
 jobs:
   update-data:
     runs-on: ubuntu-latest
+    timeout-minutes: 120  # 2 hour timeout for full dataset
     
     steps:
       - name: Checkout repository
@@ -39,8 +46,22 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       
+      - name: Set data sample percentage
+        id: sample
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "DATA_SAMPLE_PERCENT=100" >> $GITHUB_ENV
+            echo "sample=100" >> $GITHUB_OUTPUT
+          else
+            echo "DATA_SAMPLE_PERCENT=1" >> $GITHUB_ENV
+            echo "sample=1" >> $GITHUB_OUTPUT
+          fi
+          echo "Branch: ${{ github.ref_name }}, Sample: $DATA_SAMPLE_PERCENT%"
+      
       - name: Fetch data from RDW
         run: python src/fetch_data.py
+        env:
+          DATA_SAMPLE_PERCENT: ${{ env.DATA_SAMPLE_PERCENT }}
       
       - name: Process data
         run: python src/process_data.py
@@ -53,10 +74,11 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add site/
-          git diff --staged --quiet || (git commit -m "Update reliability data [skip ci]" && git push)
+          git diff --staged --quiet || (git commit -m "Update reliability data (${{ steps.sample.outputs.sample }}% sample) [skip ci]" && git push)
 
-  deploy:
+  deploy-main:
     needs: update-data
+    if: github.ref_name == 'main'
     runs-on: ubuntu-latest
     
     environment:
@@ -80,3 +102,19 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  deploy-dev:
+    needs: update-data
+    if: github.ref_name == 'dev'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+      
+      - name: Dev site info
+        run: |
+          echo "Dev site built successfully with 1% data sample"
+          echo "Preview locally: git checkout dev && cd site && python -m http.server 8000"

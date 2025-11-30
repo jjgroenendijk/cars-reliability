@@ -38,6 +38,16 @@ h4 {
     margin-top: -10px;
 }
 
+.sample-banner {
+    background-color: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.95em;
+}
+
 .card {
     background: white;
     border-radius: 8px;

@@ -16,6 +16,15 @@ import pandas as pd
 DATA_DIR = Path(__file__).parent.parent / "data"
 
 
+def load_metadata() -> dict:
+    """Load fetch metadata if available."""
+    metadata_path = DATA_DIR / "fetch_metadata.json"
+    if metadata_path.exists():
+        with open(metadata_path) as f:
+            return json.load(f)
+    return {"sample_percent": 100, "full_dataset_size": 25_000_000}
+
+
 def load_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame | None]:
     """Load the fetched data from CSV files."""
     print("Loading data...")
@@ -200,15 +209,19 @@ def save_results(
     brand_stats: pd.DataFrame, 
     model_stats: pd.DataFrame,
     total_vehicles: int,
-    total_inspections: int
+    total_inspections: int,
+    metadata: dict
 ):
     """Save processed results to JSON for the static site."""
     output_dir = Path(__file__).parent.parent / "site" / "data"
     output_dir.mkdir(parents=True, exist_ok=True)
     
+    sample_percent = metadata.get("sample_percent", 100)
+    
     # Save brand stats
     brand_data = {
         "generated_at": pd.Timestamp.now().isoformat(),
+        "sample_percent": sample_percent,
         "total_vehicles": total_vehicles,
         "total_inspections": total_inspections,
         "brands": brand_stats.to_dict(orient="records")
@@ -219,6 +232,7 @@ def save_results(
     # Save all model stats (sorted by reliability)
     model_data = {
         "generated_at": pd.Timestamp.now().isoformat(),
+        "sample_percent": sample_percent,
         "total_vehicles": total_vehicles,
         "total_inspections": total_inspections,
         "most_reliable": model_stats.to_dict(orient="records"),
@@ -232,7 +246,10 @@ def save_results(
 
 def main():
     """Process data and calculate reliability metrics."""
+    metadata = load_metadata()
     vehicles, defects, defect_codes, fuel = load_data()
+    
+    print(f"\nProcessing {metadata.get('sample_percent', 100)}% dataset sample...")
     
     # Enrich vehicles with age and fuel data
     vehicles = enrich_vehicles(vehicles, fuel)
@@ -259,7 +276,7 @@ def main():
     print("=" * 60)
     print(brand_stats[["merk", "vehicle_count", "total_inspections", "avg_defects_per_inspection"]].tail(10).to_string(index=False))
     
-    save_results(brand_stats, model_stats, total_vehicles, total_inspections)
+    save_results(brand_stats, model_stats, total_vehicles, total_inspections, metadata)
 
 
 if __name__ == "__main__":

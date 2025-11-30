@@ -30,6 +30,7 @@ async function loadData() {
         modelData = modelJson.most_reliable || [];
         metadata = {
             generated_at: brandJson.generated_at,
+            sample_percent: brandJson.sample_percent || 100,
             total_vehicles: brandJson.total_vehicles,
             total_inspections: brandJson.total_inspections
         };
@@ -43,7 +44,20 @@ async function loadData() {
         // Update summary stats if element exists
         const statsEl = document.getElementById('summary-stats');
         if (statsEl && metadata.total_vehicles) {
-            statsEl.textContent = `Based on ${formatNumber(metadata.total_vehicles)} vehicles and ${formatNumber(metadata.total_inspections)} inspections`;
+            let statsText = `Based on ${formatNumber(metadata.total_vehicles)} vehicles and ${formatNumber(metadata.total_inspections)} inspections`;
+            if (metadata.sample_percent < 100) {
+                statsText += ` (${metadata.sample_percent}% sample)`;
+            }
+            statsEl.textContent = statsText;
+        }
+        
+        // Show sample warning banner if not full dataset
+        if (metadata.sample_percent < 100) {
+            const banner = document.getElementById('sample-banner');
+            if (banner) {
+                banner.style.display = 'block';
+                banner.textContent = `Note: This is a ${metadata.sample_percent}% sample of the full dataset. Results may not be fully representative.`;
+            }
         }
         
         return true;

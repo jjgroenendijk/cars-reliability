@@ -5,6 +5,10 @@ Datasets:
 - Gekentekende voertuigen (m9d7-ebf2): Vehicle registrations
 - Geconstateerde Gebreken (a34c-vvps): Defects found during inspections
 - Gebreken (hx2c-gt7k): Defect reference table
+
+Environment variables:
+- RDW_APP_TOKEN: Optional Socrata app token for higher rate limits
+- DATA_SAMPLE_PERCENT: Percentage of data to fetch (1-100, default 100)
 """
 
 import os
@@ -23,8 +27,24 @@ DATASETS = {
     "defect_codes": "hx2c-gt7k",  # Gebreken (reference table)
 }
 
+# Full dataset size (approximately 24.5M defect records as of 2025)
+FULL_DATASET_SIZE = 25_000_000
+
 # Data directory
 DATA_DIR = Path(__file__).parent.parent / "data"
+
+
+def get_sample_percent() -> int:
+    """Get the data sample percentage from environment (1-100)."""
+    percent = int(os.environ.get("DATA_SAMPLE_PERCENT", "100"))
+    return max(1, min(100, percent))
+
+
+def get_data_limit() -> int:
+    """Calculate the data limit based on sample percentage."""
+    percent = get_sample_percent()
+    limit = int(FULL_DATASET_SIZE * percent / 100)
+    return max(10000, limit)  # Minimum 10k records
 
 
 def get_client() -> Socrata:
@@ -34,18 +54,22 @@ def get_client() -> Socrata:
     return Socrata(RDW_DOMAIN, app_token)
 
 
-def fetch_defects_found(client: Socrata, limit: int = 100000) -> pd.DataFrame:
+def fetch_defects_found(client: Socrata, limit: int | None = None) -> pd.DataFrame:
     """
     Fetch defects found during inspections.
     
     Args:
         client: Socrata client
-        limit: Maximum number of records to fetch
+        limit: Maximum number of records to fetch (default from environment)
     
     Returns:
         DataFrame with defect data
     """
-    print(f"Fetching defects found (limit: {limit})...")
+    if limit is None:
+        limit = get_data_limit()
+    
+    sample_percent = get_sample_percent()
+    print(f"Fetching defects found (limit: {limit:,}, {sample_percent}% of full dataset)...")
     
     results = client.get(
         DATASETS["defects_found"],
@@ -183,8 +207,15 @@ def fetch_fuel_for_kentekens(
 
 def main():
     """Fetch all data and save to CSV files."""
+    import json
+    
     # Ensure data directory exists
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    
+    sample_percent = get_sample_percent()
+    print(f"\n{'='*60}")
+    print(f"DATA FETCH: {sample_percent}% of full dataset")
+    print(f"{'='*60}\n")
     
     client = get_client()
     
@@ -205,10 +236,23 @@ def main():
     defect_codes_df.to_csv(DATA_DIR / "defect_codes.csv", index=False)
     fuel_df.to_csv(DATA_DIR / "fuel.csv", index=False)
     
+    # Save metadata about the fetch
+    metadata = {
+        "sample_percent": sample_percent,
+        "full_dataset_size": FULL_DATASET_SIZE,
+        "fetched_defects": len(defects_df),
+        "fetched_vehicles": len(vehicles_df),
+        "fetched_at": pd.Timestamp.now().isoformat(),
+    }
+    with open(DATA_DIR / "fetch_metadata.json", "w") as f:
+        json.dump(metadata, f, indent=2)
+    
     print(f"\nData saved to {DATA_DIR}/")
-    print(f"  - vehicles.csv: {len(vehicles_df)} records")
-    print(f"  - defects_found.csv: {len(defects_df)} records")
-    print(f"  - defect_codes.csv: {len(defect_codes_df)} records")
+    print(f"  - vehicles.csv: {len(vehicles_df):,} records")
+    print(f"  - defects_found.csv: {len(defects_df):,} records")
+    print(f"  - defect_codes.csv: {len(defect_codes_df):,} records")
+    print(f"  - fuel.csv: {len(fuel_df):,} records")
+    print(f"  - fetch_metadata.json: sample={sample_percent}%")
     print(f"  - fuel.csv: {len(fuel_df)} records")
     
     client.close()
