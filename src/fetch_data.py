@@ -5,14 +5,17 @@ Datasets:
 - Gekentekende voertuigen (m9d7-ebf2): Vehicle registrations
 - Geconstateerde Gebreken (a34c-vvps): Defects found during inspections
 - Gebreken (hx2c-gt7k): Defect reference table
+- Meldingen Keuringsinstantie (sgfe-77wx): All inspection results (pass/fail)
 
 Environment variables:
 - RDW_APP_TOKEN: Socrata app token for higher rate limits (recommended)
 - DATA_SAMPLE_PERCENT: Percentage of data to fetch (1-100, default 100)
 - FETCH_WORKERS: Number of parallel workers for batch fetching (default 4)
+- CI: Set to 'true' in CI environments to disable progress bar animations
 """
 
 import os
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import wraps
@@ -22,6 +25,35 @@ from threading import Lock
 import pandas as pd
 from sodapy import Socrata
 from tqdm import tqdm
+
+
+def is_ci() -> bool:
+    """Check if running in a CI environment."""
+    return os.environ.get("CI", "").lower() == "true" or os.environ.get("GITHUB_ACTIONS") == "true"
+
+
+def get_tqdm_kwargs() -> dict:
+    """Get tqdm kwargs appropriate for the environment."""
+    if is_ci():
+        # In CI: completely disable tqdm to avoid log clutter
+        return {"disable": True}
+    return {}
+
+
+class CIProgressLogger:
+    """Simple progress logger for CI environments."""
+    def __init__(self, total: int, desc: str, log_interval: int = 10):
+        self.total = total
+        self.desc = desc
+        self.log_interval = log_interval
+        self.count = 0
+        self.enabled = is_ci()
+    
+    def update(self, n: int = 1):
+        self.count += n
+        if self.enabled and (self.count % self.log_interval == 0 or self.count == self.total):
+            pct = int(self.count / self.total * 100)
+            print(f"  {self.desc}: {self.count}/{self.total} ({pct}%)")
 
 
 def retry_with_backoff(max_retries: int = 3, base_delay: float = 1.0):
@@ -56,6 +88,7 @@ DATASETS = {
     "vehicles": "m9d7-ebf2",      # Gekentekende voertuigen
     "defects_found": "a34c-vvps", # Geconstateerde Gebreken
     "defect_codes": "hx2c-gt7k",  # Gebreken (reference table)
+    "inspections": "sgfe-77wx",   # Meldingen Keuringsinstantie (all APK results)
 }
 
 # Data directory
@@ -154,7 +187,8 @@ def fetch_defects_found(client: Socrata, limit: int | None = None) -> pd.DataFra
         except Exception as e:
             return (offset, [], str(e))
     
-    with tqdm(total=total_pages, desc="  Defects", unit="pages") as pbar:
+    ci_logger = CIProgressLogger(total_pages, "Defects pages", log_interval=max(1, total_pages // 10))
+    with tqdm(total=total_pages, desc="  Defects", unit="pages", **get_tqdm_kwargs()) as pbar:
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             futures = {executor.submit(process_page, offset): offset for offset in offsets}
             
@@ -166,6 +200,7 @@ def fetch_defects_found(client: Socrata, limit: int | None = None) -> pd.DataFra
                     with results_lock:
                         all_results.extend(results)
                 pbar.update(1)
+                ci_logger.update(1)
     
     df = pd.DataFrame.from_records(all_results)
     print(f"  Fetched {len(df):,} defect records")
@@ -234,7 +269,8 @@ def fetch_vehicles_for_kentekens(
         except Exception as e:
             return (batch_idx, [], str(e))
     
-    with tqdm(total=total_batches, desc="  Vehicles", unit="batch") as pbar:
+    ci_logger = CIProgressLogger(total_batches, "Vehicle batches", log_interval=max(1, total_batches // 10))
+    with tqdm(total=total_batches, desc="  Vehicles", unit="batch", **get_tqdm_kwargs()) as pbar:
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             futures = {
                 executor.submit(process_batch, (i, batch)): i 
@@ -249,6 +285,7 @@ def fetch_vehicles_for_kentekens(
                     with results_lock:
                         all_results.extend(results)
                 pbar.update(1)
+                ci_logger.update(1)
     
     df = pd.DataFrame.from_records(all_results)
     print(f"  Fetched info for {len(df)} passenger cars")
@@ -324,7 +361,8 @@ def fetch_fuel_for_kentekens(
         except Exception as e:
             return (batch_idx, [], str(e))
     
-    with tqdm(total=total_batches, desc="  Fuel", unit="batch") as pbar:
+    ci_logger = CIProgressLogger(total_batches, "Fuel batches", log_interval=max(1, total_batches // 10))
+    with tqdm(total=total_batches, desc="  Fuel", unit="batch", **get_tqdm_kwargs()) as pbar:
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             futures = {
                 executor.submit(process_batch, (i, batch)): i 
@@ -339,9 +377,84 @@ def fetch_fuel_for_kentekens(
                     with results_lock:
                         all_results.extend(results)
                 pbar.update(1)
+                ci_logger.update(1)
     
     df = pd.DataFrame.from_records(all_results)
     print(f"  Fetched fuel info for {len(df)} vehicles")
+    return df
+
+
+def fetch_inspections_for_kentekens(
+    client: Socrata,
+    kentekens: list[str],
+    batch_size: int = 1000
+) -> pd.DataFrame:
+    """
+    Fetch all inspection results (pass/fail) for specific license plates.
+    
+    This dataset includes ALL inspections, not just those with defects,
+    which allows us to calculate accurate pass/fail rates and avoid sample bias.
+    
+    Args:
+        client: Socrata client
+        kentekens: List of license plates to fetch
+        batch_size: Number of kentekens per API call
+    
+    Returns:
+        DataFrame with inspection data including pass/fail status
+    """
+    num_workers = get_num_workers()
+    print(f"Fetching inspection results for {len(kentekens)} unique kentekens ({num_workers} workers)...")
+    
+    all_results = []
+    results_lock = Lock()
+    unique_kentekens = list(set(kentekens))
+    total_batches = (len(unique_kentekens) + batch_size - 1) // batch_size
+    
+    # Create batches upfront
+    batches = [
+        unique_kentekens[i:i + batch_size] 
+        for i in range(0, len(unique_kentekens), batch_size)
+    ]
+    
+    @retry_with_backoff(max_retries=3, base_delay=2.0)
+    def fetch_batch(batch_kentekens):
+        kenteken_list = ",".join(f"'{k}'" for k in batch_kentekens)
+        return client.get(
+            DATASETS["inspections"],
+            select="kenteken,meld_datum_door_keuringsinstantie,soort_melding_ki_omschrijving,vervaldatum_keuring",
+            where=f"kenteken IN ({kenteken_list}) AND soort_erkenning_omschrijving='APK Lichte voertuigen'",
+            limit=batch_size * 10,  # A vehicle can have multiple inspections
+        )
+    
+    def process_batch(batch_idx_and_data):
+        batch_idx, batch = batch_idx_and_data
+        try:
+            results = fetch_batch(batch)
+            return (batch_idx, results, None)
+        except Exception as e:
+            return (batch_idx, [], str(e))
+    
+    ci_logger = CIProgressLogger(total_batches, "Inspection batches", log_interval=max(1, total_batches // 10))
+    with tqdm(total=total_batches, desc="  Inspections", unit="batch", **get_tqdm_kwargs()) as pbar:
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = {
+                executor.submit(process_batch, (i, batch)): i 
+                for i, batch in enumerate(batches)
+            }
+            
+            for future in as_completed(futures):
+                batch_idx, results, error = future.result()
+                if error:
+                    print(f"\n  Warning: inspection batch {batch_idx} failed after retries: {error}")
+                else:
+                    with results_lock:
+                        all_results.extend(results)
+                pbar.update(1)
+                ci_logger.update(1)
+    
+    df = pd.DataFrame.from_records(all_results)
+    print(f"  Fetched {len(df)} inspection records")
     return df
 
 
@@ -355,26 +468,30 @@ def main():
     sample_percent = get_sample_percent()
     print(f"\n{'='*60}")
     print(f"DATA FETCH: {sample_percent}% of full dataset")
+    if is_ci():
+        print("(CI mode: progress updates every 30s)")
     print(f"{'='*60}\n")
     
     client = get_client()
     
-    # First, fetch defects (this is our primary dataset)
+    # First, fetch defects (this is our primary dataset for selecting kentekens)
     defects_df = fetch_defects_found(client)
     defect_codes_df = fetch_defect_codes(client)
     
-    # Then fetch vehicle info for the kentekens that have defects
+    # Get unique kentekens from defects dataset
     kentekens = defects_df["kenteken"].unique().tolist()
-    vehicles_df = fetch_vehicles_for_kentekens(client, kentekens)
     
-    # Fetch fuel data for these vehicles
+    # Fetch vehicle info, fuel data, and ALL inspections for these kentekens
+    vehicles_df = fetch_vehicles_for_kentekens(client, kentekens)
     fuel_df = fetch_fuel_for_kentekens(client, kentekens)
+    inspections_df = fetch_inspections_for_kentekens(client, kentekens)
     
     # Save to CSV
     vehicles_df.to_csv(DATA_DIR / "vehicles.csv", index=False)
     defects_df.to_csv(DATA_DIR / "defects_found.csv", index=False)
     defect_codes_df.to_csv(DATA_DIR / "defect_codes.csv", index=False)
     fuel_df.to_csv(DATA_DIR / "fuel.csv", index=False)
+    inspections_df.to_csv(DATA_DIR / "inspections.csv", index=False)
     
     # Save metadata about the fetch
     full_dataset_size = get_dataset_size(client, DATASETS["defects_found"])
@@ -383,6 +500,7 @@ def main():
         "full_dataset_size": full_dataset_size,
         "fetched_defects": len(defects_df),
         "fetched_vehicles": len(vehicles_df),
+        "fetched_inspections": len(inspections_df),
         "fetched_at": pd.Timestamp.now().isoformat(),
     }
     with open(DATA_DIR / "fetch_metadata.json", "w") as f:
@@ -393,6 +511,7 @@ def main():
     print(f"  - defects_found.csv: {len(defects_df):,} records")
     print(f"  - defect_codes.csv: {len(defect_codes_df):,} records")
     print(f"  - fuel.csv: {len(fuel_df):,} records")
+    print(f"  - inspections.csv: {len(inspections_df):,} records")
     print(f"  - fetch_metadata.json: sample={sample_percent}%")
     
     client.close()

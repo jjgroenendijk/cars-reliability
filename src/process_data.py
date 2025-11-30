@@ -4,7 +4,8 @@ Process RDW data to calculate reliability metrics.
 Metrics:
 1. Defects per inspection - Average number of defects found per APK inspection
 2. Issue types per inspection - Average number of different defect categories
-3. Vehicle age at inspection - Average age of vehicles in years
+3. Pass rate - Percentage of inspections passed without defects
+4. Vehicle age at inspection - Average age of vehicles in years
 """
 
 import json
@@ -25,7 +26,7 @@ def load_metadata() -> dict:
     return {"sample_percent": 100, "full_dataset_size": 25_000_000}
 
 
-def load_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame | None]:
+def load_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame | None, pd.DataFrame | None]:
     """Load the fetched data from CSV files."""
     print("Loading data...")
     
@@ -40,11 +41,18 @@ def load_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame 
         fuel = pd.read_csv(fuel_path, dtype=str)
         print(f"  Fuel: {len(fuel)}")
     
+    # Try to load inspections data (all APK results, not just defects)
+    inspections = None
+    inspections_path = DATA_DIR / "inspections.csv"
+    if inspections_path.exists():
+        inspections = pd.read_csv(inspections_path, dtype=str)
+        print(f"  Inspections: {len(inspections)}")
+    
     print(f"  Vehicles: {len(vehicles)}")
     print(f"  Defects: {len(defects)}")
     print(f"  Defect codes: {len(defect_codes)}")
     
-    return vehicles, defects, defect_codes, fuel
+    return vehicles, defects, defect_codes, fuel, inspections
 
 
 def enrich_vehicles(vehicles: pd.DataFrame, fuel: pd.DataFrame | None) -> pd.DataFrame:
@@ -73,7 +81,8 @@ def enrich_vehicles(vehicles: pd.DataFrame, fuel: pd.DataFrame | None) -> pd.Dat
 
 def calculate_defects_by_brand(
     vehicles: pd.DataFrame, 
-    defects: pd.DataFrame
+    defects: pd.DataFrame,
+    inspections: pd.DataFrame | None = None
 ) -> pd.DataFrame:
     """
     Calculate average defects per inspection by brand.
@@ -81,6 +90,7 @@ def calculate_defects_by_brand(
     Args:
         vehicles: Vehicle registration data
         defects: Defects found during inspections
+        inspections: All inspection results (optional, enables pass rate calculation)
     
     Returns:
         DataFrame with brand, vehicle count, inspection count, avg defects per inspection
@@ -114,6 +124,36 @@ def calculate_defects_by_brand(
         total_defect_types=("defect_types", "sum"),
     ).reset_index()
     
+    # If we have inspections data, calculate pass rate (inspections without defects)
+    if inspections is not None and len(inspections) > 0:
+        print("  Calculating pass rates from inspections data...")
+        insp = inspections.copy()
+        insp["inspection_id"] = insp["kenteken"] + "_" + insp["meld_datum_door_keuringsinstantie"]
+        
+        # Join inspections with vehicles to get brand
+        insp_with_brand = vehicles[["kenteken", "merk"]].merge(
+            insp[["kenteken", "inspection_id"]].drop_duplicates(),
+            on="kenteken",
+            how="inner"
+        )
+        
+        # Count ALL inspections by brand
+        all_insp_by_brand = insp_with_brand.groupby("merk").agg(
+            all_inspections=("inspection_id", "nunique")
+        ).reset_index()
+        
+        # Merge with brand_stats
+        brand_stats = brand_stats.merge(all_insp_by_brand, on="merk", how="left")
+        brand_stats["all_inspections"] = brand_stats["all_inspections"].fillna(brand_stats["total_inspections"])
+        
+        # Pass rate = (all inspections - inspections with defects) / all inspections
+        brand_stats["pass_rate"] = (
+            (brand_stats["all_inspections"] - brand_stats["total_inspections"]) / brand_stats["all_inspections"] * 100
+        ).round(1)
+    else:
+        brand_stats["all_inspections"] = brand_stats["total_inspections"]
+        brand_stats["pass_rate"] = None
+    
     # Calculate metrics
     brand_stats["avg_defects_per_inspection"] = (
         brand_stats["total_defects"] / brand_stats["total_inspections"]
@@ -140,6 +180,7 @@ def calculate_defects_by_brand(
 def calculate_defects_by_model(
     vehicles: pd.DataFrame, 
     defects: pd.DataFrame,
+    inspections: pd.DataFrame | None = None,
     min_vehicles: int = 50
 ) -> pd.DataFrame:
     """
@@ -148,6 +189,7 @@ def calculate_defects_by_model(
     Args:
         vehicles: Vehicle registration data
         defects: Defects found during inspections
+        inspections: All inspection results (optional, enables pass rate calculation)
         min_vehicles: Minimum vehicles required for a model to be included
     
     Returns:
@@ -181,6 +223,35 @@ def calculate_defects_by_model(
         total_defects=("total_defects", "sum"),
         total_defect_types=("defect_types", "sum"),
     ).reset_index()
+    
+    # If we have inspections data, calculate pass rate (inspections without defects)
+    if inspections is not None and len(inspections) > 0:
+        insp = inspections.copy()
+        insp["inspection_id"] = insp["kenteken"] + "_" + insp["meld_datum_door_keuringsinstantie"]
+        
+        # Join inspections with vehicles to get brand/model
+        insp_with_model = vehicles[["kenteken", "merk", "handelsbenaming"]].merge(
+            insp[["kenteken", "inspection_id"]].drop_duplicates(),
+            on="kenteken",
+            how="inner"
+        )
+        
+        # Count ALL inspections by brand/model
+        all_insp_by_model = insp_with_model.groupby(["merk", "handelsbenaming"]).agg(
+            all_inspections=("inspection_id", "nunique")
+        ).reset_index()
+        
+        # Merge with model_stats
+        model_stats = model_stats.merge(all_insp_by_model, on=["merk", "handelsbenaming"], how="left")
+        model_stats["all_inspections"] = model_stats["all_inspections"].fillna(model_stats["total_inspections"])
+        
+        # Pass rate = (all inspections - inspections with defects) / all inspections
+        model_stats["pass_rate"] = (
+            (model_stats["all_inspections"] - model_stats["total_inspections"]) / model_stats["all_inspections"] * 100
+        ).round(1)
+    else:
+        model_stats["all_inspections"] = model_stats["total_inspections"]
+        model_stats["pass_rate"] = None
     
     # Calculate metrics
     model_stats["avg_defects_per_inspection"] = (
@@ -247,7 +318,7 @@ def save_results(
 def main():
     """Process data and calculate reliability metrics."""
     metadata = load_metadata()
-    vehicles, defects, defect_codes, fuel = load_data()
+    vehicles, defects, defect_codes, fuel, inspections = load_data()
     
     print(f"\nProcessing {metadata.get('sample_percent', 100)}% dataset sample...")
     
@@ -261,20 +332,29 @@ def main():
     total_vehicles = len(vehicles)
     total_inspections = defects["inspection_id"].nunique()
     
-    brand_stats = calculate_defects_by_brand(vehicles, defects)
-    model_stats = calculate_defects_by_model(vehicles, defects)
+    # If we have inspections data, use that for total count (includes passed inspections)
+    if inspections is not None and len(inspections) > 0:
+        inspections["inspection_id"] = inspections["kenteken"] + "_" + inspections["meld_datum_door_keuringsinstantie"]
+        total_inspections = inspections["inspection_id"].nunique()
+        print(f"  Total inspections (including passed): {total_inspections:,}")
+    
+    brand_stats = calculate_defects_by_brand(vehicles, defects, inspections)
+    model_stats = calculate_defects_by_model(vehicles, defects, inspections)
     
     # Print top 10 most reliable brands
     print("\n" + "=" * 60)
     print("TOP 10 MOST RELIABLE BRANDS (lowest defects per inspection)")
     print("=" * 60)
-    print(brand_stats[["merk", "vehicle_count", "total_inspections", "avg_defects_per_inspection"]].head(10).to_string(index=False))
+    cols = ["merk", "vehicle_count", "total_inspections", "avg_defects_per_inspection"]
+    if "pass_rate" in brand_stats.columns and brand_stats["pass_rate"].notna().any():
+        cols.append("pass_rate")
+    print(brand_stats[cols].head(10).to_string(index=False))
     
     # Print top 10 least reliable brands
     print("\n" + "=" * 60)
     print("TOP 10 LEAST RELIABLE BRANDS (highest defects per inspection)")
     print("=" * 60)
-    print(brand_stats[["merk", "vehicle_count", "total_inspections", "avg_defects_per_inspection"]].tail(10).to_string(index=False))
+    print(brand_stats[cols].tail(10).to_string(index=False))
     
     save_results(brand_stats, model_stats, total_vehicles, total_inspections, metadata)
 

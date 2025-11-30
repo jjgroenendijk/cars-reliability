@@ -23,6 +23,7 @@ DATASETS = {
     "vehicles": "m9d7-ebf2",      # Gekentekende voertuigen
     "defects_found": "a34c-vvps", # Geconstateerde Gebreken
     "defect_codes": "hx2c-gt7k",  # Gebreken (reference table)
+    "inspections": "sgfe-77wx",   # Meldingen Keuringsinstantie (all APK results)
 }
 # Additional dataset fetched separately:
 # Fuel: 8ys7-d773 - Brandstof data

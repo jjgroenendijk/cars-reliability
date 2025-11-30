@@ -71,6 +71,25 @@ Reference table for defect codes. Currently fetched but not actively used in the
 
 Used to enrich vehicle data with fuel type information. We filter for `brandstof_volgnummer='1'` to get the primary fuel only.
 
+### 5. Meldingen Keuringsinstantie (Inspection Results)
+
+| Property | Value |
+|----------|-------|
+| Dataset ID | `sgfe-77wx` |
+| URL | [opendata.rdw.nl/Keuringen/Open-Data-RDW-Meldingen-Keuringsinstantie/sgfe-77wx](https://opendata.rdw.nl/Keuringen/Open-Data-RDW-Meldingen-Keuringsinstantie/sgfe-77wx) |
+| Update Frequency | Daily |
+| License | CC0 (Public Domain) |
+
+**Key columns:**
+
+- `kenteken` - License plate number
+- `meld_datum_door_keuringsinstantie` - Inspection date
+- `soort_melding_ki_omschrijving` - Inspection type (e.g., "periodieke controle")
+- `vervaldatum_keuring` - New APK validity date (0 = inspection failed)
+- `soort_erkenning_omschrijving` - Inspection category (we filter for "APK Lichte voertuigen")
+
+This dataset contains ALL inspection results, including those where no defects were found. This allows us to calculate accurate pass rates and avoid sample bias from only looking at defects.
+
 ## API Access
 
 RDW uses the Socrata SODA API. No authentication is required, but rate limits apply.
@@ -106,15 +125,6 @@ results = client.get(
 - **Timeliness**: Data is updated daily by RDW
 - **Accuracy**: Official government data, considered authoritative
 - **Coverage**: Only Dutch-registered vehicles
-
-## Related Datasets (Not Yet Used)
-
-These could enhance future analysis:
-
-| Dataset | ID | Potential Use |
-|---------|-----|---------------|
-| Keuringsresultaten | (TBD) | APK pass/fail rates |
-| Terugroepacties | (recalls) | Recall frequency |
 
 ## References
 
