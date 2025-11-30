@@ -63,7 +63,7 @@ class CIProgressLogger:
             log(f"  {self.desc}: {self.count}/{self.total} ({pct}%) - {elapsed:.0f}s elapsed")
 
 
-def retry_with_backoff(max_retries: int = 3, base_delay: float = 1.0):
+def retry_with_backoff(max_retries: int = 5, base_delay: float = 2.0):
     """Decorator to retry a function with exponential backoff."""
     def decorator(func):
         @wraps(func)
@@ -84,8 +84,12 @@ def retry_with_backoff(max_retries: int = 3, base_delay: float = 1.0):
 
 
 def get_num_workers() -> int:
-    """Get the number of parallel workers for batch fetching."""
-    return int(os.environ.get("FETCH_WORKERS", "4"))
+    """Get the number of parallel workers for batch fetching.
+    
+    Default is 2 workers to avoid overwhelming the RDW API.
+    The API is rate-limited and will drop connections with too many parallel requests.
+    """
+    return int(os.environ.get("FETCH_WORKERS", "2"))
 
 # RDW Open Data domain
 RDW_DOMAIN = "opendata.rdw.nl"
@@ -144,7 +148,8 @@ def get_client() -> Socrata:
         log("  Using app token for higher rate limits")
     else:
         log("  Warning: No app token - requests will be throttled")
-    return Socrata(RDW_DOMAIN, app_token)
+    # Increase timeout to 60 seconds to handle slow API responses
+    return Socrata(RDW_DOMAIN, app_token, timeout=60)
 
 
 def fetch_defects_found(client: Socrata, limit: int | None = None) -> pd.DataFrame:
@@ -177,7 +182,7 @@ def fetch_defects_found(client: Socrata, limit: int | None = None) -> pd.DataFra
     offsets = list(range(0, limit, page_size))
     total_pages = len(offsets)
     
-    @retry_with_backoff(max_retries=3, base_delay=2.0)
+    @retry_with_backoff(max_retries=5, base_delay=2.0)
     def fetch_page(offset):
         fetch_size = min(page_size, limit - offset)
         return client.get(
@@ -189,6 +194,8 @@ def fetch_defects_found(client: Socrata, limit: int | None = None) -> pd.DataFra
     
     def process_page(offset):
         try:
+            # Small delay to avoid overwhelming the API
+            time.sleep(0.1)
             results = fetch_page(offset)
             return (offset, results, None)
         except Exception as e:
@@ -258,7 +265,7 @@ def fetch_vehicles_for_kentekens(
         for i in range(0, len(unique_kentekens), batch_size)
     ]
     
-    @retry_with_backoff(max_retries=3, base_delay=2.0)
+    @retry_with_backoff(max_retries=5, base_delay=2.0)
     def fetch_batch(batch_kentekens):
         kenteken_list = ",".join(f"'{k}'" for k in batch_kentekens)
         return client.get(
@@ -271,6 +278,7 @@ def fetch_vehicles_for_kentekens(
     def process_batch(batch_idx_and_data):
         batch_idx, batch = batch_idx_and_data
         try:
+            time.sleep(0.1)  # Small delay to avoid overwhelming the API
             results = fetch_batch(batch)
             return (batch_idx, results, None)
         except Exception as e:
@@ -351,7 +359,7 @@ def fetch_fuel_for_kentekens(
         for i in range(0, len(unique_kentekens), batch_size)
     ]
     
-    @retry_with_backoff(max_retries=3, base_delay=2.0)
+    @retry_with_backoff(max_retries=5, base_delay=2.0)
     def fetch_batch(batch_kentekens):
         kenteken_list = ",".join(f"'{k}'" for k in batch_kentekens)
         return client.get(
@@ -363,6 +371,7 @@ def fetch_fuel_for_kentekens(
     def process_batch(batch_idx_and_data):
         batch_idx, batch = batch_idx_and_data
         try:
+            time.sleep(0.1)  # Small delay to avoid overwhelming the API
             results = fetch_batch(batch)
             return (batch_idx, results, None)
         except Exception as e:
@@ -424,7 +433,7 @@ def fetch_inspections_for_kentekens(
         for i in range(0, len(unique_kentekens), batch_size)
     ]
     
-    @retry_with_backoff(max_retries=3, base_delay=2.0)
+    @retry_with_backoff(max_retries=5, base_delay=2.0)
     def fetch_batch(batch_kentekens):
         kenteken_list = ",".join(f"'{k}'" for k in batch_kentekens)
         return client.get(
@@ -437,6 +446,7 @@ def fetch_inspections_for_kentekens(
     def process_batch(batch_idx_and_data):
         batch_idx, batch = batch_idx_and_data
         try:
+            time.sleep(0.1)  # Small delay to avoid overwhelming the API
             results = fetch_batch(batch)
             return (batch_idx, results, None)
         except Exception as e:
