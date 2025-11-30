@@ -58,11 +58,29 @@ DATASETS = {
     "defect_codes": "hx2c-gt7k",  # Gebreken (reference table)
 }
 
-# Full dataset size (approximately 24.5M defect records as of 2025)
-FULL_DATASET_SIZE = 25_000_000
-
 # Data directory
 DATA_DIR = Path(__file__).parent.parent / "data"
+
+# Cache for dataset size (to avoid repeated API calls)
+_dataset_size_cache: dict[str, int] = {}
+
+
+def get_dataset_size(client, dataset_id: str) -> int:
+    """Query the total number of records in a dataset."""
+    if dataset_id in _dataset_size_cache:
+        return _dataset_size_cache[dataset_id]
+    
+    try:
+        result = client.get(dataset_id, select="count(*)", limit=1)
+        if result and len(result) > 0:
+            count = int(result[0]["count"])
+            _dataset_size_cache[dataset_id] = count
+            return count
+    except Exception as e:
+        print(f"  Warning: Could not get dataset size: {e}")
+    
+    # Fallback to hardcoded estimate
+    return 25_000_000
 
 
 def get_sample_percent() -> int:
@@ -71,10 +89,11 @@ def get_sample_percent() -> int:
     return max(1, min(100, percent))
 
 
-def get_data_limit() -> int:
-    """Calculate the data limit based on sample percentage."""
+def get_data_limit(client) -> int:
+    """Calculate the data limit based on sample percentage and actual dataset size."""
     percent = get_sample_percent()
-    limit = int(FULL_DATASET_SIZE * percent / 100)
+    total_size = get_dataset_size(client, DATASETS["defects_found"])
+    limit = int(total_size * percent / 100)
     return max(10000, limit)  # Minimum 10k records
 
 
@@ -99,12 +118,15 @@ def fetch_defects_found(client: Socrata, limit: int | None = None) -> pd.DataFra
     Returns:
         DataFrame with defect data
     """
-    if limit is None:
-        limit = get_data_limit()
-    
+    # Get dataset size and calculate limit dynamically
+    total_size = get_dataset_size(client, DATASETS["defects_found"])
     sample_percent = get_sample_percent()
+    
+    if limit is None:
+        limit = get_data_limit(client)
+    
     num_workers = get_num_workers()
-    print(f"Fetching defects found (limit: {limit:,}, {sample_percent}% of full dataset, {num_workers} workers)...")
+    print(f"Fetching defects found ({sample_percent}% of {total_size:,} = {limit:,} records, {num_workers} workers)...")
     
     # Use pagination for large datasets
     page_size = 50000  # Socrata recommended max per request
@@ -355,9 +377,10 @@ def main():
     fuel_df.to_csv(DATA_DIR / "fuel.csv", index=False)
     
     # Save metadata about the fetch
+    full_dataset_size = get_dataset_size(client, DATASETS["defects_found"])
     metadata = {
         "sample_percent": sample_percent,
-        "full_dataset_size": FULL_DATASET_SIZE,
+        "full_dataset_size": full_dataset_size,
         "fetched_defects": len(defects_df),
         "fetched_vehicles": len(vehicles_df),
         "fetched_at": pd.Timestamp.now().isoformat(),
