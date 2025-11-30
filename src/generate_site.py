@@ -135,11 +135,11 @@ def generate_html():
     </style>
 </head>
 <body>
-    <h1>🚗 Dutch Car Reliability Analysis</h1>
+    <h1>Dutch Car Reliability Analysis</h1>
     <p class="subtitle">Based on APK (MOT) inspection data from RDW Open Data</p>
     
     <div class="methodology card">
-        <h3>📊 Methodology</h3>
+        <h3>Methodology</h3>
         <p>This analysis uses official Dutch vehicle inspection (APK) data from the 
         <a href="https://opendata.rdw.nl/">RDW Open Data</a> portal. We measure reliability 
         by analyzing defects found during mandatory safety inspections.</p>
@@ -147,7 +147,7 @@ def generate_html():
         <p class="updated">Data generated: {brand_data['generated_at'][:10]}</p>
     </div>
     
-    <h2>🏆 Reliability by Brand</h2>
+    <h2>Reliability by Brand</h2>
     <div class="card">
         <table>
             <thead>
@@ -165,7 +165,7 @@ def generate_html():
         </table>
     </div>
     
-    <h2>✅ Most Reliable Models (Top 20)</h2>
+    <h2>Most Reliable Models (Top 20)</h2>
     <div class="card">
         <table>
             <thead>
@@ -182,7 +182,7 @@ def generate_html():
         </table>
     </div>
     
-    <h2>⚠️ Least Reliable Models (Bottom 20)</h2>
+    <h2>Least Reliable Models (Bottom 20)</h2>
     <div class="card">
         <table>
             <thead>
