@@ -6,10 +6,11 @@ This project analyzes Dutch vehicle inspection (APK) data from RDW Open Data to 
 
 ## Architecture
 
-**Data flow:** `fetch_data.py` → CSV files → `process_data.py` → JSON → `generate_site.py` → site/
+**Data flow:** `fetch_pipeline.py` → CSV files → `process_data.py` → JSON → `generate_site.py` → site/
 
 Key directories:
 - `src/` - Python pipeline scripts (fetch → process → generate)
+- `src/rdw_client.py` - Shared utilities (Socrata client, streaming CSV, retry logic)
 - `src/templates/` - HTML and JavaScript templates
 - `data/` - Raw CSV files (gitignored, regenerated on each run)
 - `site/` - Generated website deployed to GitHub Pages
@@ -17,7 +18,7 @@ Key directories:
 
 ## RDW API Conventions
 
-The RDW uses Socrata's SODA API. Dataset IDs are defined in `src/fetch_data.py`:
+The RDW uses Socrata's SODA API. Dataset IDs are defined in `src/rdw_client.py`:
 ```python
 DATASETS = {
     "vehicles": "m9d7-ebf2",      # Gekentekende voertuigen
@@ -39,9 +40,13 @@ When querying the API:
 
 ```bash
 # Run the full pipeline locally
-python src/fetch_data.py    # Fetches from RDW API (~2-3 min)
-python src/process_data.py  # Calculates metrics, outputs JSON
-python src/generate_site.py # Copies templates to site/
+python src/fetch_pipeline.py  # Fetches from RDW API (~2-3 min)
+python src/process_data.py    # Calculates metrics, outputs JSON
+python src/generate_site.py   # Copies templates to site/
+
+# Or fetch individual datasets (for parallel CI jobs)
+python src/fetch_single.py inspections  # Primary dataset
+python src/fetch_single.py vehicles --kentekens-from data/inspections.csv
 
 # Preview the site
 cd site && python -m http.server 8000
@@ -67,3 +72,11 @@ GitHub Actions workflow (`.github/workflows/update.yml`):
 - No emojis in code or generated output
 - Dutch field names from RDW (e.g., `merk`, `kenteken`, `handelsbenaming`) are preserved
 - English for code, comments, and documentation
+
+## Contributing to This File
+
+When adding new conventions, patterns, or rules to this project, document them in this file (`copilot-instructions.md`). This ensures Copilot and future contributors understand project standards. Include:
+- New API conventions or dataset handling patterns
+- Code style decisions and naming conventions
+- Workflow or deployment changes
+- Any project-specific rules that deviate from common practices
