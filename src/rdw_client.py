@@ -52,10 +52,10 @@ def get_sample_percent() -> int:
 def get_num_workers() -> int:
     """Get the number of parallel workers for batch fetching.
     
-    Default is 4 workers to balance speed and API rate limits.
+    Default is 2 workers to avoid overwhelming the RDW API.
     The API is rate-limited and will drop connections with too many parallel requests.
     """
-    return int(os.environ.get("FETCH_WORKERS", "4"))
+    return int(os.environ.get("FETCH_WORKERS", "2"))
 
 
 def get_client() -> Socrata:

@@ -135,28 +135,28 @@ jobs:
         run: python src/download.py inspections
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
-          FETCH_WORKERS: 4
+          FETCH_WORKERS: 2
       
       - name: Fetch vehicles
         if: steps.cache-vehicles.outputs.cache-hit != 'true'
         run: python src/download.py vehicles --kentekens-from data/inspections.csv
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
-          FETCH_WORKERS: 4
+          FETCH_WORKERS: 2
       
       - name: Fetch fuel
         if: steps.cache-fuel.outputs.cache-hit != 'true'
         run: python src/download.py fuel --kentekens-from data/inspections.csv
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
-          FETCH_WORKERS: 4
+          FETCH_WORKERS: 2
       
       - name: Fetch defects_found
         if: steps.cache-defects-found.outputs.cache-hit != 'true'
         run: python src/download.py defects_found --kentekens-from data/inspections.csv
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
-          FETCH_WORKERS: 4
+          FETCH_WORKERS: 2
       
       - name: Fetch defect_codes
         if: steps.cache-defect-codes.outputs.cache-hit != 'true'
