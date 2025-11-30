@@ -207,30 +207,36 @@ def items_fetch_parallel(items: list, fetch_fn, writer: CSVWriter | None = None,
         except Exception as e:
             return [], str(e)
     
-    with ThreadPoolExecutor(max_workers=num_workers) as pool:
-        futures = {pool.submit(fetch_with_delay, item): item for item in items}
+    # Process in chunks to limit memory usage (max 20 concurrent items in memory)
+    chunk_size = max(20, num_workers * 4)
+    
+    for chunk_start in range(0, len(items), chunk_size):
+        chunk = items[chunk_start:chunk_start + chunk_size]
         
-        for future in as_completed(futures):
-            batch, error = future.result()
-            done[0] += 1
+        with ThreadPoolExecutor(max_workers=num_workers) as pool:
+            futures = {pool.submit(fetch_with_delay, item): item for item in chunk}
             
-            if error:
-                errors[0] += 1
-                log(f"  Warning: {error}")
-            elif batch:
-                if stream_to_disk:
-                    writer.rows_write(batch)
-                else:
-                    with lock:
-                        results.extend(batch)
-                records[0] += len(batch)
-            
-            # Log progress at 10% intervals with system stats
-            if done[0] % max(1, total // 10) == 0 or done[0] == total:
-                elapsed = time.time() - start
-                rate = records[0] / elapsed if elapsed > 0 else 0
-                log(f"  Progress: {done[0]}/{total} ({done[0] * 100 // total}%) - {records[0]:,} records ({rate:,.0f}/s)")
-                stats_log()
+            for future in as_completed(futures):
+                batch, error = future.result()
+                done[0] += 1
+                
+                if error:
+                    errors[0] += 1
+                    log(f"  Warning: {error}")
+                elif batch:
+                    if stream_to_disk:
+                        writer.rows_write(batch)
+                    else:
+                        with lock:
+                            results.extend(batch)
+                    records[0] += len(batch)
+                
+                # Log progress at 10% intervals with system stats
+                if done[0] % max(1, total // 10) == 0 or done[0] == total:
+                    elapsed = time.time() - start
+                    rate = records[0] / elapsed if elapsed > 0 else 0
+                    log(f"  Progress: {done[0]}/{total} ({done[0] * 100 // total}%) - {records[0]:,} records ({rate:,.0f}/s)")
+                    stats_log()
     
     elapsed = time.time() - start
     log(f"  Completed: {records[0]:,} records in {elapsed:.1f}s, {errors[0]} errors")
@@ -310,7 +316,8 @@ def _offset_pages_build(client, dataset_id, config):
     limit = max(10000, int(total * sample / 100))
     log(f"Fetching {sample}% of {total:,} = {limit:,} records")
     
-    page_size = 50000
+    # Smaller page size to reduce memory pressure per request
+    page_size = 10000
     offsets = list(range(0, limit, page_size))
     
     @retry_with_backoff()
