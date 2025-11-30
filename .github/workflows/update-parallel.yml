@@ -60,7 +60,7 @@ jobs:
         id: cache-key
         run: |
           WEEK=$(date +%Y-W%V)
-          HASH=$(sha256sum src/fetch_dataset.py | cut -c1-8)
+          HASH=$(sha256sum src/fetch_single.py | cut -c1-8)
           echo "key=inspections-${{ github.ref_name }}-${WEEK}-${HASH}" >> $GITHUB_OUTPUT
       
       - name: Restore cache
@@ -73,7 +73,7 @@ jobs:
       
       - name: Fetch inspections (all APK results)
         if: steps.cache-restore.outputs.cache-hit != 'true'
-        run: python src/fetch_dataset.py inspections
+        run: python src/fetch_single.py inspections
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           FETCH_WORKERS: 2
@@ -108,7 +108,7 @@ jobs:
       - run: pip install -r requirements.txt
       
       - name: Fetch defect_codes
-        run: python src/fetch_dataset.py defect_codes
+        run: python src/fetch_single.py defect_codes
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
       
@@ -152,7 +152,7 @@ jobs:
         id: cache-key
         run: |
           WEEK=$(date +%Y-W%V)
-          HASH=$(sha256sum src/fetch_dataset.py | cut -c1-8)
+          HASH=$(sha256sum src/fetch_single.py | cut -c1-8)
           echo "key=${{ matrix.dataset }}-${{ github.ref_name }}-${WEEK}-${HASH}" >> $GITHUB_OUTPUT
       
       - name: Restore cache
@@ -172,7 +172,7 @@ jobs:
       
       - name: Fetch ${{ matrix.dataset }}
         if: steps.cache-restore.outputs.cache-hit != 'true'
-        run: python src/fetch_dataset.py ${{ matrix.dataset }} --kentekens-from data/inspections.csv
+        run: python src/fetch_single.py ${{ matrix.dataset }} --kentekens-from data/inspections.csv
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           FETCH_WORKERS: 2
