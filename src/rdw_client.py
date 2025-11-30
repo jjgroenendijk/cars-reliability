@@ -4,8 +4,7 @@ Shared utilities for fetching data from RDW Open Data API.
 This module provides reusable components:
 - StreamingCSVWriter: Thread-safe CSV writer with immediate disk flush
 - retry_with_backoff: Decorator for exponential backoff retries
-- Logging utilities for CI environments
-- Socrata client factory
+- Socrata client factory and configuration
 """
 
 import csv
@@ -37,11 +36,6 @@ DATA_DIR = Path(__file__).parent.parent / "data"
 def log(message: str) -> None:
     """Print a message and flush immediately (important for CI)."""
     print(message, flush=True)
-
-
-def is_ci() -> bool:
-    """Check if running in a CI environment."""
-    return os.environ.get("CI", "").lower() == "true" or os.environ.get("GITHUB_ACTIONS") == "true"
 
 
 def get_sample_percent() -> int:
@@ -160,31 +154,3 @@ class StreamingCSVWriter:
     def row_count(self) -> int:
         """Return total number of rows written."""
         return self._row_count
-
-
-class CIProgressLogger:
-    """Simple progress logger for CI environments where tqdm is disabled."""
-    
-    def __init__(self, total: int, desc: str, log_interval: int = 10):
-        self.total = total
-        self.desc = desc
-        self.log_interval = log_interval
-        self.count = 0
-        self.enabled = is_ci()
-        self.start_time = time.time()
-    
-    def update(self, n: int = 1):
-        """Update progress counter and log if at interval."""
-        self.count += n
-        if self.enabled and (self.count % self.log_interval == 0 or self.count == self.total):
-            pct = int(self.count / self.total * 100)
-            elapsed = time.time() - self.start_time
-            log(f"  {self.desc}: {self.count}/{self.total} ({pct}%) - {elapsed:.0f}s elapsed")
-
-
-def get_tqdm_kwargs() -> dict:
-    """Get tqdm kwargs appropriate for the environment."""
-    if is_ci():
-        # In CI: completely disable tqdm to avoid log clutter
-        return {"disable": True}
-    return {}

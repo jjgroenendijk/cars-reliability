@@ -12,7 +12,6 @@ Environment variables:
 - RDW_APP_TOKEN: Socrata app token for higher rate limits (recommended)
 - DATA_SAMPLE_PERCENT: Percentage of data to fetch (1-100, default 100)
 - FETCH_WORKERS: Number of parallel workers for batch fetching (default 2)
-- CI: Set to 'true' in CI environments to disable progress bar animations
 """
 
 import json
@@ -21,35 +20,21 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 
 import pandas as pd
-from tqdm import tqdm
 
 from rdw_client import (
     DATASETS,
     DATA_DIR,
-    CIProgressLogger,
-    StreamingCSVWriter,
     get_client,
     get_dataset_size,
     get_num_workers,
     get_sample_percent,
-    get_tqdm_kwargs,
-    is_ci,
     log,
     retry_with_backoff,
 )
 
 
 def fetch_defects_found(client, limit: int | None = None) -> pd.DataFrame:
-    """
-    Fetch defects found during inspections using parallel pagination.
-    
-    Args:
-        client: Socrata client
-        limit: Maximum number of records to fetch (default from environment)
-    
-    Returns:
-        DataFrame with defect data
-    """
+    """Fetch defects found during inspections using parallel pagination."""
     total_size = get_dataset_size(client, DATASETS["defects_found"])
     sample_percent = get_sample_percent()
     
@@ -83,20 +68,21 @@ def fetch_defects_found(client, limit: int | None = None) -> pd.DataFrame:
         except Exception as e:
             return (offset, [], str(e))
     
-    ci_logger = CIProgressLogger(total_pages, "Defects pages", log_interval=max(1, total_pages // 10))
-    with tqdm(total=total_pages, desc="  Defects", unit="pages", **get_tqdm_kwargs()) as pbar:
-        with ThreadPoolExecutor(max_workers=num_workers) as executor:
-            futures = {executor.submit(process_page, offset): offset for offset in offsets}
+    completed = 0
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = {executor.submit(process_page, offset): offset for offset in offsets}
+        
+        for future in as_completed(futures):
+            offset, results, error = future.result()
+            completed += 1
+            if error:
+                log(f"  Error at offset {offset}: {error}")
+            elif results:
+                with results_lock:
+                    all_results.extend(results)
             
-            for future in as_completed(futures):
-                offset, results, error = future.result()
-                if error:
-                    log(f"\n  Error at offset {offset}: {error}")
-                elif results:
-                    with results_lock:
-                        all_results.extend(results)
-                pbar.update(1)
-                ci_logger.update(1)
+            if completed % max(1, total_pages // 10) == 0 or completed == total_pages:
+                log(f"  Progress: {completed}/{total_pages} pages ({completed * 100 // total_pages}%)")
     
     df = pd.DataFrame.from_records(all_results)
     log(f"  Fetched {len(df):,} defect records")
@@ -139,19 +125,20 @@ def fetch_vehicles_for_kentekens(client, kentekens: list[str], batch_size: int =
         except Exception as e:
             return (batch_idx, [], str(e))
     
-    ci_logger = CIProgressLogger(total_batches, "Vehicle batches", log_interval=max(1, total_batches // 10))
-    with tqdm(total=total_batches, desc="  Vehicles", unit="batch", **get_tqdm_kwargs()) as pbar:
-        with ThreadPoolExecutor(max_workers=num_workers) as executor:
-            futures = {executor.submit(process_batch, (i, b)): i for i, b in enumerate(batches)}
-            for future in as_completed(futures):
-                batch_idx, results, error = future.result()
-                if error:
-                    log(f"\n  Warning: batch {batch_idx} failed: {error}")
-                else:
-                    with results_lock:
-                        all_results.extend(results)
-                pbar.update(1)
-                ci_logger.update(1)
+    completed = 0
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = {executor.submit(process_batch, (i, b)): i for i, b in enumerate(batches)}
+        for future in as_completed(futures):
+            batch_idx, results, error = future.result()
+            completed += 1
+            if error:
+                log(f"  Warning: batch {batch_idx} failed: {error}")
+            else:
+                with results_lock:
+                    all_results.extend(results)
+            
+            if completed % max(1, total_batches // 10) == 0 or completed == total_batches:
+                log(f"  Progress: {completed}/{total_batches} batches ({completed * 100 // total_batches}%)")
     
     df = pd.DataFrame.from_records(all_results)
     log(f"  Fetched info for {len(df)} passenger cars")
@@ -196,19 +183,20 @@ def fetch_fuel_for_kentekens(client, kentekens: list[str], batch_size: int = 100
         except Exception as e:
             return (batch_idx, [], str(e))
     
-    ci_logger = CIProgressLogger(total_batches, "Fuel batches", log_interval=max(1, total_batches // 10))
-    with tqdm(total=total_batches, desc="  Fuel", unit="batch", **get_tqdm_kwargs()) as pbar:
-        with ThreadPoolExecutor(max_workers=num_workers) as executor:
-            futures = {executor.submit(process_batch, (i, b)): i for i, b in enumerate(batches)}
-            for future in as_completed(futures):
-                batch_idx, results, error = future.result()
-                if error:
-                    log(f"\n  Warning: fuel batch {batch_idx} failed: {error}")
-                else:
-                    with results_lock:
-                        all_results.extend(results)
-                pbar.update(1)
-                ci_logger.update(1)
+    completed = 0
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = {executor.submit(process_batch, (i, b)): i for i, b in enumerate(batches)}
+        for future in as_completed(futures):
+            batch_idx, results, error = future.result()
+            completed += 1
+            if error:
+                log(f"  Warning: fuel batch {batch_idx} failed: {error}")
+            else:
+                with results_lock:
+                    all_results.extend(results)
+            
+            if completed % max(1, total_batches // 10) == 0 or completed == total_batches:
+                log(f"  Progress: {completed}/{total_batches} batches ({completed * 100 // total_batches}%)")
     
     df = pd.DataFrame.from_records(all_results)
     log(f"  Fetched fuel info for {len(df)} vehicles")
@@ -216,12 +204,7 @@ def fetch_fuel_for_kentekens(client, kentekens: list[str], batch_size: int = 100
 
 
 def fetch_inspections_for_kentekens(client, kentekens: list[str], batch_size: int = 1000) -> pd.DataFrame:
-    """
-    Fetch all inspection results (pass/fail) for specific license plates.
-    
-    This dataset includes ALL inspections, not just those with defects,
-    which allows us to calculate accurate pass/fail rates.
-    """
+    """Fetch all inspection results (pass/fail) for specific license plates."""
     num_workers = get_num_workers()
     log(f"Fetching inspection results for {len(kentekens)} unique kentekens ({num_workers} workers)...")
     
@@ -250,19 +233,20 @@ def fetch_inspections_for_kentekens(client, kentekens: list[str], batch_size: in
         except Exception as e:
             return (batch_idx, [], str(e))
     
-    ci_logger = CIProgressLogger(total_batches, "Inspection batches", log_interval=max(1, total_batches // 10))
-    with tqdm(total=total_batches, desc="  Inspections", unit="batch", **get_tqdm_kwargs()) as pbar:
-        with ThreadPoolExecutor(max_workers=num_workers) as executor:
-            futures = {executor.submit(process_batch, (i, b)): i for i, b in enumerate(batches)}
-            for future in as_completed(futures):
-                batch_idx, results, error = future.result()
-                if error:
-                    log(f"\n  Warning: inspection batch {batch_idx} failed: {error}")
-                else:
-                    with results_lock:
-                        all_results.extend(results)
-                pbar.update(1)
-                ci_logger.update(1)
+    completed = 0
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = {executor.submit(process_batch, (i, b)): i for i, b in enumerate(batches)}
+        for future in as_completed(futures):
+            batch_idx, results, error = future.result()
+            completed += 1
+            if error:
+                log(f"  Warning: inspection batch {batch_idx} failed: {error}")
+            else:
+                with results_lock:
+                    all_results.extend(results)
+            
+            if completed % max(1, total_batches // 10) == 0 or completed == total_batches:
+                log(f"  Progress: {completed}/{total_batches} batches ({completed * 100 // total_batches}%)")
     
     df = pd.DataFrame.from_records(all_results)
     log(f"  Fetched {len(df)} inspection records")
@@ -276,8 +260,6 @@ def main():
     sample_percent = get_sample_percent()
     log(f"\n{'='*60}")
     log(f"DATA FETCH: {sample_percent}% of full dataset")
-    if is_ci():
-        log("(CI mode: progress bar disabled, showing periodic updates)")
     log(f"{'='*60}\n")
     
     client = get_client()

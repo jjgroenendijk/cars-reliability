@@ -140,7 +140,7 @@ jobs:
           echo "To preview locally:" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "git checkout dev" >> $GITHUB_STEP_SUMMARY
-          echo "DATA_SAMPLE_PERCENT=1 python src/fetch_data.py" >> $GITHUB_STEP_SUMMARY
+          echo "DATA_SAMPLE_PERCENT=1 python src/fetch_pipeline.py" >> $GITHUB_STEP_SUMMARY
           echo "python src/process_data.py" >> $GITHUB_STEP_SUMMARY
           echo "python src/generate_site.py" >> $GITHUB_STEP_SUMMARY
           echo "cd site && python -m http.server 8000" >> $GITHUB_STEP_SUMMARY

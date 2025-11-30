@@ -2,7 +2,7 @@
 
 [![Update Data](https://github.com/jjgroenendijk/cars-reliability/actions/workflows/update-parallel.yml/badge.svg)](https://github.com/jjgroenendijk/cars-reliability/actions/workflows/update-parallel.yml)
 
-**[View the Live Site](https://jjgroenendijk.nl/cars-reliability/)** | **[Dev Preview](https://cars-reliability-dev.surge.sh)**
+**[View the Live Site](https://jjgroenendijk.nl/cars-reliability/)**
 
 Analyzing car reliability using Dutch APK (MOT) inspection data from RDW Open Data.
 
@@ -30,8 +30,9 @@ This project calculates reliability metrics for car brands and models using offi
 ```text
 cars/
 ├── src/
-│   ├── fetch_dataset.py   # Fetch single dataset (for parallel CI)
-│   ├── fetch_data.py      # Legacy monolithic fetcher
+│   ├── fetch_pipeline.py  # Orchestrator: fetch all datasets
+│   ├── fetch_single.py    # Fetch single dataset (for parallel CI)
+│   ├── rdw_client.py      # Shared utilities (API client, streaming CSV)
 │   ├── process_data.py    # Metrics calculation
 │   ├── generate_site.py   # Template copying to site/
 │   └── templates/         # HTML/JS templates
@@ -40,7 +41,7 @@ cars/
 ├── docs/                   # Documentation
 └── .github/workflows/
     ├── update-parallel.yml # Parallel fetch workflow (recommended)
-    └── update.yml          # Legacy single-job workflow
+    └── update.yml          # Single-job workflow
 ```
 
 ## Documentation
@@ -52,13 +53,6 @@ See [docs/](docs/index.md) for detailed documentation:
 - [Metrics](docs/metrics.md) - How reliability is measured
 - [Development](docs/development.md) - Local setup guide
 
-## Branches
-
-| Branch | Data Sample | Deployment |
-|--------|-------------|------------|
-| `main` | 100% (~25M records) | GitHub Pages |
-| `dev` | 1% (~250k records) | Surge.sh preview |
-
 ## Local Development
 
 ```bash
@@ -69,11 +63,14 @@ source .venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Fetch data (1% sample for speed)
-DATA_SAMPLE_PERCENT=1 python src/fetch_dataset.py inspections
-DATA_SAMPLE_PERCENT=1 python src/fetch_dataset.py vehicles --kentekens-from data/inspections.csv
-DATA_SAMPLE_PERCENT=1 python src/fetch_dataset.py defects_found --kentekens-from data/inspections.csv
-python src/fetch_dataset.py defect_codes
+# Option 1: Fetch all data with pipeline (simpler)
+DATA_SAMPLE_PERCENT=1 python src/fetch_pipeline.py
+
+# Option 2: Fetch datasets individually (for parallel CI)
+DATA_SAMPLE_PERCENT=1 python src/fetch_single.py inspections
+DATA_SAMPLE_PERCENT=1 python src/fetch_single.py vehicles --kentekens-from data/inspections.csv
+DATA_SAMPLE_PERCENT=1 python src/fetch_single.py defects_found --kentekens-from data/inspections.csv
+python src/fetch_single.py defect_codes
 
 # Process and generate site
 python src/process_data.py

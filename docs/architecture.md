@@ -20,8 +20,9 @@
 ```
 cars/
 ├── src/                    # Python source code
-│   ├── fetch_dataset.py    # Fetch single dataset (parallel CI)
-│   ├── fetch_data.py       # Legacy monolithic fetcher
+│   ├── fetch_pipeline.py   # Orchestrator: fetch all datasets
+│   ├── fetch_single.py     # Fetch single dataset (parallel CI)
+│   ├── rdw_client.py       # Shared utilities (API, streaming CSV)
 │   ├── process_data.py     # Metrics calculation
 │   ├── generate_site.py    # Site generation
 │   └── templates/          # HTML/JS templates
@@ -41,14 +42,22 @@ cars/
 ├── docs/                   # Documentation
 └── .github/workflows/
     ├── update-parallel.yml # Parallel fetch (recommended)
-    └── update.yml          # Legacy single-job
+    └── update.yml          # Single-job workflow
 ```
 
 ## Data Flow
 
-### 1. Fetch (`src/fetch_dataset.py`)
+### 1. Fetch (`src/fetch_pipeline.py` or `src/fetch_single.py`)
 
-The parallel fetcher downloads one dataset at a time with streaming writes:
+Two modes of operation:
+
+**Pipeline mode** (`fetch_pipeline.py`):
+- Fetches all datasets in sequence
+- Good for local development
+
+**Parallel mode** (`fetch_single.py`):
+- Fetches one dataset at a time
+- Used by CI for parallel jobs
 
 ```
 Stage 1 (parallel):
@@ -63,15 +72,15 @@ Stage 2 (parallel):
 ```
 
 Key features:
-- **Inspections first** - Avoids sample bias by starting with ALL inspection results
 - **Streaming CSV writes** - Flushes to disk immediately, survives interruption
 - **Per-dataset caching** - Each dataset cached separately in CI
+- **Exponential backoff** - Retries with increasing delays on API errors
 
 ### 2. Process (`src/process_data.py`)
 
 - Loads CSV files into pandas DataFrames
 - Joins with vehicle info on `kenteken`
-- Calculates pass rate from inspections (unbiased!)
+- Calculates pass rate from inspections
 - Aggregates by brand and model
 - Outputs JSON files for the website
 
@@ -84,8 +93,8 @@ Key features:
 
 ```
 fetch-inspections ──┐
-                    ├──▶ process-and-deploy ──▶ GitHub Pages (main)
-fetch-defect-codes ─┤                      └──▶ Surge.sh (dev)
+                    ├──▶ process-and-deploy ──▶ GitHub Pages
+fetch-defect-codes ─┤
                     │
 fetch-dependent ────┘
   ├── vehicles
@@ -123,26 +132,21 @@ Writing to disk as data arrives:
 - Fast loading with async data fetching
 - Easy to update data without changing templates
 
-## Limitations
-
-- **Rate limiting**: RDW API requires careful throttling (2 workers recommended)
-- **Data freshness**: Weekly updates (could be daily)
-
 ## Resilience Features
 
 ### API Retry Logic
 
-The fetch script includes exponential backoff retry for API calls:
+The fetch scripts include exponential backoff retry for API calls:
 
-- 3 retries per batch with 2s base delay
-- Backoff multiplier: 2x (delays: 2s, 4s, 8s)
+- 5 retries per batch with 2s base delay
+- Backoff multiplier: 2x (delays: 2s, 4s, 8s, 16s, 32s)
 - Failed batches are logged but don't stop the entire fetch
 
 ### Data Caching
 
 GitHub Actions caches fetched data to speed up repeated runs:
 
-- Cache key: `rdw-data-{branch}-{week}-{script-hash}`
+- Cache key: `{dataset}-{branch}-{week}-{script-hash}`
 - Fresh data is fetched weekly (cache key includes week number)
 - Script changes invalidate cache automatically
 - Manual workflow dispatch has "force fetch" option to bypass cache
@@ -156,22 +160,20 @@ Dataset size is queried dynamically from the API at runtime using `SELECT count(
 | Sample | Records | Use Case |
 |--------|---------|----------|
 | 1% | ~245k defects | Dev branch, fast iteration |
+| 10% | ~2.5M defects | Testing full pipeline |
 | 100% | ~24.5M defects | Main branch, production |
 
-The website displays a warning banner when viewing sample data.
-
-## Performance Optimizations
+## Performance
 
 ### Parallel Fetching
 
 All batch operations use `ThreadPoolExecutor` for parallel requests:
 
-- Defects: Fetched in 50k record pages, parallelized across workers
-- Vehicles: Fetched in 1k kenteken batches, parallelized
-- Fuel: Same as vehicles
+- Defects: Fetched in 50k record pages
+- Vehicles/Fuel/Inspections: Fetched in 1k kenteken batches
 
-Default is 8 workers (`FETCH_WORKERS=8`), which provides ~2-3x speedup over sequential fetching.
+Default is 2 workers to avoid overwhelming the RDW API.
 
 ### App Token
 
-Using an RDW app token (`RDW_APP_TOKEN`) removes rate limiting and significantly speeds up API calls.
+Using an RDW app token (`RDW_APP_TOKEN`) removes rate limiting and speeds up API calls.
