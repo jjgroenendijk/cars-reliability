@@ -68,8 +68,8 @@ jobs:
       - name: Set data sample percentage
         id: sample
         run: |
-          # Use input if provided (manual trigger), otherwise default to 10%
-          SAMPLE="${{ inputs.sample_percent || '10' }}"
+          # Use input if provided (manual trigger), otherwise default to 100%
+          SAMPLE="${{ inputs.sample_percent || '100' }}"
           echo "DATA_SAMPLE_PERCENT=${SAMPLE}" >> $GITHUB_ENV
           echo "sample=${SAMPLE}" >> $GITHUB_OUTPUT
           echo "Sample: ${SAMPLE}%"
