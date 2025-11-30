@@ -1,220 +1,220 @@
 {
-  "generated_at": "2025-11-30T08:49:24.734734",
+  "generated_at": "2025-11-30T08:58:38.242077",
   "brands": [
     {
       "merk": "BMW",
-      "vehicle_count": 815,
-      "total_defects": 2643,
-      "total_inspections": 2039,
-      "avg_defects_per_vehicle": 3.24,
+      "vehicle_count": 822,
+      "total_defects": 2629,
+      "total_inspections": 2015,
+      "avg_defects_per_vehicle": 3.2,
       "avg_defects_per_inspection": 1.3
     },
     {
       "merk": "AUDI",
-      "vehicle_count": 689,
-      "total_defects": 2322,
-      "total_inspections": 1785,
-      "avg_defects_per_vehicle": 3.37,
+      "vehicle_count": 714,
+      "total_defects": 2348,
+      "total_inspections": 1802,
+      "avg_defects_per_vehicle": 3.29,
       "avg_defects_per_inspection": 1.3
     },
     {
       "merk": "MERCEDES-BENZ",
-      "vehicle_count": 780,
-      "total_defects": 2637,
-      "total_inspections": 2060,
-      "avg_defects_per_vehicle": 3.38,
-      "avg_defects_per_inspection": 1.28
-    },
-    {
-      "merk": "TOYOTA",
-      "vehicle_count": 2335,
-      "total_defects": 8114,
-      "total_inspections": 6042,
-      "avg_defects_per_vehicle": 3.47,
-      "avg_defects_per_inspection": 1.34
+      "vehicle_count": 789,
+      "total_defects": 2698,
+      "total_inspections": 2091,
+      "avg_defects_per_vehicle": 3.42,
+      "avg_defects_per_inspection": 1.29
     },
     {
       "merk": "DAIHATSU",
-      "vehicle_count": 258,
-      "total_defects": 906,
-      "total_inspections": 680,
-      "avg_defects_per_vehicle": 3.51,
+      "vehicle_count": 264,
+      "total_defects": 919,
+      "total_inspections": 690,
+      "avg_defects_per_vehicle": 3.48,
       "avg_defects_per_inspection": 1.33
     },
     {
+      "merk": "TOYOTA",
+      "vehicle_count": 2302,
+      "total_defects": 8166,
+      "total_inspections": 6064,
+      "avg_defects_per_vehicle": 3.55,
+      "avg_defects_per_inspection": 1.35
+    },
+    {
       "merk": "VOLVO",
-      "vehicle_count": 814,
-      "total_defects": 2913,
-      "total_inspections": 2318,
-      "avg_defects_per_vehicle": 3.58,
+      "vehicle_count": 836,
+      "total_defects": 2985,
+      "total_inspections": 2372,
+      "avg_defects_per_vehicle": 3.57,
+      "avg_defects_per_inspection": 1.26
+    },
+    {
+      "merk": "OPEL",
+      "vehicle_count": 1969,
+      "total_defects": 7124,
+      "total_inspections": 5660,
+      "avg_defects_per_vehicle": 3.62,
       "avg_defects_per_inspection": 1.26
     },
     {
       "merk": "KIA",
-      "vehicle_count": 973,
-      "total_defects": 3535,
-      "total_inspections": 2685,
-      "avg_defects_per_vehicle": 3.63,
-      "avg_defects_per_inspection": 1.32
+      "vehicle_count": 967,
+      "total_defects": 3540,
+      "total_inspections": 2652,
+      "avg_defects_per_vehicle": 3.66,
+      "avg_defects_per_inspection": 1.33
     },
     {
-      "merk": "OPEL",
-      "vehicle_count": 1959,
-      "total_defects": 7104,
-      "total_inspections": 5641,
-      "avg_defects_per_vehicle": 3.63,
+      "merk": "ALFA ROMEO",
+      "vehicle_count": 135,
+      "total_defects": 500,
+      "total_inspections": 398,
+      "avg_defects_per_vehicle": 3.7,
       "avg_defects_per_inspection": 1.26
     },
     {
       "merk": "FORD",
-      "vehicle_count": 2001,
-      "total_defects": 7436,
-      "total_inspections": 5660,
+      "vehicle_count": 2007,
+      "total_defects": 7459,
+      "total_inspections": 5689,
       "avg_defects_per_vehicle": 3.72,
       "avg_defects_per_inspection": 1.31
     },
     {
+      "merk": "SEAT",
+      "vehicle_count": 670,
+      "total_defects": 2498,
+      "total_inspections": 2014,
+      "avg_defects_per_vehicle": 3.73,
+      "avg_defects_per_inspection": 1.24
+    },
+    {
       "merk": "VOLKSWAGEN",
-      "vehicle_count": 2723,
-      "total_defects": 10174,
-      "total_inspections": 8041,
-      "avg_defects_per_vehicle": 3.74,
-      "avg_defects_per_inspection": 1.27
+      "vehicle_count": 2761,
+      "total_defects": 10294,
+      "total_inspections": 8159,
+      "avg_defects_per_vehicle": 3.73,
+      "avg_defects_per_inspection": 1.26
+    },
+    {
+      "merk": "MITSUBISHI",
+      "vehicle_count": 402,
+      "total_defects": 1506,
+      "total_inspections": 1191,
+      "avg_defects_per_vehicle": 3.75,
+      "avg_defects_per_inspection": 1.26
     },
     {
       "merk": "SKODA",
-      "vehicle_count": 433,
-      "total_defects": 1627,
-      "total_inspections": 1256,
+      "vehicle_count": 445,
+      "total_defects": 1673,
+      "total_inspections": 1282,
       "avg_defects_per_vehicle": 3.76,
       "avg_defects_per_inspection": 1.3
     },
     {
       "merk": "CITROEN",
-      "vehicle_count": 1339,
-      "total_defects": 5071,
-      "total_inspections": 3987,
-      "avg_defects_per_vehicle": 3.79,
+      "vehicle_count": 1337,
+      "total_defects": 5053,
+      "total_inspections": 3979,
+      "avg_defects_per_vehicle": 3.78,
       "avg_defects_per_inspection": 1.27
-    },
-    {
-      "merk": "SEAT",
-      "vehicle_count": 639,
-      "total_defects": 2427,
-      "total_inspections": 1957,
-      "avg_defects_per_vehicle": 3.8,
-      "avg_defects_per_inspection": 1.24
     },
     {
       "merk": "NISSAN",
-      "vehicle_count": 755,
-      "total_defects": 2889,
-      "total_inspections": 2295,
-      "avg_defects_per_vehicle": 3.83,
+      "vehicle_count": 730,
+      "total_defects": 2784,
+      "total_inspections": 2205,
+      "avg_defects_per_vehicle": 3.81,
       "avg_defects_per_inspection": 1.26
-    },
-    {
-      "merk": "SUZUKI",
-      "vehicle_count": 1129,
-      "total_defects": 4392,
-      "total_inspections": 3282,
-      "avg_defects_per_vehicle": 3.89,
-      "avg_defects_per_inspection": 1.34
-    },
-    {
-      "merk": "ALFA ROMEO",
-      "vehicle_count": 138,
-      "total_defects": 539,
-      "total_inspections": 424,
-      "avg_defects_per_vehicle": 3.91,
-      "avg_defects_per_inspection": 1.27
     },
     {
       "merk": "MAZDA",
       "vehicle_count": 389,
-      "total_defects": 1523,
-      "total_inspections": 1162,
-      "avg_defects_per_vehicle": 3.92,
+      "total_defects": 1487,
+      "total_inspections": 1136,
+      "avg_defects_per_vehicle": 3.82,
       "avg_defects_per_inspection": 1.31
     },
     {
-      "merk": "MITSUBISHI",
-      "vehicle_count": 386,
-      "total_defects": 1513,
-      "total_inspections": 1200,
-      "avg_defects_per_vehicle": 3.92,
-      "avg_defects_per_inspection": 1.26
+      "merk": "SUZUKI",
+      "vehicle_count": 1122,
+      "total_defects": 4367,
+      "total_inspections": 3251,
+      "avg_defects_per_vehicle": 3.89,
+      "avg_defects_per_inspection": 1.34
     },
     {
       "merk": "PEUGEOT",
-      "vehicle_count": 2230,
-      "total_defects": 8798,
-      "total_inspections": 6925,
-      "avg_defects_per_vehicle": 3.95,
-      "avg_defects_per_inspection": 1.27
-    },
-    {
-      "merk": "RENAULT",
-      "vehicle_count": 1956,
-      "total_defects": 7980,
-      "total_inspections": 6275,
-      "avg_defects_per_vehicle": 4.08,
-      "avg_defects_per_inspection": 1.27
-    },
-    {
-      "merk": "MINI",
-      "vehicle_count": 282,
-      "total_defects": 1160,
-      "total_inspections": 907,
-      "avg_defects_per_vehicle": 4.11,
+      "vehicle_count": 2191,
+      "total_defects": 8612,
+      "total_inspections": 6746,
+      "avg_defects_per_vehicle": 3.93,
       "avg_defects_per_inspection": 1.28
     },
     {
+      "merk": "MINI",
+      "vehicle_count": 284,
+      "total_defects": 1128,
+      "total_inspections": 863,
+      "avg_defects_per_vehicle": 3.97,
+      "avg_defects_per_inspection": 1.31
+    },
+    {
+      "merk": "RENAULT",
+      "vehicle_count": 1982,
+      "total_defects": 8001,
+      "total_inspections": 6291,
+      "avg_defects_per_vehicle": 4.04,
+      "avg_defects_per_inspection": 1.27
+    },
+    {
+      "merk": "SAAB",
+      "vehicle_count": 127,
+      "total_defects": 516,
+      "total_inspections": 404,
+      "avg_defects_per_vehicle": 4.06,
+      "avg_defects_per_inspection": 1.28
+    },
+    {
+      "merk": "DACIA",
+      "vehicle_count": 194,
+      "total_defects": 795,
+      "total_inspections": 645,
+      "avg_defects_per_vehicle": 4.1,
+      "avg_defects_per_inspection": 1.23
+    },
+    {
+      "merk": "HYUNDAI",
+      "vehicle_count": 1118,
+      "total_defects": 4592,
+      "total_inspections": 3312,
+      "avg_defects_per_vehicle": 4.11,
+      "avg_defects_per_inspection": 1.39
+    },
+    {
       "merk": "HONDA",
-      "vehicle_count": 314,
-      "total_defects": 1293,
-      "total_inspections": 947,
+      "vehicle_count": 313,
+      "total_defects": 1288,
+      "total_inspections": 938,
       "avg_defects_per_vehicle": 4.12,
       "avg_defects_per_inspection": 1.37
     },
     {
       "merk": "FIAT",
-      "vehicle_count": 1367,
-      "total_defects": 5688,
-      "total_inspections": 4311,
+      "vehicle_count": 1352,
+      "total_defects": 5625,
+      "total_inspections": 4262,
       "avg_defects_per_vehicle": 4.16,
       "avg_defects_per_inspection": 1.32
     },
     {
-      "merk": "HYUNDAI",
-      "vehicle_count": 1105,
-      "total_defects": 4622,
-      "total_inspections": 3343,
-      "avg_defects_per_vehicle": 4.18,
-      "avg_defects_per_inspection": 1.38
-    },
-    {
-      "merk": "DACIA",
-      "vehicle_count": 201,
-      "total_defects": 889,
-      "total_inspections": 717,
-      "avg_defects_per_vehicle": 4.42,
-      "avg_defects_per_inspection": 1.24
-    },
-    {
-      "merk": "SAAB",
-      "vehicle_count": 113,
-      "total_defects": 502,
-      "total_inspections": 383,
-      "avg_defects_per_vehicle": 4.44,
-      "avg_defects_per_inspection": 1.31
-    },
-    {
       "merk": "CHEVROLET",
-      "vehicle_count": 414,
-      "total_defects": 1851,
-      "total_inspections": 1452,
-      "avg_defects_per_vehicle": 4.47,
+      "vehicle_count": 407,
+      "total_defects": 1794,
+      "total_inspections": 1414,
+      "avg_defects_per_vehicle": 4.41,
       "avg_defects_per_inspection": 1.27
     }
   ]
