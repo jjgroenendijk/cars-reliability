@@ -17,6 +17,7 @@ This project analyzes vehicle inspection (APK) data to determine which cars are 
 | Gekentekende voertuigen | `m9d7-ebf2` | Vehicle registrations (make, model, APK dates) |
 | Geconstateerde Gebreken | `a34c-vvps` | Defects found during inspections |
 | Gebreken | `hx2c-gt7k` | Reference table of defect types |
+| Brandstof | `8ys7-d773` | Fuel type and emissions data |
 
 ## Reliability Metrics (MVP)
 
@@ -30,7 +31,8 @@ cars/
 ├── src/
 │   ├── fetch_data.py      # Data fetching from RDW API
 │   ├── process_data.py    # Data processing and metrics calculation
-│   └── generate_site.py   # Static HTML generation
+│   ├── generate_site.py   # Template copying to site/
+│   └── templates/         # HTML/JS templates
 ├── data/                   # Downloaded/processed data (gitignored)
 ├── site/                   # Generated website (GitHub Pages)
 ├── docs/                   # Project documentation

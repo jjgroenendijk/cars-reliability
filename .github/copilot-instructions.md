@@ -6,10 +6,11 @@ This project analyzes Dutch vehicle inspection (APK) data from RDW Open Data to 
 
 ## Architecture
 
-**Data flow:** `fetch_data.py` → CSV files → `process_data.py` → JSON → `generate_site.py` → HTML
+**Data flow:** `fetch_data.py` → CSV files → `process_data.py` → JSON → `generate_site.py` → site/
 
 Key directories:
 - `src/` - Python pipeline scripts (fetch → process → generate)
+- `src/templates/` - HTML and JavaScript templates
 - `data/` - Raw CSV files (gitignored, regenerated on each run)
 - `site/` - Generated website deployed to GitHub Pages
 - `docs/` - Project documentation (Markdown)
@@ -23,6 +24,8 @@ DATASETS = {
     "defects_found": "a34c-vvps", # Geconstateerde Gebreken
     "defect_codes": "hx2c-gt7k",  # Gebreken (reference table)
 }
+# Additional dataset fetched separately:
+# Fuel: 8ys7-d773 - Brandstof data
 ```
 
 When querying the API:
@@ -36,8 +39,8 @@ When querying the API:
 ```bash
 # Run the full pipeline locally
 python src/fetch_data.py    # Fetches from RDW API (~2-3 min)
-python src/process_data.py  # Calculates metrics
-python src/generate_site.py # Generates site/index.html
+python src/process_data.py  # Calculates metrics, outputs JSON
+python src/generate_site.py # Copies templates to site/
 
 # Preview the site
 cd site && python -m http.server 8000
@@ -48,7 +51,8 @@ cd site && python -m http.server 8000
 - All scripts use `Path(__file__).parent.parent / "subdir"` for paths relative to project root
 - DataFrames loaded with `dtype=str` to avoid type coercion issues with kentekens
 - Metrics require minimum sample sizes (100 vehicles for brands, 50 for models)
-- HTML is generated via Python f-strings in `generate_site.py`, not a template engine
+- Templates in `src/templates/` are copied by `generate_site.py`
+- JavaScript loads data dynamically from JSON files using `fetch()`
 
 ## CI/CD
 

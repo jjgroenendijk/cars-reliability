@@ -53,6 +53,24 @@ We use this to enrich defect records with brand/model information.
 
 Reference table for defect codes. Currently fetched but not actively used in the MVP.
 
+### 4. Brandstof (Fuel)
+
+| Property | Value |
+|----------|-------|
+| Dataset ID | `8ys7-d773` |
+| URL | [opendata.rdw.nl/Voertuigen/Open-Data-RDW-Gekentekende_voertuigen_brandstof/8ys7-d773](https://opendata.rdw.nl/Voertuigen/Open-Data-RDW-Gekentekende_voertuigen_brandstof/8ys7-d773) |
+| Update Frequency | Daily |
+| License | CC0 (Public Domain) |
+
+**Key columns:**
+
+- `kenteken` - License plate number
+- `brandstof_volgnummer` - Fuel sequence (1 = primary, 2 = secondary for hybrids)
+- `brandstof_omschrijving` - Fuel type (Benzine, Diesel, Elektriciteit, etc.)
+- `uitlaatemissieniveau` - Emission standard (Euro 5, Euro 6, etc.)
+
+Used to enrich vehicle data with fuel type information. We filter for `brandstof_volgnummer='1'` to get the primary fuel only.
+
 ## API Access
 
 RDW uses the Socrata SODA API. No authentication is required, but rate limits apply.
@@ -96,7 +114,6 @@ These could enhance future analysis:
 | Dataset | ID | Potential Use |
 |---------|-----|---------------|
 | Keuringsresultaten | (TBD) | APK pass/fail rates |
-| Brandstof | (linked) | Fuel type analysis |
 | Terugroepacties | (recalls) | Recall frequency |
 
 ## References

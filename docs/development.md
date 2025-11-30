@@ -36,9 +36,11 @@ python src/generate_site.py
 ```
 
 Output files:
+
 - `data/*.csv` - Raw data (gitignored)
 - `site/data/*.json` - Processed metrics
 - `site/index.html` - Static website
+- `site/js/app.js` - Interactive JavaScript
 
 ## Viewing the Site Locally
 
@@ -51,11 +53,14 @@ python -m http.server 8000
 
 ## Project Structure
 
-```
+```text
 src/
 ├── fetch_data.py      # RDW API client
 ├── process_data.py    # Data processing & metrics
-└── generate_site.py   # HTML generation
+├── generate_site.py   # Template copying
+└── templates/         # HTML/JS templates
+    ├── index.html
+    └── app.js
 ```
 
 ## Configuration
