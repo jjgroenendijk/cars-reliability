@@ -145,8 +145,52 @@ def load_kentekens(csv_path: Path) -> list[str]:
     return kentekens
 
 
-def fetch_defects_found(client: Socrata, output_file: Path):
-    """Fetch defects found with streaming write."""
+def fetch_inspections_all(client: Socrata, output_file: Path):
+    """Fetch ALL inspection results with streaming write (primary dataset)."""
+    total_size = get_dataset_size(client, DATASETS["inspections"])
+    sample_percent = get_sample_percent()
+    limit = max(10000, int(total_size * sample_percent / 100))
+    num_workers = get_num_workers()
+    
+    log(f"Fetching inspections ({sample_percent}% of {total_size:,} = {limit:,} records)")
+    
+    page_size = 50000
+    offsets = list(range(0, limit, page_size))
+    total_pages = len(offsets)
+    
+    @retry_with_backoff()
+    def fetch_page(offset):
+        time.sleep(0.1)
+        return client.get(
+            DATASETS["inspections"],
+            select="kenteken,meld_datum_door_keuringsinstantie,soort_melding_ki_omschrijving,vervaldatum_keuring",
+            where="soort_erkenning_omschrijving='APK Lichte voertuigen'",
+            limit=min(page_size, limit - offset),
+            offset=offset,
+            order="kenteken",
+        )
+    
+    with StreamingCSVWriter(output_file) as writer:
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = {executor.submit(fetch_page, o): o for o in offsets}
+            completed = 0
+            
+            for future in as_completed(futures):
+                completed += 1
+                try:
+                    results = future.result()
+                    writer.write_rows(results)
+                except Exception as e:
+                    log(f"  Error: {e}")
+                
+                if completed % max(1, total_pages // 10) == 0 or completed == total_pages:
+                    log(f"  Progress: {completed}/{total_pages} pages ({completed * 100 // total_pages}%)")
+        
+        log(f"  Written {writer.row_count:,} records to {output_file}")
+
+
+def fetch_defects_found_all(client: Socrata, output_file: Path):
+    """Fetch defects found with streaming write (legacy, fetches all)."""
     total_size = get_dataset_size(client, DATASETS["defects_found"])
     sample_percent = get_sample_percent()
     limit = max(10000, int(total_size * sample_percent / 100))
@@ -183,6 +227,46 @@ def fetch_defects_found(client: Socrata, output_file: Path):
                 
                 if completed % max(1, total_pages // 10) == 0 or completed == total_pages:
                     log(f"  Progress: {completed}/{total_pages} pages ({completed * 100 // total_pages}%)")
+        
+        log(f"  Written {writer.row_count:,} records to {output_file}")
+
+
+def fetch_defects_found(client: Socrata, kentekens: list[str], output_file: Path):
+    """Fetch defects found for specific kentekens with streaming write."""
+    num_workers = get_num_workers()
+    batch_size = 1000
+    
+    unique = list(set(kentekens))
+    batches = [unique[i:i + batch_size] for i in range(0, len(unique), batch_size)]
+    total = len(batches)
+    
+    log(f"Fetching defects_found for {len(unique):,} kentekens ({total} batches, {num_workers} workers)")
+    
+    @retry_with_backoff()
+    def fetch_batch(batch):
+        time.sleep(0.1)
+        kenteken_list = ",".join(f"'{k}'" for k in batch)
+        return client.get(
+            DATASETS["defects_found"],
+            where=f"kenteken IN ({kenteken_list})",
+            limit=batch_size * 20,  # A vehicle can have many defects
+        )
+    
+    with StreamingCSVWriter(output_file) as writer:
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = {executor.submit(fetch_batch, b): i for i, b in enumerate(batches)}
+            completed = 0
+            
+            for future in as_completed(futures):
+                completed += 1
+                try:
+                    results = future.result()
+                    writer.write_rows(results)
+                except Exception as e:
+                    log(f"  Batch error: {e}")
+                
+                if completed % max(1, total // 10) == 0 or completed == total:
+                    log(f"  Progress: {completed}/{total} batches ({completed * 100 // total}%)")
         
         log(f"  Written {writer.row_count:,} records to {output_file}")
 
@@ -329,7 +413,7 @@ def fetch_inspections(client: Socrata, kentekens: list[str], output_file: Path):
 def main():
     parser = argparse.ArgumentParser(description="Fetch a single RDW dataset")
     parser.add_argument("dataset", choices=list(DATASETS.keys()), help="Dataset to fetch")
-    parser.add_argument("--kentekens-from", type=Path, help="CSV file to load kentekens from")
+    parser.add_argument("--kentekens-from", type=Path, help="CSV file to load kentekens from (for dependent datasets)")
     parser.add_argument("--output", type=Path, help="Output CSV file (default: data/<dataset>.csv)")
     args = parser.parse_args()
     
@@ -345,15 +429,19 @@ def main():
     client = get_client()
     
     try:
-        if args.dataset == "defects_found":
-            fetch_defects_found(client, output_file)
+        # Primary dataset: inspections (fetch all, this is the unbiased source)
+        if args.dataset == "inspections" and not args.kentekens_from:
+            fetch_inspections_all(client, output_file)
         
+        # Reference table: defect codes (small, no dependencies)
         elif args.dataset == "defect_codes":
             fetch_defect_codes(client, output_file)
         
-        elif args.dataset in ("vehicles", "fuel", "inspections"):
+        # Dependent datasets: need kentekens from inspections
+        elif args.dataset in ("vehicles", "fuel", "defects_found", "inspections"):
             if not args.kentekens_from:
                 log(f"Error: --kentekens-from required for {args.dataset}")
+                log(f"Usage: python fetch_dataset.py {args.dataset} --kentekens-from data/inspections.csv")
                 sys.exit(1)
             if not args.kentekens_from.exists():
                 log(f"Error: {args.kentekens_from} not found")
@@ -365,7 +453,10 @@ def main():
                 fetch_vehicles(client, kentekens, output_file)
             elif args.dataset == "fuel":
                 fetch_fuel(client, kentekens, output_file)
+            elif args.dataset == "defects_found":
+                fetch_defects_found(client, kentekens, output_file)
             elif args.dataset == "inspections":
+                # This case: fetch inspections for specific kentekens (not used in new flow)
                 fetch_inspections(client, kentekens, output_file)
     
     finally:

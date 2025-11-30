@@ -33,12 +33,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Stage 1: Fetch defects (primary dataset, needed for kentekens)
-  fetch-defects:
+  # Stage 1: Fetch inspections (PRIMARY dataset - includes ALL inspections, pass and fail)
+  fetch-inspections:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    outputs:
-      cache-hit: ${{ steps.cache-restore.outputs.cache-hit }}
+    timeout-minutes: 90
     
     steps:
       - uses: actions/checkout@v4
@@ -63,19 +61,19 @@ jobs:
         run: |
           WEEK=$(date +%Y-W%V)
           HASH=$(sha256sum src/fetch_dataset.py | cut -c1-8)
-          echo "key=defects-${{ github.ref_name }}-${WEEK}-${HASH}" >> $GITHUB_OUTPUT
+          echo "key=inspections-${{ github.ref_name }}-${WEEK}-${HASH}" >> $GITHUB_OUTPUT
       
       - name: Restore cache
         if: inputs.force_fetch != 'true'
         id: cache-restore
         uses: actions/cache/restore@v4
         with:
-          path: data/defects_found.csv
+          path: data/inspections.csv
           key: ${{ steps.cache-key.outputs.key }}
       
-      - name: Fetch defects_found
+      - name: Fetch inspections (all APK results)
         if: steps.cache-restore.outputs.cache-hit != 'true'
-        run: python src/fetch_dataset.py defects_found
+        run: python src/fetch_dataset.py inspections
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           FETCH_WORKERS: 2
@@ -84,17 +82,17 @@ jobs:
         if: steps.cache-restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: data/defects_found.csv
+          path: data/inspections.csv
           key: ${{ steps.cache-key.outputs.key }}
       
-      - name: Upload defects artifact
+      - name: Upload inspections artifact
         uses: actions/upload-artifact@v4
         with:
-          name: defects_found
-          path: data/defects_found.csv
+          name: inspections
+          path: data/inspections.csv
           retention-days: 1
 
-  # Stage 1b: Fetch defect codes (small, no dependencies)
+  # Stage 1b: Fetch defect codes (small reference table, no dependencies)
   fetch-defect-codes:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -121,16 +119,16 @@ jobs:
           path: data/defect_codes.csv
           retention-days: 1
 
-  # Stage 2: Fetch dependent datasets in parallel (need kentekens from defects)
+  # Stage 2: Fetch dependent datasets in parallel (need kentekens from inspections)
   fetch-dependent:
-    needs: fetch-defects
+    needs: fetch-inspections
     runs-on: ubuntu-latest
     timeout-minutes: 90
     
     strategy:
       fail-fast: false
       matrix:
-        dataset: [vehicles, fuel, inspections]
+        dataset: [vehicles, fuel, defects_found]
     
     steps:
       - uses: actions/checkout@v4
@@ -165,16 +163,16 @@ jobs:
           path: data/${{ matrix.dataset }}.csv
           key: ${{ steps.cache-key.outputs.key }}
       
-      - name: Download defects artifact
+      - name: Download inspections artifact
         if: steps.cache-restore.outputs.cache-hit != 'true'
         uses: actions/download-artifact@v4
         with:
-          name: defects_found
+          name: inspections
           path: data/
       
       - name: Fetch ${{ matrix.dataset }}
         if: steps.cache-restore.outputs.cache-hit != 'true'
-        run: python src/fetch_dataset.py ${{ matrix.dataset }} --kentekens-from data/defects_found.csv
+        run: python src/fetch_dataset.py ${{ matrix.dataset }} --kentekens-from data/inspections.csv
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           FETCH_WORKERS: 2
@@ -195,13 +193,12 @@ jobs:
 
   # Stage 3: Process and deploy
   process-and-deploy:
-    needs: [fetch-defects, fetch-defect-codes, fetch-dependent]
+    needs: [fetch-inspections, fetch-defect-codes, fetch-dependent]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     
     environment:
       name: ${{ github.ref_name == 'main' && 'github-pages' || 'dev' }}
-      url: ${{ github.ref_name == 'main' && steps.deployment.outputs.page_url || '' }}
     
     steps:
       - uses: actions/checkout@v4
@@ -258,10 +255,25 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
       
+      - name: Deploy dev to Surge
+        if: github.ref_name == 'dev'
+        id: dev-deploy
+        run: |
+          npm install -g surge
+          surge ./site --domain cars-reliability-dev.surge.sh --token ${{ secrets.SURGE_TOKEN }}
+          echo "url=https://cars-reliability-dev.surge.sh" >> $GITHUB_OUTPUT
+        continue-on-error: true
+      
       - name: Dev build summary
         if: github.ref_name == 'dev'
         run: |
           echo "## Dev Build Complete (Parallel Workflow)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Data files:" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.dev-deploy.outcome }}" = "success" ]; then
+            echo "**Preview:** https://cars-reliability-dev.surge.sh" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Note:** Set SURGE_TOKEN secret to enable dev preview deploys" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Data files:" >> $GITHUB_STEP_SUMMARY
           ls -lh data/*.csv | awk '{print "- " $9 ": " $5}' >> $GITHUB_STEP_SUMMARY
