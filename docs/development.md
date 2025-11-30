@@ -129,15 +129,13 @@ head site/data/brand_reliability.json
 
 ## Deployment
 
-### Manual Deployment
+The site is deployed automatically via GitHub Actions:
 
-```bash
-git add site/
-git commit -m "Update data"
-git push
-```
+1. Pipeline runs (fetch → process → generate)
+2. Generated `site/` folder is uploaded as artifact
+3. GitHub Pages serves from the artifact
 
-GitHub Actions will automatically deploy to GitHub Pages.
+No files are committed - the site is built fresh on each deploy.
 
 ### Triggering a Refresh
 

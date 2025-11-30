@@ -69,10 +69,10 @@ cars/
 
 ### 4. Deploy (GitHub Actions)
 
-- Runs weekly (Sunday midnight UTC)
-- Executes the full pipeline
-- Commits any data changes
-- Deploys `site/` to GitHub Pages
+- Runs weekly (Sunday midnight UTC) on `main` branch
+- Executes the full pipeline in a single job
+- Uploads generated `site/` as a GitHub Pages artifact
+- Deploys directly from artifact (no files committed to repo)
 
 ## Key Design Decisions
 
