@@ -5,8 +5,8 @@ Generate static HTML site for GitHub Pages.
 import json
 from pathlib import Path
 
-DOCS_DIR = Path(__file__).parent.parent / "docs"
-DATA_DIR = DOCS_DIR / "data"
+SITE_DIR = Path(__file__).parent.parent / "site"
+DATA_DIR = SITE_DIR / "data"
 
 
 def generate_html():
@@ -207,15 +207,15 @@ def generate_html():
 </html>
 """
     
-    with open(DOCS_DIR / "index.html", "w") as f:
+    with open(SITE_DIR / "index.html", "w") as f:
         f.write(html)
     
-    print(f"Generated {DOCS_DIR / 'index.html'}")
+    print(f"Generated {SITE_DIR / 'index.html'}")
 
 
 def main():
     """Generate the static site."""
-    DOCS_DIR.mkdir(parents=True, exist_ok=True)
+    SITE_DIR.mkdir(parents=True, exist_ok=True)
     generate_html()
 
 

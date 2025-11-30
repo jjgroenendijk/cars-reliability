@@ -143,7 +143,7 @@ def calculate_defects_by_model(
 
 def save_results(brand_stats: pd.DataFrame, model_stats: pd.DataFrame):
     """Save processed results to JSON for the static site."""
-    output_dir = Path(__file__).parent.parent / "docs" / "data"
+    output_dir = Path(__file__).parent.parent / "site" / "data"
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Save brand stats

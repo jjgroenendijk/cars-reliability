@@ -25,20 +25,31 @@ This project analyzes vehicle inspection (APK) data to determine which cars are 
 
 ## Project Structure
 
-```
+```text
 cars/
 ├── src/
 │   ├── fetch_data.py      # Data fetching from RDW API
 │   ├── process_data.py    # Data processing and metrics calculation
 │   └── generate_site.py   # Static HTML generation
 ├── data/                   # Downloaded/processed data (gitignored)
-├── docs/                   # GitHub Pages static site
+├── site/                   # Generated website (GitHub Pages)
+├── docs/                   # Project documentation
 ├── .github/
 │   └── workflows/
 │       └── update.yml      # GitHub Actions workflow
 ├── requirements.txt
 └── README.md
 ```
+
+## Documentation
+
+See the [docs/](docs/index.md) folder for detailed documentation:
+
+- [Architecture](docs/architecture.md) - System design and data flow
+- [Data Sources](docs/data-sources.md) - RDW datasets and API details
+- [Metrics](docs/metrics.md) - How reliability is measured
+- [Development](docs/development.md) - Local setup guide
+- [Future Plans](docs/future.md) - Roadmap and improvements
 
 ## Local Development
 
