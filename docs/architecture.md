@@ -20,8 +20,7 @@
 ```
 cars/
 ├── src/                    # Python source code
-│   ├── download.py         # Unified data fetching script
-│   ├── download.py         # Data fetching (API, streaming CSV)
+│   ├── download.py         # Data fetching (API client, streaming CSV, system stats)
 │   ├── process_data.py     # Metrics calculation
 │   ├── generate_site.py    # Site generation
 │   └── templates/          # HTML/JS templates
@@ -119,9 +118,14 @@ The RDW API is slow (~2-3 hours for full dataset). Per-dataset caching allows:
 ### Why streaming writes?
 
 Writing to disk as data arrives:
+
 - Reduces memory usage
 - Provides recovery point on interruption
 - Visible progress in CI logs
+
+### System Stats Logging
+
+During fetches, the script logs system resource usage (RAM, CPU, disk) to help diagnose CI runner issues. Requires `psutil` (falls back gracefully if unavailable).
 
 ### Why Static HTML with Dynamic JS?
 

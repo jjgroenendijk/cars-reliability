@@ -11,7 +11,7 @@ on:
       sample_percent:
         description: 'Percentage of data to fetch (1-100)'
         required: false
-        default: '100'
+        default: '10'
         type: choice
         options:
           - '1'
@@ -68,8 +68,8 @@ jobs:
       - name: Set data sample percentage
         id: sample
         run: |
-          # Use input if provided (manual trigger), otherwise default to 100%
-          SAMPLE="${{ inputs.sample_percent || '100' }}"
+          # Use input if provided (manual trigger), otherwise default to 10%
+          SAMPLE="${{ inputs.sample_percent || '10' }}"
           echo "DATA_SAMPLE_PERCENT=${SAMPLE}" >> $GITHUB_ENV
           echo "sample=${SAMPLE}" >> $GITHUB_OUTPUT
           echo "Sample: ${SAMPLE}%"
@@ -129,8 +129,16 @@ jobs:
           path: data/defect_codes.csv
           key: ${{ steps.cache-keys.outputs.defect_codes }}
       
-      # Fetch only datasets that weren't cached
-      - name: Fetch inspections
+      # Fetch datasets in order: smallest first, then dependencies
+      # Order: defect_codes (tiny) -> inspections (primary) -> vehicles -> fuel -> defects_found
+      
+      - name: Fetch defect_codes (smallest)
+        if: steps.cache-defect-codes.outputs.cache-hit != 'true'
+        run: python src/download.py defect_codes
+        env:
+          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
+      
+      - name: Fetch inspections (primary dataset)
         if: steps.cache-inspections.outputs.cache-hit != 'true'
         run: python src/download.py inspections
         env:
@@ -157,12 +165,6 @@ jobs:
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           FETCH_WORKERS: 2
-      
-      - name: Fetch defect_codes
-        if: steps.cache-defect-codes.outputs.cache-hit != 'true'
-        run: python src/download.py defect_codes
-        env:
-          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
       
       # Save caches for datasets that were fetched
       - name: Save inspections cache
