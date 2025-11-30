@@ -10,9 +10,9 @@ The github actions workflow has to have 3 parts:
     - Data processing
     - Website processing and uploading.
 
-Changes always have to be tested on the dev branch. Success can only be claimed if the dev branch shows success in the gihtub actions logs
+Changes always have to be tested on the main branch. Success can only be claimed if the main branch shows success in the github actions logs.
 
-Main branch and dev branch:
-    - Main downloads 100% of the datasets.
-    - Dev downloads 1% of the datasets
-    - Both branches deploy to GitHub Pages (last deployment wins)
+Sample percentage:
+    - Default: 100% (full dataset)
+    - Can be adjusted via workflow_dispatch input (1%, 10%, 50%, 100%)
+    - Use lower percentages for quick testing

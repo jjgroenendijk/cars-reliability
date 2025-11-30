@@ -1,24 +1,33 @@
 name: Update Car Reliability Data
 
 on:
-  # Run weekly on Sunday at midnight UTC (main branch only)
+  # Run weekly on Sunday at midnight UTC
   schedule:
     - cron: '0 0 * * 0'
   
-  # Allow manual trigger with cache bypass option
+  # Allow manual trigger with options
   workflow_dispatch:
     inputs:
+      sample_percent:
+        description: 'Percentage of data to fetch (1-100)'
+        required: false
+        default: '100'
+        type: choice
+        options:
+          - '1'
+          - '10'
+          - '50'
+          - '100'
       force_fetch:
         description: 'Force fresh data fetch (bypass cache)'
         required: false
         default: false
         type: boolean
   
-  # Run on push to main or dev branches
+  # Run on push to main branch
   push:
     branches:
       - main
-      - dev
     paths:
       - 'src/**'
       - '.github/workflows/update.yml'
@@ -29,9 +38,9 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment per branch
+# Allow only one concurrent deployment
 concurrency:
-  group: "pages-${{ github.ref_name }}"
+  group: "pages"
   cancel-in-progress: false
 
 jobs:
@@ -59,29 +68,25 @@ jobs:
       - name: Set data sample percentage
         id: sample
         run: |
-          if [ "${{ github.ref_name }}" = "main" ]; then
-            echo "DATA_SAMPLE_PERCENT=100" >> $GITHUB_ENV
-            echo "sample=100" >> $GITHUB_OUTPUT
-            echo "Branch: ${{ github.ref_name }}, Sample: 100%"
-          else
-            echo "DATA_SAMPLE_PERCENT=1" >> $GITHUB_ENV
-            echo "sample=1" >> $GITHUB_OUTPUT
-            echo "Branch: ${{ github.ref_name }}, Sample: 1%"
-          fi
+          # Use input if provided (manual trigger), otherwise default to 100%
+          SAMPLE="${{ inputs.sample_percent || '100' }}"
+          echo "DATA_SAMPLE_PERCENT=${SAMPLE}" >> $GITHUB_ENV
+          echo "sample=${SAMPLE}" >> $GITHUB_OUTPUT
+          echo "Sample: ${SAMPLE}%"
       
       - name: Generate cache keys
         id: cache-keys
         run: |
-          # Cache key based on: branch, week number, and fetch script hash
+          # Cache key based on: sample percentage, week number, and fetch script hash
           # Each dataset gets its own cache for independent updates
           WEEK=$(date +%Y-W%V)
           SCRIPT_HASH=$(sha256sum src/download.py | cut -c1-8)
-          BRANCH="${{ github.ref_name }}"
-          echo "inspections=inspections-${BRANCH}-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
-          echo "vehicles=vehicles-${BRANCH}-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
-          echo "fuel=fuel-${BRANCH}-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
-          echo "defects_found=defects_found-${BRANCH}-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
-          echo "defect_codes=defect_codes-${BRANCH}-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
+          SAMPLE="${{ steps.sample.outputs.sample }}"
+          echo "inspections=inspections-${SAMPLE}pct-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
+          echo "vehicles=vehicles-${SAMPLE}pct-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
+          echo "fuel=fuel-${SAMPLE}pct-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
+          echo "defects_found=defects_found-${SAMPLE}pct-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
+          echo "defect_codes=defect_codes-${SAMPLE}pct-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
       
       # Cache restore for each dataset independently
       - name: Restore inspections cache
@@ -199,7 +204,6 @@ jobs:
         run: |
           cat > data/fetch_metadata.json << EOF
           {
-            "branch": "${{ github.ref_name }}",
             "sample_percent": ${{ steps.sample.outputs.sample }},
             "fetched_at": "$(date -Iseconds)",
             "cache_status": {
@@ -214,7 +218,7 @@ jobs:
       
       - name: Report cache status
         run: |
-          echo "### Data Fetch Summary (${{ github.ref_name }} branch)" >> $GITHUB_STEP_SUMMARY
+          echo "### Data Fetch Summary (${{ steps.sample.outputs.sample }}% sample)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Dataset | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
@@ -245,8 +249,7 @@ jobs:
       - name: Build summary
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Build Complete (${{ github.ref_name }})" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Sample:** ${{ steps.sample.outputs.sample }}%" >> $GITHUB_STEP_SUMMARY
           echo "**Deployed to:** ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY

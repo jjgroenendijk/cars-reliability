@@ -35,10 +35,15 @@ async function loadData() {
             total_inspections: brandJson.total_inspections
         };
         
-        // Update the generated date in the page
+        // Update the generated date in the page (About section and footer)
+        const dateStr = metadata.generated_at ? metadata.generated_at.substring(0, 10) : null;
         const dateEl = document.getElementById('generated-date');
-        if (dateEl && metadata.generated_at) {
-            dateEl.textContent = metadata.generated_at.substring(0, 10);
+        if (dateEl && dateStr) {
+            dateEl.textContent = dateStr;
+        }
+        const footerDateEl = document.getElementById('footer-date');
+        if (footerDateEl && dateStr) {
+            footerDateEl.textContent = dateStr;
         }
         
         // Update summary stats if element exists
