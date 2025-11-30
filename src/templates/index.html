@@ -147,7 +147,8 @@
                         <th data-col="vehicle_count" data-type="number">Vehicles<span class="sort-indicator"></span></th>
                         <th data-col="total_inspections" data-type="number">Inspections<span class="sort-indicator"></span></th>
                         <th data-col="avg_defects_per_inspection" data-type="number">Defects per Inspection<span class="sort-indicator"></span></th>
-                        <th data-col="avg_defect_types_per_inspection" data-type="number">Issue Types per Inspection<span class="sort-indicator"></span></th>
+                        <th data-col="defects_per_year" data-type="number">Defects per Year<span class="sort-indicator"></span></th>
+                        <th data-col="avg_age_years" data-type="number">Avg Age<span class="sort-indicator"></span></th>
                     </tr>
                 </thead>
                 <tbody id="model-tbody"></tbody>
@@ -183,11 +184,19 @@
             </div>
             
             <div class="metric-explanation">
-                <h4>Issue Types per Inspection</h4>
-                <p class="formula">= Number of distinct defect categories / Number of inspections</p>
-                <p>The average number of different types of problems found per inspection. A vehicle might have multiple instances 
-                of the same defect type (e.g., 4 worn brake pads), but this counts as 1 issue type.</p>
-                <p><em>Example: A value of 1.8 means on average, problems are found in 1.8 different categories per inspection.</em></p>
+                <h4>Defects per Year (Age-Normalized)</h4>
+                <p class="formula">= Defects per Inspection / Average Vehicle Age</p>
+                <p>The defects per inspection normalized by the average age of vehicles. This accounts for the fact that older 
+                vehicles naturally accumulate more defects. <strong>Lower values indicate better reliability when controlling for age.</strong></p>
+                <p><em>Example: A 10-year-old car with 2.0 defects/inspection has 0.20 defects/year, while a 5-year-old car 
+                with the same 2.0 defects/inspection has 0.40 defects/year - indicating the older car aged more gracefully.</em></p>
+            </div>
+            
+            <div class="metric-explanation">
+                <h4>Average Age</h4>
+                <p class="formula">= Mean age of vehicles in years (from first registration date)</p>
+                <p>The average age of vehicles in this brand/model group. Useful context for comparing reliability - 
+                a brand with mostly newer cars might appear more reliable simply because the cars have had less time to develop issues.</p>
             </div>
             
             <div class="metric-explanation">
@@ -214,8 +223,6 @@
             <ul>
                 <li><strong>Sample bias:</strong> Only includes vehicles that had defects recorded. Vehicles that passed 
                 inspection with zero defects may not appear in the defects dataset.</li>
-                <li><strong>Age not controlled:</strong> Older vehicles naturally have more inspections and potentially 
-                more wear-related defects. This analysis does not currently normalize by vehicle age.</li>
                 <li><strong>Defect severity:</strong> All defects are counted equally, whether minor (e.g., license plate 
                 light dim) or major (e.g., brake failure).</li>
                 <li><strong>Maintenance history:</strong> Defects reflect both manufacturing quality and owner maintenance habits.</li>
@@ -225,7 +232,6 @@
         <div class="card">
             <h3>Future Improvements</h3>
             <ul>
-                <li>Age-normalized metrics (defects per year of vehicle age)</li>
                 <li>Defect severity weighting</li>
                 <li>APK pass/fail rates (requires additional dataset)</li>
                 <li>Common defect types by brand/model</li>

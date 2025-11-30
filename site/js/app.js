@@ -2,6 +2,10 @@
 let brandData = [];
 let modelData = [];
 let metadata = {};
+let top10ReliableModels = [];
+let top10UnreliableModels = [];
+let top10ReliableBrands = [];
+let top10UnreliableBrands = [];
 
 // State
 let brandSortCol = 'avg_defects_per_inspection';
@@ -28,6 +32,10 @@ async function loadData() {
         
         brandData = brandJson.brands || [];
         modelData = modelJson.most_reliable || [];
+        top10ReliableModels = modelJson.top_10_reliable || [];
+        top10UnreliableModels = modelJson.top_10_unreliable || [];
+        top10ReliableBrands = brandJson.top_10_reliable || [];
+        top10UnreliableBrands = brandJson.top_10_unreliable || [];
         metadata = {
             generated_at: brandJson.generated_at,
             sample_percent: brandJson.sample_percent || 100,
@@ -49,7 +57,7 @@ async function loadData() {
         // Update summary stats if element exists
         const statsEl = document.getElementById('summary-stats');
         if (statsEl && metadata.total_vehicles) {
-            let statsText = `Based on ${formatNumber(metadata.total_vehicles)} vehicles and ${formatNumber(metadata.total_inspections)} inspections`;
+            let statsText = `Based on ${formatNumber(metadata.total_vehicles)} vehicles and ${formatNumber(metadata.total_inspections)} inspections from RDW Open Data`;
             if (metadata.sample_percent < 100) {
                 statsText += ` (${metadata.sample_percent}% sample)`;
             }
@@ -76,6 +84,75 @@ async function loadData() {
 // Format number with commas
 function formatNumber(num) {
     return num.toLocaleString();
+}
+
+// Format value with fallback for null/undefined
+function formatValue(val, decimals = 2) {
+    if (val === null || val === undefined || isNaN(val)) {
+        return '-';
+    }
+    return typeof val === 'number' ? val.toFixed(decimals) : val;
+}
+
+// Render top 10 tables
+function renderTop10Tables() {
+    // Top 10 Most Reliable Models
+    const reliableTbody = document.getElementById('top10-reliable-tbody');
+    if (reliableTbody) {
+        reliableTbody.innerHTML = top10ReliableModels.map((m, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td>${m.merk}</td>
+                <td>${m.handelsbenaming}</td>
+                <td>${formatValue(m.avg_defects_per_inspection)}</td>
+                <td>${formatValue(m.defects_per_year, 3)}</td>
+                <td>${formatValue(m.avg_age_years, 1)}</td>
+            </tr>
+        `).join('');
+    }
+    
+    // Top 10 Least Reliable Models
+    const unreliableTbody = document.getElementById('top10-unreliable-tbody');
+    if (unreliableTbody) {
+        unreliableTbody.innerHTML = top10UnreliableModels.map((m, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td>${m.merk}</td>
+                <td>${m.handelsbenaming}</td>
+                <td>${formatValue(m.avg_defects_per_inspection)}</td>
+                <td>${formatValue(m.defects_per_year, 3)}</td>
+                <td>${formatValue(m.avg_age_years, 1)}</td>
+            </tr>
+        `).join('');
+    }
+    
+    // Top 10 Most Reliable Brands
+    const reliableBrandsTbody = document.getElementById('top10-reliable-brands-tbody');
+    if (reliableBrandsTbody) {
+        reliableBrandsTbody.innerHTML = top10ReliableBrands.map((b, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td>${b.merk}</td>
+                <td>${formatValue(b.avg_defects_per_inspection)}</td>
+                <td>${formatValue(b.defects_per_year, 3)}</td>
+                <td>${formatValue(b.avg_age_years, 1)}</td>
+            </tr>
+        `).join('');
+    }
+    
+    // Top 10 Least Reliable Brands
+    const unreliableBrandsTbody = document.getElementById('top10-unreliable-brands-tbody');
+    if (unreliableBrandsTbody) {
+        unreliableBrandsTbody.innerHTML = top10UnreliableBrands.map((b, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td>${b.merk}</td>
+                <td>${formatValue(b.avg_defects_per_inspection)}</td>
+                <td>${formatValue(b.defects_per_year, 3)}</td>
+                <td>${formatValue(b.avg_age_years, 1)}</td>
+            </tr>
+        `).join('');
+    }
 }
 
 // Render brand table
@@ -111,7 +188,8 @@ function renderBrandTable() {
             <td>${formatNumber(b.vehicle_count)}</td>
             <td>${formatNumber(b.total_inspections)}</td>
             <td>${b.avg_defects_per_inspection}</td>
-            <td>${b.avg_defect_types_per_inspection}</td>
+            <td>${formatValue(b.defects_per_year, 3)}</td>
+            <td>${formatValue(b.avg_age_years, 1)}</td>
         </tr>
     `).join('');
     
@@ -153,7 +231,8 @@ function renderModelTable() {
             <td>${formatNumber(m.vehicle_count)}</td>
             <td>${formatNumber(m.total_inspections)}</td>
             <td>${m.avg_defects_per_inspection}</td>
-            <td>${m.avg_defect_types_per_inspection}</td>
+            <td>${formatValue(m.defects_per_year, 3)}</td>
+            <td>${formatValue(m.avg_age_years, 1)}</td>
         </tr>
     `).join('');
     
@@ -239,6 +318,7 @@ async function init() {
     const loaded = await loadData();
     if (loaded) {
         initEventListeners();
+        renderTop10Tables();
         renderBrandTable();
         renderModelTable();
     }
