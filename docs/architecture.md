@@ -11,7 +11,7 @@
                                ▼
                         ┌─────────────────┐
                         │ GitHub Actions  │
-                        │ (weekly update) │
+                        │ (parallel jobs) │
                         └─────────────────┘
 ```
 
@@ -20,84 +20,113 @@
 ```
 cars/
 ├── src/                    # Python source code
-│   ├── fetch_data.py       # RDW API client
+│   ├── fetch_dataset.py    # Fetch single dataset (parallel CI)
+│   ├── fetch_data.py       # Legacy monolithic fetcher
 │   ├── process_data.py     # Metrics calculation
-│   ├── generate_site.py    # Site generation (copies templates)
+│   ├── generate_site.py    # Site generation
 │   └── templates/          # HTML/JS templates
-│       ├── index.html
-│       └── app.js
 ├── data/                   # Raw data (gitignored)
+│   ├── inspections.csv     # PRIMARY - all APK results
 │   ├── vehicles.csv
 │   ├── defects_found.csv
 │   ├── defect_codes.csv
 │   └── fuel.csv
 ├── site/                   # Generated website
 │   ├── index.html
-│   ├── js/
-│   │   └── app.js
+│   ├── css/styles.css
+│   ├── js/app.js
 │   └── data/
 │       ├── brand_reliability.json
 │       └── model_reliability.json
-├── docs/                   # Documentation (you are here)
-├── .github/workflows/      # CI/CD
-│   └── update.yml
-└── requirements.txt
+├── docs/                   # Documentation
+└── .github/workflows/
+    ├── update-parallel.yml # Parallel fetch (recommended)
+    └── update.yml          # Legacy single-job
 ```
 
 ## Data Flow
 
-### 1. Fetch (`src/fetch_data.py`)
+### 1. Fetch (`src/fetch_dataset.py`)
 
-- Queries dataset size dynamically via `SELECT count(*)`
-- Connects to RDW Open Data via Socrata SODA API
-- Fetches defect records in parallel pages (50k records each)
-- For each unique license plate (kenteken), fetches vehicle and fuel info in parallel batches
-- Uses configurable worker threads (`FETCH_WORKERS`, default 8)
-- Saves raw data as CSV files in `data/`
+The parallel fetcher downloads one dataset at a time with streaming writes:
+
+```
+Stage 1 (parallel):
+├── inspections (PRIMARY - all APK results)
+└── defect_codes (small reference table)
+         │
+         ▼ extract kentekens
+Stage 2 (parallel):
+├── vehicles
+├── fuel
+└── defects_found
+```
+
+Key features:
+- **Inspections first** - Avoids sample bias by starting with ALL inspection results
+- **Streaming CSV writes** - Flushes to disk immediately, survives interruption
+- **Per-dataset caching** - Each dataset cached separately in CI
 
 ### 2. Process (`src/process_data.py`)
 
 - Loads CSV files into pandas DataFrames
-- Joins defects with vehicle info on `kenteken`
+- Joins with vehicle info on `kenteken`
+- Calculates pass rate from inspections (unbiased!)
 - Aggregates by brand and model
-- Calculates metrics (avg defects per vehicle/inspection)
 - Outputs JSON files for the website
 
 ### 3. Generate (`src/generate_site.py`)
 
-- Copies HTML and JavaScript templates from `src/templates/`
-- Templates load data dynamically via JavaScript `fetch()`
-- Outputs to `site/index.html` and `site/js/app.js`
+- Copies HTML/CSS/JS templates from `src/templates/`
+- Templates load data dynamically via `fetch()`
 
 ### 4. Deploy (GitHub Actions)
 
-- Runs weekly (Sunday midnight UTC) on `main` branch
-- Executes the full pipeline in a single job
-- Uploads generated `site/` as a GitHub Pages artifact
-- Deploys directly from artifact (no files committed to repo)
+```
+fetch-inspections ──┐
+                    ├──▶ process-and-deploy ──▶ GitHub Pages (main)
+fetch-defect-codes ─┤                      └──▶ Surge.sh (dev)
+                    │
+fetch-dependent ────┘
+  ├── vehicles
+  ├── fuel
+  └── defects_found
+```
+
+- **Parallel runners**: Up to 5 concurrent jobs
+- **Per-dataset caching**: Only refetch changed datasets
+- **Artifact handoff**: CSVs passed between jobs
 
 ## Key Design Decisions
 
-### Why Socrata/SODA API?
+### Why start from inspections (not defects)?
 
-RDW uses Tyler Technologies' Socrata platform for their open data. The `sodapy` library provides a clean Python interface with built-in pagination and query support.
+Starting from defects creates **sample bias** - we only see vehicles that failed. Starting from inspections gives us ALL results (pass and fail), enabling accurate pass rate calculations.
+
+### Why parallel fetching?
+
+The RDW API is slow (~2-3 hours for full dataset). Parallel jobs with separate caches:
+- Run fetches concurrently on different runners
+- Cache datasets independently
+- Resume faster on partial failures
+
+### Why streaming writes?
+
+Writing to disk as data arrives:
+- Reduces memory usage
+- Provides recovery point on interruption
+- Visible progress in CI logs
 
 ### Why Static HTML with Dynamic JS?
 
 - No server required (GitHub Pages is free)
 - Fast loading with async data fetching
-- Separation of concerns (templates vs data)
-- Interactive tables with sorting and filtering
 - Easy to update data without changing templates
-
-### Why start from defects?
-
-The defects dataset is smaller and more focused. Starting there ensures we only fetch vehicle info for cars that have inspection records, maximizing data overlap.
 
 ## Limitations
 
-- **Rate limiting**: Without an app token, API calls are throttled
-- **Data freshness**: RDW updates daily, but we only fetch weekly
+- **Rate limiting**: RDW API requires careful throttling (2 workers recommended)
+- **Data freshness**: Weekly updates (could be daily)
 
 ## Resilience Features
 

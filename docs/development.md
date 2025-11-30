@@ -4,7 +4,6 @@
 
 - Python 3.10+
 - Git
-- (Optional) GitHub CLI (`gh`) for deployment
 
 ## Local Setup
 
@@ -14,9 +13,9 @@ git clone https://github.com/jjgroenendijk/cars-reliability.git
 cd cars-reliability
 
 # Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# or: venv\Scripts\activate  # Windows
+python -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+# or: .venv\Scripts\activate  # Windows
 
 # Install dependencies
 pip install -r requirements.txt
@@ -24,23 +23,39 @@ pip install -r requirements.txt
 
 ## Branches
 
-| Branch | Data Sample | Purpose |
-|--------|-------------|--------|
-| `main` | 100% | Production - deployed to GitHub Pages |
-| `dev` | 1% | Development - fast iteration |
+| Branch | Data Sample | Deployment |
+|--------|-------------|------------|
+| `main` | 100% | GitHub Pages |
+| `dev` | 1% | Surge.sh preview |
 
 Work on `dev` for quick feedback, merge to `main` for production.
 
 ## Running the Pipeline
 
+### Option 1: Parallel fetcher (recommended)
+
 ```bash
-# 1. Fetch data from RDW (use 1% sample for dev)
-DATA_SAMPLE_PERCENT=1 python src/fetch_data.py
+# 1. Fetch inspections first (primary dataset)
+DATA_SAMPLE_PERCENT=1 python src/fetch_dataset.py inspections
 
-# 2. Process data and calculate metrics
+# 2. Fetch dependent datasets using kentekens from inspections
+DATA_SAMPLE_PERCENT=1 python src/fetch_dataset.py vehicles --kentekens-from data/inspections.csv
+DATA_SAMPLE_PERCENT=1 python src/fetch_dataset.py fuel --kentekens-from data/inspections.csv
+DATA_SAMPLE_PERCENT=1 python src/fetch_dataset.py defects_found --kentekens-from data/inspections.csv
+
+# 3. Fetch reference table
+python src/fetch_dataset.py defect_codes
+
+# 4. Process and generate
 python src/process_data.py
+python src/generate_site.py
+```
 
-# 3. Generate static website
+### Option 2: Legacy monolithic fetcher
+
+```bash
+DATA_SAMPLE_PERCENT=1 python src/fetch_data.py
+python src/process_data.py
 python src/generate_site.py
 ```
 
@@ -49,12 +64,10 @@ Output files:
 - `data/*.csv` - Raw data (gitignored)
 - `site/data/*.json` - Processed metrics
 - `site/index.html` - Static website
-- `site/js/app.js` - Interactive JavaScript
 
 ## Viewing the Site Locally
 
 ```bash
-# Simple Python HTTP server
 cd site
 python -m http.server 8000
 # Open http://localhost:8000
