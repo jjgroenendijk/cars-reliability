@@ -30,8 +30,7 @@ This project calculates reliability metrics for car brands and models using offi
 ```text
 cars/
 ├── src/
-│   ├── fetch_pipeline.py  # Orchestrator: fetch all datasets
-│   ├── fetch_single.py    # Fetch single dataset (for parallel CI)
+│   ├── download.py        # Unified data fetching script
 │   ├── rdw_client.py      # Shared utilities (API client, streaming CSV)
 │   ├── process_data.py    # Metrics calculation
 │   ├── generate_site.py   # Template copying to site/
@@ -63,14 +62,14 @@ source .venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Option 1: Fetch all data with pipeline (simpler)
-DATA_SAMPLE_PERCENT=1 python src/fetch_pipeline.py
+# Option 1: Fetch all data at once
+DATA_SAMPLE_PERCENT=1 python src/download.py --all
 
 # Option 2: Fetch datasets individually (for parallel CI)
-DATA_SAMPLE_PERCENT=1 python src/fetch_single.py inspections
-DATA_SAMPLE_PERCENT=1 python src/fetch_single.py vehicles --kentekens-from data/inspections.csv
-DATA_SAMPLE_PERCENT=1 python src/fetch_single.py defects_found --kentekens-from data/inspections.csv
-python src/fetch_single.py defect_codes
+DATA_SAMPLE_PERCENT=1 python src/download.py inspections
+DATA_SAMPLE_PERCENT=1 python src/download.py vehicles --kentekens-from data/inspections.csv
+DATA_SAMPLE_PERCENT=1 python src/download.py defects_found --kentekens-from data/inspections.csv
+python src/download.py defect_codes
 
 # Process and generate site
 python src/process_data.py

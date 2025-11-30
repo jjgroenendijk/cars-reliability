@@ -3,6 +3,7 @@ Shared utilities for fetching data from RDW Open Data API.
 
 This module provides reusable components:
 - StreamingCSVWriter: Thread-safe CSV writer with immediate disk flush
+- parallel_fetch / parallel_fetch_to_writer: Generic parallel fetching helpers
 - retry_with_backoff: Decorator for exponential backoff retries
 - Socrata client factory and configuration
 """
@@ -10,11 +11,15 @@ This module provides reusable components:
 import csv
 import os
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import wraps
 from pathlib import Path
 from threading import Lock
+from typing import Callable, TypeVar
 
 from sodapy import Socrata
+
+T = TypeVar("T")
 
 
 # RDW Open Data domain
@@ -89,6 +94,128 @@ def retry_with_backoff(max_retries: int = 5, base_delay: float = 2.0):
             raise last_exception
         return wrapper
     return decorator
+
+
+def parallel_fetch(
+    items: list[T],
+    fetch_fn: Callable[[T], list[dict]],
+    num_workers: int | None = None,
+    description: str = "items",
+    delay: float = 0.1,
+) -> list[dict]:
+    """
+    Generic parallel fetch with progress logging and error handling.
+    
+    Args:
+        items: List of items to process (e.g., offsets, batches of kentekens)
+        fetch_fn: Function that takes an item and returns list of result dicts.
+                  Should raise exceptions on failure (will be caught and logged).
+        num_workers: Number of parallel workers (default: from env FETCH_WORKERS)
+        description: Description for logging (e.g., "pages", "batches")
+        delay: Delay between requests to avoid rate limiting
+    
+    Returns:
+        List of all results from successful fetches
+    """
+    if num_workers is None:
+        num_workers = get_num_workers()
+    
+    total = len(items)
+    log(f"  Fetching {total} {description} with {num_workers} workers...")
+    
+    all_results = []
+    results_lock = Lock()
+    completed_count = 0
+    
+    def process_item(item: T) -> tuple[list[dict], str | None]:
+        """Wrapper that catches exceptions and returns (results, error)."""
+        try:
+            time.sleep(delay)
+            return (fetch_fn(item), None)
+        except Exception as e:
+            return ([], str(e))
+    
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = {executor.submit(process_item, item): item for item in items}
+        
+        for future in as_completed(futures):
+            results, error = future.result()
+            completed_count += 1
+            
+            if error:
+                log(f"  Warning: {description} failed: {error}")
+            elif results:
+                with results_lock:
+                    all_results.extend(results)
+            
+            # Log progress at 10% intervals
+            if completed_count % max(1, total // 10) == 0 or completed_count == total:
+                log(f"  Progress: {completed_count}/{total} {description} ({completed_count * 100 // total}%)")
+    
+    return all_results
+
+
+def parallel_fetch_to_writer(
+    items: list[T],
+    fetch_fn: Callable[[T], list[dict]],
+    writer: "StreamingCSVWriter",
+    num_workers: int | None = None,
+    description: str = "items",
+    delay: float = 0.1,
+) -> int:
+    """
+    Generic parallel fetch that streams results to a CSV writer.
+    
+    Similar to parallel_fetch but writes results immediately instead of
+    collecting them in memory. Better for large datasets.
+    
+    Args:
+        items: List of items to process (e.g., offsets, batches of kentekens)
+        fetch_fn: Function that takes an item and returns list of result dicts.
+                  Should raise exceptions on failure (will be caught and logged).
+        writer: StreamingCSVWriter to write results to
+        num_workers: Number of parallel workers (default: from env FETCH_WORKERS)
+        description: Description for logging (e.g., "pages", "batches")
+        delay: Delay between requests to avoid rate limiting
+    
+    Returns:
+        Total number of items processed successfully
+    """
+    if num_workers is None:
+        num_workers = get_num_workers()
+    
+    total = len(items)
+    log(f"  Fetching {total} {description} with {num_workers} workers...")
+    
+    completed_count = 0
+    errors = 0
+    
+    def process_item(item: T) -> tuple[list[dict], str | None]:
+        """Wrapper that catches exceptions and returns (results, error)."""
+        try:
+            time.sleep(delay)
+            return (fetch_fn(item), None)
+        except Exception as e:
+            return ([], str(e))
+    
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = {executor.submit(process_item, item): item for item in items}
+        
+        for future in as_completed(futures):
+            results, error = future.result()
+            completed_count += 1
+            
+            if error:
+                errors += 1
+                log(f"  Warning: {description} failed: {error}")
+            elif results:
+                writer.write_rows(results)
+            
+            # Log progress at 10% intervals
+            if completed_count % max(1, total // 10) == 0 or completed_count == total:
+                log(f"  Progress: {completed_count}/{total} {description} ({completed_count * 100 // total}%)")
+    
+    return completed_count - errors
 
 
 class StreamingCSVWriter:

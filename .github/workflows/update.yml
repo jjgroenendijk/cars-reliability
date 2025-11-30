@@ -74,7 +74,7 @@ jobs:
         run: |
           # Cache key based on: branch, week number, and fetch script hash
           WEEK=$(date +%Y-W%V)
-          SCRIPT_HASH=$(sha256sum src/fetch_pipeline.py | cut -c1-8)
+          SCRIPT_HASH=$(sha256sum src/download.py | cut -c1-8)
           echo "key=rdw-data-${{ github.ref_name }}-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
           echo "Cache key: rdw-data-${{ github.ref_name }}-${WEEK}-${SCRIPT_HASH}"
       
@@ -88,7 +88,7 @@ jobs:
       
       - name: Fetch data from RDW
         if: steps.cache-restore.outputs.cache-hit != 'true'
-        run: python src/fetch_pipeline.py
+        run: python src/download.py --all
         env:
           DATA_SAMPLE_PERCENT: ${{ env.DATA_SAMPLE_PERCENT }}
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
@@ -140,7 +140,7 @@ jobs:
           echo "To preview locally:" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "git checkout dev" >> $GITHUB_STEP_SUMMARY
-          echo "DATA_SAMPLE_PERCENT=1 python src/fetch_pipeline.py" >> $GITHUB_STEP_SUMMARY
+          echo "DATA_SAMPLE_PERCENT=1 python src/download.py --all" >> $GITHUB_STEP_SUMMARY
           echo "python src/process_data.py" >> $GITHUB_STEP_SUMMARY
           echo "python src/generate_site.py" >> $GITHUB_STEP_SUMMARY
           echo "cd site && python -m http.server 8000" >> $GITHUB_STEP_SUMMARY

@@ -6,7 +6,7 @@ This project analyzes Dutch vehicle inspection (APK) data from RDW Open Data to 
 
 ## Architecture
 
-**Data flow:** `fetch_pipeline.py` → CSV files → `process_data.py` → JSON → `generate_site.py` → site/
+**Data flow:** `download.py` → CSV files → `process_data.py` → JSON → `generate_site.py` → site/
 
 Key directories:
 - `src/` - Python pipeline scripts (fetch → process → generate)
@@ -40,13 +40,13 @@ When querying the API:
 
 ```bash
 # Run the full pipeline locally
-python src/fetch_pipeline.py  # Fetches from RDW API (~2-3 min)
+python src/download.py --all  # Fetches from RDW API (~2-3 min)
 python src/process_data.py    # Calculates metrics, outputs JSON
 python src/generate_site.py   # Copies templates to site/
 
 # Or fetch individual datasets (for parallel CI jobs)
-python src/fetch_single.py inspections  # Primary dataset
-python src/fetch_single.py vehicles --kentekens-from data/inspections.csv
+python src/download.py inspections  # Primary dataset
+python src/download.py vehicles --kentekens-from data/inspections.csv
 
 # Preview the site
 cd site && python -m http.server 8000
