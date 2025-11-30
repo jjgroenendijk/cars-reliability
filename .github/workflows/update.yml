@@ -29,10 +29,10 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment per branch
+# Allow only one concurrent deployment
 concurrency:
-  group: "pages-${{ github.ref_name }}"
-  cancel-in-progress: true
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
@@ -40,8 +40,8 @@ jobs:
     timeout-minutes: 120  # 2 hour timeout for full dataset
     
     environment:
-      name: ${{ github.ref_name == 'main' && 'github-pages' || 'dev' }}
-      url: ${{ steps.deployment.outputs.page_url }}${{ github.ref_name != 'main' && 'dev/' || '' }}
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
       - name: Checkout repository
@@ -119,72 +119,10 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
       
-      - name: Prepare deployment directory
-        run: |
-          mkdir -p deploy
-          if [ "${{ github.ref_name }}" = "main" ]; then
-            # Main branch deploys to root
-            cp -r site/* deploy/
-          else
-            # Dev branch deploys to /dev/ subdirectory
-            mkdir -p deploy/dev
-            cp -r site/* deploy/dev/
-          fi
-      
-      - name: Fetch existing Pages content (for dev branch)
-        if: github.ref_name != 'main'
-        run: |
-          # Try to fetch existing main site content to preserve it
-          PAGES_URL="https://jjgroenendijk.github.io/cars-reliability"
-          echo "Fetching existing Pages content from ${PAGES_URL}..."
-          
-          cd deploy
-          
-          # Use wget to mirror the existing site (excluding /dev/)
-          wget --quiet --recursive --no-parent --reject "index.html?*" \
-               --exclude-directories="/cars-reliability/dev" \
-               --no-host-directories --cut-dirs=1 \
-               --tries=3 --timeout=30 \
-               "${PAGES_URL}/" 2>/dev/null || echo "No existing Pages content found (first deployment?)"
-          
-          # Remove any accidentally downloaded dev content (we'll add our own)
-          rm -rf dev 2>/dev/null || true
-          
-          # Re-add the dev content we generated
-          mkdir -p dev
-          cp -r ../site/* dev/
-          
-          cd ..
-          echo "Deployment directory contents:"
-          ls -la deploy/
-        continue-on-error: true
-      
-      - name: Fetch existing dev content (for main branch)
-        if: github.ref_name == 'main'
-        run: |
-          # Try to fetch existing dev site content to preserve it
-          PAGES_URL="https://jjgroenendijk.github.io/cars-reliability/dev"
-          echo "Fetching existing dev content from ${PAGES_URL}..."
-          
-          mkdir -p deploy/dev
-          cd deploy/dev
-          
-          # Use wget to mirror the existing dev site
-          wget --quiet --recursive --no-parent --reject "index.html?*" \
-               --no-host-directories --cut-dirs=2 \
-               --tries=3 --timeout=30 \
-               "${PAGES_URL}/" 2>/dev/null || echo "No existing dev content found"
-          
-          cd ../..
-          echo "Deployment directory contents:"
-          ls -la deploy/
-          ls -la deploy/dev/ 2>/dev/null || echo "No dev/ directory"
-        continue-on-error: true
-      
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'deploy'
+          path: 'site'
       
       - name: Deploy to GitHub Pages
         id: deployment
@@ -194,8 +132,5 @@ jobs:
         run: |
           echo "## Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ github.ref_name }}" = "main" ]; then
-            echo "**Deployed to:** ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "**Deployed to:** ${{ steps.deployment.outputs.page_url }}dev/" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed to:** ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
