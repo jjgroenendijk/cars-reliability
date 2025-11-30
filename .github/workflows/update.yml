@@ -29,9 +29,9 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment
+# Allow only one concurrent deployment per branch
 concurrency:
-  group: "pages"
+  group: "pages-${{ github.ref_name }}"
   cancel-in-progress: false
 
 jobs:
@@ -60,55 +60,169 @@ jobs:
         id: sample
         run: |
           if [ "${{ github.ref_name }}" = "main" ]; then
-            # Start with 10% for testing, increase to 100 after verified
-            echo "DATA_SAMPLE_PERCENT=10" >> $GITHUB_ENV
-            echo "sample=10" >> $GITHUB_OUTPUT
+            echo "DATA_SAMPLE_PERCENT=100" >> $GITHUB_ENV
+            echo "sample=100" >> $GITHUB_OUTPUT
+            echo "Branch: ${{ github.ref_name }}, Sample: 100%"
           else
             echo "DATA_SAMPLE_PERCENT=1" >> $GITHUB_ENV
             echo "sample=1" >> $GITHUB_OUTPUT
+            echo "Branch: ${{ github.ref_name }}, Sample: 1%"
           fi
-          echo "Branch: ${{ github.ref_name }}, Sample: $DATA_SAMPLE_PERCENT%"
       
-      - name: Generate cache key
-        id: cache-key
+      - name: Generate cache keys
+        id: cache-keys
         run: |
           # Cache key based on: branch, week number, and fetch script hash
+          # Each dataset gets its own cache for independent updates
           WEEK=$(date +%Y-W%V)
           SCRIPT_HASH=$(sha256sum src/download.py | cut -c1-8)
-          echo "key=rdw-data-${{ github.ref_name }}-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
-          echo "Cache key: rdw-data-${{ github.ref_name }}-${WEEK}-${SCRIPT_HASH}"
+          BRANCH="${{ github.ref_name }}"
+          echo "inspections=inspections-${BRANCH}-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
+          echo "vehicles=vehicles-${BRANCH}-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
+          echo "fuel=fuel-${BRANCH}-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
+          echo "defects_found=defects_found-${BRANCH}-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
+          echo "defect_codes=defect_codes-${BRANCH}-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
       
-      - name: Restore data cache
+      # Cache restore for each dataset independently
+      - name: Restore inspections cache
         if: inputs.force_fetch != 'true'
-        id: cache-restore
+        id: cache-inspections
         uses: actions/cache/restore@v4
         with:
-          path: data/
-          key: ${{ steps.cache-key.outputs.key }}
+          path: data/inspections.csv
+          key: ${{ steps.cache-keys.outputs.inspections }}
       
-      - name: Fetch data from RDW
-        if: steps.cache-restore.outputs.cache-hit != 'true'
-        run: python src/download.py --all
+      - name: Restore vehicles cache
+        if: inputs.force_fetch != 'true'
+        id: cache-vehicles
+        uses: actions/cache/restore@v4
+        with:
+          path: data/vehicles.csv
+          key: ${{ steps.cache-keys.outputs.vehicles }}
+      
+      - name: Restore fuel cache
+        if: inputs.force_fetch != 'true'
+        id: cache-fuel
+        uses: actions/cache/restore@v4
+        with:
+          path: data/fuel.csv
+          key: ${{ steps.cache-keys.outputs.fuel }}
+      
+      - name: Restore defects_found cache
+        if: inputs.force_fetch != 'true'
+        id: cache-defects-found
+        uses: actions/cache/restore@v4
+        with:
+          path: data/defects_found.csv
+          key: ${{ steps.cache-keys.outputs.defects_found }}
+      
+      - name: Restore defect_codes cache
+        if: inputs.force_fetch != 'true'
+        id: cache-defect-codes
+        uses: actions/cache/restore@v4
+        with:
+          path: data/defect_codes.csv
+          key: ${{ steps.cache-keys.outputs.defect_codes }}
+      
+      # Fetch only datasets that weren't cached
+      - name: Fetch inspections
+        if: steps.cache-inspections.outputs.cache-hit != 'true'
+        run: python src/download.py inspections
         env:
-          DATA_SAMPLE_PERCENT: ${{ env.DATA_SAMPLE_PERCENT }}
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           FETCH_WORKERS: 2
       
-      - name: Save data cache
-        if: steps.cache-restore.outputs.cache-hit != 'true'
+      - name: Fetch vehicles
+        if: steps.cache-vehicles.outputs.cache-hit != 'true'
+        run: python src/download.py vehicles --kentekens-from data/inspections.csv
+        env:
+          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
+          FETCH_WORKERS: 2
+      
+      - name: Fetch fuel
+        if: steps.cache-fuel.outputs.cache-hit != 'true'
+        run: python src/download.py fuel --kentekens-from data/inspections.csv
+        env:
+          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
+          FETCH_WORKERS: 2
+      
+      - name: Fetch defects_found
+        if: steps.cache-defects-found.outputs.cache-hit != 'true'
+        run: python src/download.py defects_found --kentekens-from data/inspections.csv
+        env:
+          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
+          FETCH_WORKERS: 2
+      
+      - name: Fetch defect_codes
+        if: steps.cache-defect-codes.outputs.cache-hit != 'true'
+        run: python src/download.py defect_codes
+        env:
+          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
+      
+      # Save caches for datasets that were fetched
+      - name: Save inspections cache
+        if: steps.cache-inspections.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: data/
-          key: ${{ steps.cache-key.outputs.key }}
+          path: data/inspections.csv
+          key: ${{ steps.cache-keys.outputs.inspections }}
+      
+      - name: Save vehicles cache
+        if: steps.cache-vehicles.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: data/vehicles.csv
+          key: ${{ steps.cache-keys.outputs.vehicles }}
+      
+      - name: Save fuel cache
+        if: steps.cache-fuel.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: data/fuel.csv
+          key: ${{ steps.cache-keys.outputs.fuel }}
+      
+      - name: Save defects_found cache
+        if: steps.cache-defects-found.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: data/defects_found.csv
+          key: ${{ steps.cache-keys.outputs.defects_found }}
+      
+      - name: Save defect_codes cache
+        if: steps.cache-defect-codes.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: data/defect_codes.csv
+          key: ${{ steps.cache-keys.outputs.defect_codes }}
+      
+      - name: Create fetch metadata
+        run: |
+          cat > data/fetch_metadata.json << EOF
+          {
+            "branch": "${{ github.ref_name }}",
+            "sample_percent": ${{ steps.sample.outputs.sample }},
+            "fetched_at": "$(date -Iseconds)",
+            "cache_status": {
+              "inspections": "${{ steps.cache-inspections.outputs.cache-hit == 'true' && 'cached' || 'fetched' }}",
+              "vehicles": "${{ steps.cache-vehicles.outputs.cache-hit == 'true' && 'cached' || 'fetched' }}",
+              "fuel": "${{ steps.cache-fuel.outputs.cache-hit == 'true' && 'cached' || 'fetched' }}",
+              "defects_found": "${{ steps.cache-defects-found.outputs.cache-hit == 'true' && 'cached' || 'fetched' }}",
+              "defect_codes": "${{ steps.cache-defect-codes.outputs.cache-hit == 'true' && 'cached' || 'fetched' }}"
+            }
+          }
+          EOF
       
       - name: Report cache status
         run: |
-          if [ "${{ steps.cache-restore.outputs.cache-hit }}" = "true" ]; then
-            echo "### Cache hit - using cached data" >> $GITHUB_STEP_SUMMARY
-            cat data/fetch_metadata.json >> $GITHUB_STEP_SUMMARY
-          else
-            echo "### Fresh data fetched from RDW" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "### Data Fetch Summary (${{ github.ref_name }} branch)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Dataset | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| inspections | ${{ steps.cache-inspections.outputs.cache-hit == 'true' && 'cached' || 'fetched' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| vehicles | ${{ steps.cache-vehicles.outputs.cache-hit == 'true' && 'cached' || 'fetched' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| fuel | ${{ steps.cache-fuel.outputs.cache-hit == 'true' && 'cached' || 'fetched' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| defects_found | ${{ steps.cache-defects-found.outputs.cache-hit == 'true' && 'cached' || 'fetched' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| defect_codes | ${{ steps.cache-defect-codes.outputs.cache-hit == 'true' && 'cached' || 'fetched' }} |" >> $GITHUB_STEP_SUMMARY
       
       - name: Process data
         run: python src/process_data.py
@@ -130,7 +244,9 @@ jobs:
       
       - name: Build summary
         run: |
-          echo "## Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Complete (${{ github.ref_name }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Sample:** ${{ steps.sample.outputs.sample }}%" >> $GITHUB_STEP_SUMMARY
           echo "**Deployed to:** ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY

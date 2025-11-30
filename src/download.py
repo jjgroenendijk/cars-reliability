@@ -47,29 +47,26 @@ from rdw_client import (
 
 
 # Dataset-specific query configuration
+# Note: No column filtering (select) allowed per requirements.
+# Only filter allowed is voertuigsoort='Personenauto' to exclude trucks.
 DATASET_CONFIGS = {
     "vehicles": {
-        "select": "kenteken,merk,handelsbenaming,voertuigsoort,datum_eerste_toelating,vervaldatum_apk,cilinderinhoud,aantal_cilinders,massa_rijklaar,eerste_kleur,inrichting",
         "extra_where": " AND voertuigsoort='Personenauto'",
         "limit_mult": 1,
     },
     "fuel": {
-        "select": None,
-        "extra_where": " AND brandstof_volgnummer='1'",
+        "extra_where": "",
         "limit_mult": 1,
     },
     "defects_found": {
-        "select": None,
         "extra_where": "",
         "limit_mult": 20,  # A vehicle can have many defects
     },
     "inspections": {
-        "select": "kenteken,meld_datum_door_keuringsinstantie,soort_melding_ki_omschrijving,vervaldatum_keuring",
-        "extra_where": " AND soort_erkenning_omschrijving='APK Lichte voertuigen'",
+        "extra_where": "",
         "limit_mult": 10,  # Multiple inspections per vehicle
     },
     "defect_codes": {
-        "select": None,
         "extra_where": "",
         "limit_mult": 1,
     },
@@ -133,8 +130,6 @@ def fetch_dataset(
             where = f"kenteken IN ({kenteken_list}){config['extra_where']}"
             
             kwargs = {"where": where, "limit": batch_size * config["limit_mult"]}
-            if config["select"]:
-                kwargs["select"] = config["select"]
             
             return client.get(DATASETS[dataset], **kwargs)
         
@@ -159,12 +154,9 @@ def fetch_dataset(
                 "offset": offset,
                 "order": "kenteken",
             }
-            if config["select"]:
-                kwargs["select"] = config["select"]
+            # Only vehicles dataset has a filter (Personenauto only)
             if config["extra_where"]:
-                # For inspections, we need a base WHERE clause
-                if dataset == "inspections":
-                    kwargs["where"] = "soort_erkenning_omschrijving='APK Lichte voertuigen'"
+                kwargs["where"] = config["extra_where"].lstrip(" AND ")
             
             return client.get(DATASETS[dataset], **kwargs)
         
