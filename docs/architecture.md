@@ -96,4 +96,14 @@ The defects dataset is smaller and more focused. Starting there ensures we only 
 
 - **Rate limiting**: Without an app token, API calls are throttled
 - **Data freshness**: RDW updates daily, but we only fetch weekly
-- **Sample size**: MVP limits to 100k defect records for speed
+
+## Data Sampling
+
+The `DATA_SAMPLE_PERCENT` environment variable controls how much of the full dataset to fetch:
+
+| Sample | Records | Use Case |
+|--------|---------|----------|
+| 1% | ~250k defects | Dev branch, fast iteration |
+| 100% | ~25M defects | Main branch, production |
+
+The website displays a warning banner when viewing sample data.

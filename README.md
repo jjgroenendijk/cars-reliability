@@ -53,6 +53,15 @@ See the [docs/](docs/index.md) folder for detailed documentation:
 - [Development](docs/development.md) - Local setup guide
 - [Future Plans](docs/future.md) - Roadmap and improvements
 
+## Branches
+
+| Branch | Data Sample | Purpose |
+|--------|-------------|--------|
+| `main` | 100% (~25M records) | Production - deployed to GitHub Pages |
+| `dev` | 1% (~250k records) | Development - fast iteration |
+
+The `DATA_SAMPLE_PERCENT` environment variable controls how much data to fetch.
+
 ## Local Development
 
 ```bash
@@ -63,10 +72,18 @@ source venv/bin/activate  # Linux/Mac
 # Install dependencies
 pip install -r requirements.txt
 
-# Run pipeline
-python src/fetch_data.py
+# Run pipeline (1% sample for speed)
+DATA_SAMPLE_PERCENT=1 python src/fetch_data.py
 python src/process_data.py
 python src/generate_site.py
+
+# Preview the site
+cd site && python -m http.server 8000
+```
+
+For full dataset (takes longer):
+```bash
+DATA_SAMPLE_PERCENT=100 python src/fetch_data.py
 ```
 
 ## License

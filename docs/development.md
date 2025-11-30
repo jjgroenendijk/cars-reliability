@@ -22,11 +22,20 @@ source venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 ```
 
+## Branches
+
+| Branch | Data Sample | Purpose |
+|--------|-------------|--------|
+| `main` | 100% | Production - deployed to GitHub Pages |
+| `dev` | 1% | Development - fast iteration |
+
+Work on `dev` for quick feedback, merge to `main` for production.
+
 ## Running the Pipeline
 
 ```bash
-# 1. Fetch data from RDW (takes a few minutes)
-python src/fetch_data.py
+# 1. Fetch data from RDW (use 1% sample for dev)
+DATA_SAMPLE_PERCENT=1 python src/fetch_data.py
 
 # 2. Process data and calculate metrics
 python src/process_data.py
@@ -67,23 +76,28 @@ src/
 
 ### Environment Variables
 
-| Variable | Description | Required |
+| Variable | Description | Default |
 |----------|-------------|----------|
-| `RDW_APP_TOKEN` | Socrata app token for higher rate limits | No |
+| `DATA_SAMPLE_PERCENT` | Percentage of full dataset to fetch (1-100) | 100 |
+| `RDW_APP_TOKEN` | Socrata app token for higher rate limits | None |
 
 Get an app token at [opendata.rdw.nl](https://opendata.rdw.nl/) (free registration).
 
-### Adjusting Limits
+### Data Sampling
 
-In `src/fetch_data.py`:
-```python
-# Increase for more comprehensive data
-defects_df = fetch_defects_found(client, limit=500000)
+```bash
+# Quick dev run (1% sample, ~250k records)
+DATA_SAMPLE_PERCENT=1 python src/fetch_data.py
+
+# Full production run (~25M records, takes longer)
+DATA_SAMPLE_PERCENT=100 python src/fetch_data.py
 ```
+
+### Adjusting Thresholds
 
 In `src/process_data.py`:
 ```python
-# Lower threshold includes more models
+# Lower threshold includes more models (default is 50)
 model_stats = calculate_defects_by_model(vehicles, defects, min_vehicles=20)
 ```
 
