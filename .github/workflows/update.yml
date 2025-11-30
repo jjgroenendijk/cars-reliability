@@ -41,7 +41,7 @@ jobs:
     
     environment:
       name: ${{ github.ref_name == 'main' && 'github-pages' || 'dev' }}
-      url: ${{ github.ref_name == 'main' && steps.deployment.outputs.page_url || '' }}
+      url: ${{ steps.deployment.outputs.page_url }}${{ github.ref_name != 'main' && 'dev/' || '' }}
     
     steps:
       - name: Checkout repository
@@ -117,31 +117,85 @@ jobs:
         run: python src/generate_site.py
       
       - name: Setup Pages
-        if: github.ref_name == 'main'
         uses: actions/configure-pages@v4
       
-      - name: Upload artifact
+      - name: Prepare deployment directory
+        run: |
+          mkdir -p deploy
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            # Main branch deploys to root
+            cp -r site/* deploy/
+          else
+            # Dev branch deploys to /dev/ subdirectory
+            mkdir -p deploy/dev
+            cp -r site/* deploy/dev/
+          fi
+      
+      - name: Fetch existing Pages content (for dev branch)
+        if: github.ref_name != 'main'
+        run: |
+          # Try to fetch existing main site content to preserve it
+          PAGES_URL="https://jjgroenendijk.github.io/cars-reliability"
+          echo "Fetching existing Pages content from ${PAGES_URL}..."
+          
+          cd deploy
+          
+          # Use wget to mirror the existing site (excluding /dev/)
+          wget --quiet --recursive --no-parent --reject "index.html?*" \
+               --exclude-directories="/cars-reliability/dev" \
+               --no-host-directories --cut-dirs=1 \
+               --tries=3 --timeout=30 \
+               "${PAGES_URL}/" 2>/dev/null || echo "No existing Pages content found (first deployment?)"
+          
+          # Remove any accidentally downloaded dev content (we'll add our own)
+          rm -rf dev 2>/dev/null || true
+          
+          # Re-add the dev content we generated
+          mkdir -p dev
+          cp -r ../site/* dev/
+          
+          cd ..
+          echo "Deployment directory contents:"
+          ls -la deploy/
+        continue-on-error: true
+      
+      - name: Fetch existing dev content (for main branch)
         if: github.ref_name == 'main'
+        run: |
+          # Try to fetch existing dev site content to preserve it
+          PAGES_URL="https://jjgroenendijk.github.io/cars-reliability/dev"
+          echo "Fetching existing dev content from ${PAGES_URL}..."
+          
+          mkdir -p deploy/dev
+          cd deploy/dev
+          
+          # Use wget to mirror the existing dev site
+          wget --quiet --recursive --no-parent --reject "index.html?*" \
+               --no-host-directories --cut-dirs=2 \
+               --tries=3 --timeout=30 \
+               "${PAGES_URL}/" 2>/dev/null || echo "No existing dev content found"
+          
+          cd ../..
+          echo "Deployment directory contents:"
+          ls -la deploy/
+          ls -la deploy/dev/ 2>/dev/null || echo "No dev/ directory"
+        continue-on-error: true
+      
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'site'
+          path: 'deploy'
       
       - name: Deploy to GitHub Pages
-        if: github.ref_name == 'main'
         id: deployment
         uses: actions/deploy-pages@v4
       
-      - name: Dev build summary
-        if: github.ref_name == 'dev'
+      - name: Build summary
         run: |
-          echo "## Dev Build Complete" >> $GITHUB_STEP_SUMMARY
-          echo "Built with ${{ steps.sample.outputs.sample }}% data sample" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "To preview locally:" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "git checkout dev" >> $GITHUB_STEP_SUMMARY
-          echo "DATA_SAMPLE_PERCENT=1 python src/download.py --all" >> $GITHUB_STEP_SUMMARY
-          echo "python src/process_data.py" >> $GITHUB_STEP_SUMMARY
-          echo "python src/generate_site.py" >> $GITHUB_STEP_SUMMARY
-          echo "cd site && python -m http.server 8000" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "**Deployed to:** ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Deployed to:** ${{ steps.deployment.outputs.page_url }}dev/" >> $GITHUB_STEP_SUMMARY
+          fi
