@@ -91,7 +91,7 @@ jobs:
         env:
           DATA_SAMPLE_PERCENT: ${{ env.DATA_SAMPLE_PERCENT }}
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
-          FETCH_WORKERS: 4
+          FETCH_WORKERS: 8
       
       - name: Save data cache
         if: steps.cache-restore.outputs.cache-hit != 'true'
