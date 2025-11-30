@@ -27,6 +27,11 @@ from sodapy import Socrata
 from tqdm import tqdm
 
 
+def log(message: str) -> None:
+    """Print a message and flush immediately (important for CI)."""
+    print(message, flush=True)
+
+
 def is_ci() -> bool:
     """Check if running in a CI environment."""
     return os.environ.get("CI", "").lower() == "true" or os.environ.get("GITHUB_ACTIONS") == "true"
@@ -48,12 +53,14 @@ class CIProgressLogger:
         self.log_interval = log_interval
         self.count = 0
         self.enabled = is_ci()
+        self.start_time = time.time()
     
     def update(self, n: int = 1):
         self.count += n
         if self.enabled and (self.count % self.log_interval == 0 or self.count == self.total):
             pct = int(self.count / self.total * 100)
-            print(f"  {self.desc}: {self.count}/{self.total} ({pct}%)")
+            elapsed = time.time() - self.start_time
+            log(f"  {self.desc}: {self.count}/{self.total} ({pct}%) - {elapsed:.0f}s elapsed")
 
 
 def retry_with_backoff(max_retries: int = 3, base_delay: float = 1.0):
@@ -69,7 +76,7 @@ def retry_with_backoff(max_retries: int = 3, base_delay: float = 1.0):
                     last_exception = e
                     if attempt < max_retries - 1:
                         delay = base_delay * (2 ** attempt)
-                        print(f"  Retry {attempt + 1}/{max_retries} after {delay}s: {e}")
+                        log(f"  Retry {attempt + 1}/{max_retries} after {delay}s: {e}")
                         time.sleep(delay)
             raise last_exception
         return wrapper
@@ -110,7 +117,7 @@ def get_dataset_size(client, dataset_id: str) -> int:
             _dataset_size_cache[dataset_id] = count
             return count
     except Exception as e:
-        print(f"  Warning: Could not get dataset size: {e}")
+        log(f"  Warning: Could not get dataset size: {e}")
     
     # Fallback to hardcoded estimate
     return 25_000_000
@@ -134,9 +141,9 @@ def get_client() -> Socrata:
     """Create Socrata client for RDW API with app token if available."""
     app_token = os.environ.get("RDW_APP_TOKEN")
     if app_token:
-        print(f"  Using app token for higher rate limits")
+        log("  Using app token for higher rate limits")
     else:
-        print("  Warning: No app token - requests will be throttled")
+        log("  Warning: No app token - requests will be throttled")
     return Socrata(RDW_DOMAIN, app_token)
 
 
@@ -159,7 +166,7 @@ def fetch_defects_found(client: Socrata, limit: int | None = None) -> pd.DataFra
         limit = get_data_limit(client)
     
     num_workers = get_num_workers()
-    print(f"Fetching defects found ({sample_percent}% of {total_size:,} = {limit:,} records, {num_workers} workers)...")
+    log(f"Fetching defects found ({sample_percent}% of {total_size:,} = {limit:,} records, {num_workers} workers)...")
     
     # Use pagination for large datasets
     page_size = 50000  # Socrata recommended max per request
@@ -195,7 +202,7 @@ def fetch_defects_found(client: Socrata, limit: int | None = None) -> pd.DataFra
             for future in as_completed(futures):
                 offset, results, error = future.result()
                 if error:
-                    print(f"\n  Error at offset {offset}: {error}")
+                    log(f"\n  Error at offset {offset}: {error}")
                 elif results:
                     with results_lock:
                         all_results.extend(results)
@@ -203,7 +210,7 @@ def fetch_defects_found(client: Socrata, limit: int | None = None) -> pd.DataFra
                 ci_logger.update(1)
     
     df = pd.DataFrame.from_records(all_results)
-    print(f"  Fetched {len(df):,} defect records")
+    log(f"  Fetched {len(df):,} defect records")
     return df
 
 
@@ -224,7 +231,7 @@ def fetch_vehicles_for_kentekens(
         DataFrame with vehicle data
     """
     num_workers = get_num_workers()
-    print(f"Fetching vehicle info for {len(kentekens)} unique kentekens ({num_workers} workers)...")
+    log(f"Fetching vehicle info for {len(kentekens)} unique kentekens ({num_workers} workers)...")
     
     columns = [
         "kenteken",
@@ -280,7 +287,7 @@ def fetch_vehicles_for_kentekens(
             for future in as_completed(futures):
                 batch_idx, results, error = future.result()
                 if error:
-                    print(f"\n  Warning: batch {batch_idx} failed after retries: {error}")
+                    log(f"\n  Warning: batch {batch_idx} failed after retries: {error}")
                 else:
                     with results_lock:
                         all_results.extend(results)
@@ -288,7 +295,7 @@ def fetch_vehicles_for_kentekens(
                 ci_logger.update(1)
     
     df = pd.DataFrame.from_records(all_results)
-    print(f"  Fetched info for {len(df)} passenger cars")
+    log(f"  Fetched info for {len(df)} passenger cars")
     return df
 
 
@@ -302,7 +309,7 @@ def fetch_defect_codes(client: Socrata) -> pd.DataFrame:
     Returns:
         DataFrame with defect codes
     """
-    print("Fetching defect codes...")
+    log("Fetching defect codes...")
     
     results = client.get(
         DATASETS["defect_codes"],
@@ -310,7 +317,7 @@ def fetch_defect_codes(client: Socrata) -> pd.DataFrame:
     )
     
     df = pd.DataFrame.from_records(results)
-    print(f"  Fetched {len(df)} defect codes")
+    log(f"  Fetched {len(df)} defect codes")
     return df
 
 
@@ -331,7 +338,7 @@ def fetch_fuel_for_kentekens(
         DataFrame with fuel data
     """
     num_workers = get_num_workers()
-    print(f"Fetching fuel info for {len(kentekens)} unique kentekens ({num_workers} workers)...")
+    log(f"Fetching fuel info for {len(kentekens)} unique kentekens ({num_workers} workers)...")
     
     all_results = []
     results_lock = Lock()
@@ -372,7 +379,7 @@ def fetch_fuel_for_kentekens(
             for future in as_completed(futures):
                 batch_idx, results, error = future.result()
                 if error:
-                    print(f"\n  Warning: fuel batch {batch_idx} failed after retries: {error}")
+                    log(f"\n  Warning: fuel batch {batch_idx} failed after retries: {error}")
                 else:
                     with results_lock:
                         all_results.extend(results)
@@ -380,7 +387,7 @@ def fetch_fuel_for_kentekens(
                 ci_logger.update(1)
     
     df = pd.DataFrame.from_records(all_results)
-    print(f"  Fetched fuel info for {len(df)} vehicles")
+    log(f"  Fetched fuel info for {len(df)} vehicles")
     return df
 
 
@@ -404,7 +411,7 @@ def fetch_inspections_for_kentekens(
         DataFrame with inspection data including pass/fail status
     """
     num_workers = get_num_workers()
-    print(f"Fetching inspection results for {len(kentekens)} unique kentekens ({num_workers} workers)...")
+    log(f"Fetching inspection results for {len(kentekens)} unique kentekens ({num_workers} workers)...")
     
     all_results = []
     results_lock = Lock()
@@ -446,7 +453,7 @@ def fetch_inspections_for_kentekens(
             for future in as_completed(futures):
                 batch_idx, results, error = future.result()
                 if error:
-                    print(f"\n  Warning: inspection batch {batch_idx} failed after retries: {error}")
+                    log(f"\n  Warning: inspection batch {batch_idx} failed after retries: {error}")
                 else:
                     with results_lock:
                         all_results.extend(results)
@@ -454,7 +461,7 @@ def fetch_inspections_for_kentekens(
                 ci_logger.update(1)
     
     df = pd.DataFrame.from_records(all_results)
-    print(f"  Fetched {len(df)} inspection records")
+    log(f"  Fetched {len(df)} inspection records")
     return df
 
 
@@ -466,11 +473,11 @@ def main():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     
     sample_percent = get_sample_percent()
-    print(f"\n{'='*60}")
-    print(f"DATA FETCH: {sample_percent}% of full dataset")
+    log(f"\n{'='*60}")
+    log(f"DATA FETCH: {sample_percent}% of full dataset")
     if is_ci():
-        print("(CI mode: progress updates every 30s)")
-    print(f"{'='*60}\n")
+        log("(CI mode: progress bar disabled, showing periodic updates)")
+    log(f"{'='*60}\n")
     
     client = get_client()
     
@@ -486,14 +493,26 @@ def main():
     fuel_df = fetch_fuel_for_kentekens(client, kentekens)
     inspections_df = fetch_inspections_for_kentekens(client, kentekens)
     
-    # Save to CSV
+    # Save to CSV with progress logging
+    log("\nSaving data to CSV files...")
+    
+    log(f"  Writing vehicles.csv ({len(vehicles_df):,} records)...")
     vehicles_df.to_csv(DATA_DIR / "vehicles.csv", index=False)
+    
+    log(f"  Writing defects_found.csv ({len(defects_df):,} records)...")
     defects_df.to_csv(DATA_DIR / "defects_found.csv", index=False)
+    
+    log(f"  Writing defect_codes.csv ({len(defect_codes_df):,} records)...")
     defect_codes_df.to_csv(DATA_DIR / "defect_codes.csv", index=False)
+    
+    log(f"  Writing fuel.csv ({len(fuel_df):,} records)...")
     fuel_df.to_csv(DATA_DIR / "fuel.csv", index=False)
+    
+    log(f"  Writing inspections.csv ({len(inspections_df):,} records)...")
     inspections_df.to_csv(DATA_DIR / "inspections.csv", index=False)
     
     # Save metadata about the fetch
+    log("  Writing fetch_metadata.json...")
     full_dataset_size = get_dataset_size(client, DATASETS["defects_found"])
     metadata = {
         "sample_percent": sample_percent,
@@ -506,13 +525,13 @@ def main():
     with open(DATA_DIR / "fetch_metadata.json", "w") as f:
         json.dump(metadata, f, indent=2)
     
-    print(f"\nData saved to {DATA_DIR}/")
-    print(f"  - vehicles.csv: {len(vehicles_df):,} records")
-    print(f"  - defects_found.csv: {len(defects_df):,} records")
-    print(f"  - defect_codes.csv: {len(defect_codes_df):,} records")
-    print(f"  - fuel.csv: {len(fuel_df):,} records")
-    print(f"  - inspections.csv: {len(inspections_df):,} records")
-    print(f"  - fetch_metadata.json: sample={sample_percent}%")
+    log(f"\nAll data saved to {DATA_DIR}/")
+    log(f"  - vehicles.csv: {len(vehicles_df):,} records")
+    log(f"  - defects_found.csv: {len(defects_df):,} records")
+    log(f"  - defect_codes.csv: {len(defect_codes_df):,} records")
+    log(f"  - fuel.csv: {len(fuel_df):,} records")
+    log(f"  - inspections.csv: {len(inspections_df):,} records")
+    log(f"  - fetch_metadata.json: sample={sample_percent}%")
     
     client.close()
 
