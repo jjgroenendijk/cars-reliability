@@ -1,6 +1,6 @@
 # Dutch Car Reliability Analysis
 
-[![Update Data](https://github.com/jjgroenendijk/cars-reliability/actions/workflows/update-parallel.yml/badge.svg)](https://github.com/jjgroenendijk/cars-reliability/actions/workflows/update-parallel.yml)
+[![Update Data](https://github.com/jjgroenendijk/cars-reliability/actions/workflows/update.yml/badge.svg)](https://github.com/jjgroenendijk/cars-reliability/actions/workflows/update.yml)
 
 **[View the Live Site](https://jjgroenendijk.nl/cars-reliability/)**
 
@@ -39,8 +39,7 @@ cars/
 ├── site/                   # Generated website
 ├── docs/                   # Documentation
 └── .github/workflows/
-    ├── update-parallel.yml # Parallel fetch workflow (recommended)
-    └── update.yml          # Single-job workflow
+    └── update.yml          # CI/CD workflow (per-dataset caching)
 ```
 
 ## Documentation

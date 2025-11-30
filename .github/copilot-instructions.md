@@ -63,15 +63,17 @@ cd site && python -m http.server 8000
 ## CI/CD
 
 GitHub Actions workflow (`.github/workflows/update.yml`):
-- Runs weekly on Sundays and on push to `src/` or workflow files
-- Commits generated `site/` files and deploys to GitHub Pages
-- Uses `[skip ci]` in commit messages to avoid infinite loops
+- Runs weekly on Sundays at midnight UTC
+- Runs on push to `main` branch when `src/` or workflow files change
+- Uses per-dataset caching with keys: `{dataset}-{sample}pct-{week}-{script-hash}`
+- Deploys generated `site/` to GitHub Pages
 
-## Branch Workflow
+## Sample Percentage
 
-- All changes must be tested and verified on the `dev` branch before merging to `main`
-- Run the full pipeline locally on `dev` to catch issues before they affect production
-- CI/CD runs on push to validate changes
+- Default: 100% (full dataset)
+- Adjustable via workflow_dispatch input: 1%, 10%, 50%, or 100%
+- Use `DATA_SAMPLE_PERCENT=1` locally for quick testing
+- Run the full pipeline locally before pushing to catch issues
 
 ## Style Guidelines
 

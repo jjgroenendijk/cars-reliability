@@ -23,30 +23,30 @@ pip install -r requirements.txt
 
 ## Running the Pipeline
 
-### Option 1: Pipeline (all datasets)
+### Option 1: All datasets at once
 
 ```bash
-# Fetch all datasets with 1% sample
-DATA_SAMPLE_PERCENT=1 python src/fetch_pipeline.py
+# Fetch all datasets with 1% sample (quick test)
+DATA_SAMPLE_PERCENT=1 python src/download.py --all
 
 # Process and generate
 python src/process_data.py
 python src/generate_site.py
 ```
 
-### Option 2: Individual datasets (for parallel CI)
+### Option 2: Individual datasets
 
 ```bash
 # 1. Fetch inspections first (primary dataset)
-DATA_SAMPLE_PERCENT=1 python src/fetch_single.py inspections
+DATA_SAMPLE_PERCENT=1 python src/download.py inspections
 
 # 2. Fetch dependent datasets using kentekens from inspections
-DATA_SAMPLE_PERCENT=1 python src/fetch_single.py vehicles --kentekens-from data/inspections.csv
-DATA_SAMPLE_PERCENT=1 python src/fetch_single.py fuel --kentekens-from data/inspections.csv
-DATA_SAMPLE_PERCENT=1 python src/fetch_single.py defects_found --kentekens-from data/inspections.csv
+DATA_SAMPLE_PERCENT=1 python src/download.py vehicles --kentekens-from data/inspections.csv
+DATA_SAMPLE_PERCENT=1 python src/download.py fuel --kentekens-from data/inspections.csv
+DATA_SAMPLE_PERCENT=1 python src/download.py defects_found --kentekens-from data/inspections.csv
 
 # 3. Fetch reference table
-python src/fetch_single.py defect_codes
+python src/download.py defect_codes
 
 # 4. Process and generate
 python src/process_data.py
@@ -71,8 +71,7 @@ python -m http.server 8000
 
 ```text
 src/
-├── fetch_pipeline.py  # Orchestrator: fetch all datasets
-├── fetch_single.py    # Fetch single dataset (parallel CI)
+├── download.py        # Unified data fetching script
 ├── rdw_client.py      # Shared utilities (API, streaming CSV)
 ├── process_data.py    # Data processing and metrics
 ├── generate_site.py   # Template copying
@@ -110,11 +109,11 @@ source .env && python src/fetch_pipeline.py
 ### Data Sampling
 
 ```bash
-# Quick dev run (1% sample, ~245k records)
-DATA_SAMPLE_PERCENT=1 python src/fetch_pipeline.py
+# Quick local test (1% sample, ~245k records)
+DATA_SAMPLE_PERCENT=1 python src/download.py --all
 
 # Full production run (~24.5M records, takes ~2-3 hours)
-DATA_SAMPLE_PERCENT=100 python src/fetch_pipeline.py
+DATA_SAMPLE_PERCENT=100 python src/download.py --all
 ```
 
 ## Testing
@@ -128,7 +127,7 @@ python src/test_streaming_csv.py
 To verify the full pipeline:
 
 ```bash
-DATA_SAMPLE_PERCENT=1 python src/fetch_pipeline.py
+DATA_SAMPLE_PERCENT=1 python src/download.py --all
 python src/process_data.py
 python src/generate_site.py
 
@@ -163,8 +162,11 @@ No files are committed - the site is built fresh on each deploy.
 ### Triggering a Refresh
 
 ```bash
-# Manually trigger the update workflow
-gh workflow run update-parallel.yml
+# Manually trigger the update workflow (defaults to 100%)
+gh workflow run update.yml
+
+# Trigger with specific sample percentage for testing
+gh workflow run update.yml -f sample_percent=1
 
 # Watch progress
 gh run watch
@@ -188,6 +190,7 @@ If you see 429 errors, the built-in retry logic will handle transient failures. 
 
 To force a fresh data fetch in GitHub Actions:
 
-1. Go to Actions -> "Update Car Reliability Data (Parallel)" -> "Run workflow"
-2. Check the "Force fresh data fetch" checkbox
-3. Click "Run workflow"
+1. Go to Actions -> "Update Car Reliability Data" -> "Run workflow"
+2. Select sample percentage (1%, 10%, 50%, or 100%)
+3. Check the "Force fresh data fetch" checkbox
+4. Click "Run workflow"

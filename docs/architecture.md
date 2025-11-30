@@ -20,8 +20,7 @@
 ```
 cars/
 ├── src/                    # Python source code
-│   ├── fetch_pipeline.py   # Orchestrator: fetch all datasets
-│   ├── fetch_single.py     # Fetch single dataset (parallel CI)
+│   ├── download.py         # Unified data fetching script
 │   ├── rdw_client.py       # Shared utilities (API, streaming CSV)
 │   ├── process_data.py     # Metrics calculation
 │   ├── generate_site.py    # Site generation
@@ -41,23 +40,25 @@ cars/
 │       └── model_reliability.json
 ├── docs/                   # Documentation
 └── .github/workflows/
-    ├── update-parallel.yml # Parallel fetch (recommended)
-    └── update.yml          # Single-job workflow
+    └── update.yml          # CI/CD workflow (per-dataset caching)
 ```
 
 ## Data Flow
 
-### 1. Fetch (`src/fetch_pipeline.py` or `src/fetch_single.py`)
+### 1. Fetch (`src/download.py`)
 
-Two modes of operation:
+Unified script for fetching data:
 
-**Pipeline mode** (`fetch_pipeline.py`):
-- Fetches all datasets in sequence
-- Good for local development
+**All datasets at once:**
+```bash
+python src/download.py --all
+```
 
-**Parallel mode** (`fetch_single.py`):
-- Fetches one dataset at a time
-- Used by CI for parallel jobs
+**Individual datasets (for CI per-dataset caching):**
+```bash
+python src/download.py inspections
+python src/download.py vehicles --kentekens-from data/inspections.csv
+```
 
 ```
 Stage 1 (parallel):
@@ -91,20 +92,15 @@ Key features:
 
 ### 4. Deploy (GitHub Actions)
 
-```
-fetch-inspections ──┐
-                    ├──▶ process-and-deploy ──▶ GitHub Pages
-fetch-defect-codes ─┤
-                    │
-fetch-dependent ────┘
-  ├── vehicles
-  ├── fuel
-  └── defects_found
+Single workflow with per-dataset caching:
+
+```text
+Restore caches → Fetch missing datasets → Save caches → Process → Generate → Deploy
 ```
 
-- **Parallel runners**: Up to 5 concurrent jobs
-- **Per-dataset caching**: Only refetch changed datasets
-- **Artifact handoff**: CSVs passed between jobs
+- **Per-dataset caching**: Each dataset cached independently
+- **Sample percentage**: Adjustable via workflow input (1%, 10%, 50%, 100%)
+- **Weekly refresh**: Scheduled run every Sunday at midnight UTC
 
 ## Key Design Decisions
 
@@ -112,12 +108,13 @@ fetch-dependent ────┘
 
 Starting from defects creates **sample bias** - we only see vehicles that failed. Starting from inspections gives us ALL results (pass and fail), enabling accurate pass rate calculations.
 
-### Why parallel fetching?
+### Why per-dataset caching?
 
-The RDW API is slow (~2-3 hours for full dataset). Parallel jobs with separate caches:
-- Run fetches concurrently on different runners
-- Cache datasets independently
-- Resume faster on partial failures
+The RDW API is slow (~2-3 hours for full dataset). Per-dataset caching allows:
+
+- Independent cache invalidation per dataset
+- Faster recovery when only one dataset needs refresh
+- Efficient use of GitHub Actions cache
 
 ### Why streaming writes?
 
@@ -146,7 +143,8 @@ The fetch scripts include exponential backoff retry for API calls:
 
 GitHub Actions caches fetched data to speed up repeated runs:
 
-- Cache key: `{dataset}-{branch}-{week}-{script-hash}`
+- Cache key: `{dataset}-{sample}pct-{week}-{script-hash}`
+- Each dataset is cached independently
 - Fresh data is fetched weekly (cache key includes week number)
 - Script changes invalidate cache automatically
 - Manual workflow dispatch has "force fetch" option to bypass cache
@@ -159,9 +157,9 @@ Dataset size is queried dynamically from the API at runtime using `SELECT count(
 
 | Sample | Records | Use Case |
 |--------|---------|----------|
-| 1% | ~245k defects | Dev branch, fast iteration |
+| 1% | ~245k defects | Quick local testing |
 | 10% | ~2.5M defects | Testing full pipeline |
-| 100% | ~24.5M defects | Main branch, production |
+| 100% | ~24.5M defects | Production (weekly scheduled runs) |
 
 ## Performance
 

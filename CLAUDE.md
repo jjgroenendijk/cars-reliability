@@ -125,29 +125,22 @@ Metrics require 100 vehicles for brands, 50 for models to ensure statistical val
 
 Get an app token at opendata.rdw.nl (free registration).
 
-## CI/CD and Branching
-
-**Branch workflow:**
-- `dev` - Development branch (1% sample, validates changes)
-- `main` - Production branch (100% sample, deploys to GitHub Pages)
-
-**GitHub Pages Deployment:**
-
-- Both branches deploy to: <https://jjgroenendijk.nl/cars-reliability/>
-- Deployments overwrite each other (whichever runs last is visible)
-- `main` deploys 100% sample data (production)
-- `dev` deploys 1% sample data (testing)
+## CI/CD
 
 **GitHub Actions workflow** (`.github/workflows/update.yml`):
 
-- Runs weekly on Sundays at midnight UTC (default branch only, typically `main`)
-- Runs on push to `src/` or workflow files (both `main` and `dev` branches)
-- Uses per-dataset caching with keys: `{dataset}-{branch}-{week}-{script-hash}`
-- Both branches run full pipeline: fetch → process → generate → deploy
-- Cache is branch-specific, so `dev` and `main` maintain separate cached datasets
+- Runs weekly on Sundays at midnight UTC
+- Runs on push to `src/` or workflow files on `main` branch
+- Uses per-dataset caching with keys: `{dataset}-{sample}pct-{week}-{script-hash}`
+- Deploys to GitHub Pages: <https://jjgroenendijk.nl/cars-reliability/>
+
+**Sample percentage:**
+- Default: 100% (full dataset for production)
+- Adjustable via manual workflow trigger: 1%, 10%, 50%, or 100%
+- Use lower percentages for quick testing
 
 **Testing changes:**
-All changes must be tested on `dev` branch first. Since both branches deploy, the `dev` deployment will temporarily overwrite production until `main` runs again. For safer testing, run the full pipeline locally to catch issues before pushing to `dev`.
+Run the full pipeline locally with `DATA_SAMPLE_PERCENT=1` to catch issues before pushing to `main`.
 
 ## Code Style
 
