@@ -80,8 +80,23 @@ src/
 |----------|-------------|----------|
 | `DATA_SAMPLE_PERCENT` | Percentage of full dataset to fetch (1-100) | 100 |
 | `RDW_APP_TOKEN` | Socrata app token for higher rate limits | None |
+| `FETCH_WORKERS` | Number of parallel threads for batch fetching | 4 |
 
 Get an app token at [opendata.rdw.nl](https://opendata.rdw.nl/) (free registration).
+
+### Using an App Token Locally
+
+Create a `.env` file (already in `.gitignore`):
+
+```bash
+APP_Token=your_app_token_here
+```
+
+Then run with the token:
+
+```bash
+source .env && RDW_APP_TOKEN=$APP_Token python src/fetch_data.py
+```
 
 ### Data Sampling
 

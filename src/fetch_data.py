@@ -7,14 +7,17 @@ Datasets:
 - Gebreken (hx2c-gt7k): Defect reference table
 
 Environment variables:
-- RDW_APP_TOKEN: Optional Socrata app token for higher rate limits
+- RDW_APP_TOKEN: Socrata app token for higher rate limits (recommended)
 - DATA_SAMPLE_PERCENT: Percentage of data to fetch (1-100, default 100)
+- FETCH_WORKERS: Number of parallel workers for batch fetching (default 4)
 """
 
 import os
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import wraps
 from pathlib import Path
+from threading import Lock
 
 import pandas as pd
 from sodapy import Socrata
@@ -39,6 +42,11 @@ def retry_with_backoff(max_retries: int = 3, base_delay: float = 1.0):
             raise last_exception
         return wrapper
     return decorator
+
+
+def get_num_workers() -> int:
+    """Get the number of parallel workers for batch fetching."""
+    return int(os.environ.get("FETCH_WORKERS", "4"))
 
 # RDW Open Data domain
 RDW_DOMAIN = "opendata.rdw.nl"
@@ -71,9 +79,12 @@ def get_data_limit() -> int:
 
 
 def get_client() -> Socrata:
-    """Create Socrata client for RDW API."""
-    # App token is optional but recommended for higher rate limits
+    """Create Socrata client for RDW API with app token if available."""
     app_token = os.environ.get("RDW_APP_TOKEN")
+    if app_token:
+        print(f"  Using app token for higher rate limits")
+    else:
+        print("  Warning: No app token - requests will be throttled")
     return Socrata(RDW_DOMAIN, app_token)
 
 
@@ -110,7 +121,7 @@ def fetch_vehicles_for_kentekens(
     batch_size: int = 1000
 ) -> pd.DataFrame:
     """
-    Fetch vehicle info for specific license plates.
+    Fetch vehicle info for specific license plates using parallel requests.
     
     Args:
         client: Socrata client
@@ -120,7 +131,8 @@ def fetch_vehicles_for_kentekens(
     Returns:
         DataFrame with vehicle data
     """
-    print(f"Fetching vehicle info for {len(kentekens)} unique kentekens...")
+    num_workers = get_num_workers()
+    print(f"Fetching vehicle info for {len(kentekens)} unique kentekens ({num_workers} workers)...")
     
     columns = [
         "kenteken",
@@ -137,8 +149,15 @@ def fetch_vehicles_for_kentekens(
     ]
     
     all_results = []
+    results_lock = Lock()
     unique_kentekens = list(set(kentekens))
     total_batches = (len(unique_kentekens) + batch_size - 1) // batch_size
+    
+    # Create batches upfront
+    batches = [
+        unique_kentekens[i:i + batch_size] 
+        for i in range(0, len(unique_kentekens), batch_size)
+    ]
     
     @retry_with_backoff(max_retries=3, base_delay=2.0)
     def fetch_batch(batch_kentekens):
@@ -150,15 +169,29 @@ def fetch_vehicles_for_kentekens(
             limit=batch_size,
         )
     
+    def process_batch(batch_idx_and_data):
+        batch_idx, batch = batch_idx_and_data
+        try:
+            results = fetch_batch(batch)
+            return (batch_idx, results, None)
+        except Exception as e:
+            return (batch_idx, [], str(e))
+    
     with tqdm(total=total_batches, desc="  Vehicles", unit="batch") as pbar:
-        for i in range(0, len(unique_kentekens), batch_size):
-            batch = unique_kentekens[i:i + batch_size]
-            try:
-                results = fetch_batch(batch)
-                all_results.extend(results)
-            except Exception as e:
-                print(f"  Warning: batch {i//batch_size} failed after retries: {e}")
-            pbar.update(1)
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = {
+                executor.submit(process_batch, (i, batch)): i 
+                for i, batch in enumerate(batches)
+            }
+            
+            for future in as_completed(futures):
+                batch_idx, results, error = future.result()
+                if error:
+                    print(f"\n  Warning: batch {batch_idx} failed after retries: {error}")
+                else:
+                    with results_lock:
+                        all_results.extend(results)
+                pbar.update(1)
     
     df = pd.DataFrame.from_records(all_results)
     print(f"  Fetched info for {len(df)} passenger cars")
@@ -193,7 +226,7 @@ def fetch_fuel_for_kentekens(
     batch_size: int = 1000
 ) -> pd.DataFrame:
     """
-    Fetch fuel type info for specific license plates.
+    Fetch fuel type info for specific license plates using parallel requests.
     
     Args:
         client: Socrata client
@@ -203,11 +236,19 @@ def fetch_fuel_for_kentekens(
     Returns:
         DataFrame with fuel data
     """
-    print(f"Fetching fuel info for {len(kentekens)} unique kentekens...")
+    num_workers = get_num_workers()
+    print(f"Fetching fuel info for {len(kentekens)} unique kentekens ({num_workers} workers)...")
     
     all_results = []
+    results_lock = Lock()
     unique_kentekens = list(set(kentekens))
     total_batches = (len(unique_kentekens) + batch_size - 1) // batch_size
+    
+    # Create batches upfront
+    batches = [
+        unique_kentekens[i:i + batch_size] 
+        for i in range(0, len(unique_kentekens), batch_size)
+    ]
     
     @retry_with_backoff(max_retries=3, base_delay=2.0)
     def fetch_batch(batch_kentekens):
@@ -218,15 +259,29 @@ def fetch_fuel_for_kentekens(
             limit=batch_size,
         )
     
+    def process_batch(batch_idx_and_data):
+        batch_idx, batch = batch_idx_and_data
+        try:
+            results = fetch_batch(batch)
+            return (batch_idx, results, None)
+        except Exception as e:
+            return (batch_idx, [], str(e))
+    
     with tqdm(total=total_batches, desc="  Fuel", unit="batch") as pbar:
-        for i in range(0, len(unique_kentekens), batch_size):
-            batch = unique_kentekens[i:i + batch_size]
-            try:
-                results = fetch_batch(batch)
-                all_results.extend(results)
-            except Exception as e:
-                print(f"  Warning: fuel batch {i//batch_size} failed after retries: {e}")
-            pbar.update(1)
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = {
+                executor.submit(process_batch, (i, batch)): i 
+                for i, batch in enumerate(batches)
+            }
+            
+            for future in as_completed(futures):
+                batch_idx, results, error = future.result()
+                if error:
+                    print(f"\n  Warning: fuel batch {batch_idx} failed after retries: {error}")
+                else:
+                    with results_lock:
+                        all_results.extend(results)
+                pbar.update(1)
     
     df = pd.DataFrame.from_records(all_results)
     print(f"  Fetched fuel info for {len(df)} vehicles")
