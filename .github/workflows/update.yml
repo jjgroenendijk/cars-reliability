@@ -88,13 +88,15 @@ jobs:
           echo "defects_found=defects_found-${SAMPLE}pct-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
           echo "defect_codes=defect_codes-${SAMPLE}pct-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
       
-      # Cache restore for each dataset independently
+      # Cache restore for each dataset (includes CSV and .complete marker)
       - name: Restore inspections cache
         if: inputs.force_fetch != 'true'
         id: cache-inspections
         uses: actions/cache/restore@v4
         with:
-          path: data/inspections.csv
+          path: |
+            data/inspections.csv
+            data/inspections.complete
           key: ${{ steps.cache-keys.outputs.inspections }}
       
       - name: Restore vehicles cache
@@ -102,7 +104,9 @@ jobs:
         id: cache-vehicles
         uses: actions/cache/restore@v4
         with:
-          path: data/vehicles.csv
+          path: |
+            data/vehicles.csv
+            data/vehicles.complete
           key: ${{ steps.cache-keys.outputs.vehicles }}
       
       - name: Restore fuel cache
@@ -110,7 +114,9 @@ jobs:
         id: cache-fuel
         uses: actions/cache/restore@v4
         with:
-          path: data/fuel.csv
+          path: |
+            data/fuel.csv
+            data/fuel.complete
           key: ${{ steps.cache-keys.outputs.fuel }}
       
       - name: Restore defects_found cache
@@ -118,7 +124,9 @@ jobs:
         id: cache-defects-found
         uses: actions/cache/restore@v4
         with:
-          path: data/defects_found.csv
+          path: |
+            data/defects_found.csv
+            data/defects_found.complete
           key: ${{ steps.cache-keys.outputs.defects_found }}
       
       - name: Restore defect_codes cache
@@ -126,49 +134,93 @@ jobs:
         id: cache-defect-codes
         uses: actions/cache/restore@v4
         with:
-          path: data/defect_codes.csv
+          path: |
+            data/defect_codes.csv
+            data/defect_codes.complete
           key: ${{ steps.cache-keys.outputs.defect_codes }}
       
       # Fetch datasets in order: smallest first, then dependencies
-      # Each dataset is saved to cache immediately after fetch (continue-on-error preserves partial progress)
+      # Downloads support resume - partial files are cached and continued on next run
+      # .complete marker indicates successful completion
       # Order: defect_codes (tiny) -> inspections (primary) -> vehicles -> fuel -> defects_found
       
+      # Check which datasets need fetching (missing .complete marker)
+      - name: Check completion status
+        id: check-complete
+        run: |
+          for ds in defect_codes inspections vehicles fuel defects_found; do
+            if [ -f "data/${ds}.complete" ]; then
+              echo "${ds}=true" >> $GITHUB_OUTPUT
+            else
+              echo "${ds}=false" >> $GITHUB_OUTPUT
+            fi
+          done
+      
       - name: Fetch defect_codes (smallest)
-        if: steps.cache-defect-codes.outputs.cache-hit != 'true'
+        if: steps.check-complete.outputs.defect_codes != 'true'
         id: fetch-defect-codes
         continue-on-error: true
-        run: python src/download.py defect_codes
+        run: |
+          python src/download.py defect_codes
+          touch data/defect_codes.complete
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
       
       - name: Save defect_codes cache
-        if: steps.cache-defect-codes.outputs.cache-hit != 'true' && steps.fetch-defect-codes.outcome == 'success'
+        if: steps.fetch-defect-codes.outcome == 'success'
         uses: actions/cache/save@v4
         with:
-          path: data/defect_codes.csv
+          path: |
+            data/defect_codes.csv
+            data/defect_codes.complete
           key: ${{ steps.cache-keys.outputs.defect_codes }}
       
+      # Inspections: fetch (resumes partial), mark complete, save
       - name: Fetch inspections (primary dataset)
-        if: steps.cache-inspections.outputs.cache-hit != 'true'
+        if: steps.check-complete.outputs.inspections != 'true'
         id: fetch-inspections
         continue-on-error: true
-        run: python src/download.py inspections
+        run: |
+          python src/download.py inspections
+          touch data/inspections.complete
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           FETCH_WORKERS: 2
       
       - name: Save inspections cache
-        if: steps.cache-inspections.outputs.cache-hit != 'true' && steps.fetch-inspections.outcome == 'success'
+        if: steps.fetch-inspections.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            data/inspections.csv
+            data/inspections.complete
+          key: ${{ steps.cache-keys.outputs.inspections }}
+      
+      - name: Save partial inspections (for resume on next run)
+        if: steps.fetch-inspections.outcome == 'failure'
         uses: actions/cache/save@v4
         with:
           path: data/inspections.csv
           key: ${{ steps.cache-keys.outputs.inspections }}
       
+      # Check inspections available before dependent datasets
+      - name: Check inspections available
+        id: check-inspections
+        run: |
+          if [ -f "data/inspections.csv" ]; then
+            echo "available=true" >> $GITHUB_OUTPUT
+          else
+            echo "available=false" >> $GITHUB_OUTPUT
+          fi
+      
+      # Vehicles
       - name: Fetch vehicles
-        if: steps.cache-vehicles.outputs.cache-hit != 'true' && (steps.cache-inspections.outputs.cache-hit == 'true' || steps.fetch-inspections.outcome == 'success')
+        if: steps.check-inspections.outputs.available == 'true' && steps.check-complete.outputs.vehicles != 'true'
         id: fetch-vehicles
         continue-on-error: true
-        run: python src/download.py vehicles --kentekens-from data/inspections.csv
+        run: |
+          python src/download.py vehicles --kentekens-from data/inspections.csv
+          touch data/vehicles.complete
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           FETCH_WORKERS: 2
@@ -177,14 +229,26 @@ jobs:
         if: steps.fetch-vehicles.outcome == 'success'
         uses: actions/cache/save@v4
         with:
+          path: |
+            data/vehicles.csv
+            data/vehicles.complete
+          key: ${{ steps.cache-keys.outputs.vehicles }}
+      
+      - name: Save partial vehicles (for resume on next run)
+        if: steps.fetch-vehicles.outcome == 'failure'
+        uses: actions/cache/save@v4
+        with:
           path: data/vehicles.csv
           key: ${{ steps.cache-keys.outputs.vehicles }}
       
+      # Fuel
       - name: Fetch fuel
-        if: steps.cache-fuel.outputs.cache-hit != 'true' && (steps.cache-inspections.outputs.cache-hit == 'true' || steps.fetch-inspections.outcome == 'success')
+        if: steps.check-inspections.outputs.available == 'true' && steps.check-complete.outputs.fuel != 'true'
         id: fetch-fuel
         continue-on-error: true
-        run: python src/download.py fuel --kentekens-from data/inspections.csv
+        run: |
+          python src/download.py fuel --kentekens-from data/inspections.csv
+          touch data/fuel.complete
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           FETCH_WORKERS: 2
@@ -193,20 +257,41 @@ jobs:
         if: steps.fetch-fuel.outcome == 'success'
         uses: actions/cache/save@v4
         with:
+          path: |
+            data/fuel.csv
+            data/fuel.complete
+          key: ${{ steps.cache-keys.outputs.fuel }}
+      
+      - name: Save partial fuel (for resume on next run)
+        if: steps.fetch-fuel.outcome == 'failure'
+        uses: actions/cache/save@v4
+        with:
           path: data/fuel.csv
           key: ${{ steps.cache-keys.outputs.fuel }}
       
+      # Defects_found
       - name: Fetch defects_found
-        if: steps.cache-defects-found.outputs.cache-hit != 'true' && (steps.cache-inspections.outputs.cache-hit == 'true' || steps.fetch-inspections.outcome == 'success')
+        if: steps.check-inspections.outputs.available == 'true' && steps.check-complete.outputs.defects_found != 'true'
         id: fetch-defects-found
         continue-on-error: true
-        run: python src/download.py defects_found --kentekens-from data/inspections.csv
+        run: |
+          python src/download.py defects_found --kentekens-from data/inspections.csv
+          touch data/defects_found.complete
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           FETCH_WORKERS: 2
       
       - name: Save defects_found cache
         if: steps.fetch-defects-found.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            data/defects_found.csv
+            data/defects_found.complete
+          key: ${{ steps.cache-keys.outputs.defects_found }}
+      
+      - name: Save partial defects_found (for resume on next run)
+        if: steps.fetch-defects-found.outcome == 'failure'
         uses: actions/cache/save@v4
         with:
           path: data/defects_found.csv

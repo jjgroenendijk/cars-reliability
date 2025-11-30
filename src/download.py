@@ -134,23 +134,51 @@ def retry_with_backoff(max_retries: int = 5, base_delay: float = 2.0):
 # =============================================================================
 
 class CSVWriter:
-    """Thread-safe CSV writer with immediate disk flush."""
+    """Thread-safe CSV writer with immediate disk flush and resume support."""
     
-    def __init__(self, filepath: Path):
+    def __init__(self, filepath: Path, resume: bool = False):
         self.filepath = filepath
+        self.resume = resume
         self._file = None
         self._writer = None
         self._lock = Lock()
         self.row_count = 0
+        self._existing_count = 0
+        self._fieldnames = None
     
     def __enter__(self):
         self.filepath.parent.mkdir(parents=True, exist_ok=True)
-        self._file = open(self.filepath, 'w', newline='', encoding='utf-8')
+        
+        if self.resume and self.filepath.exists():
+            # Count existing rows and get fieldnames for append mode
+            self._existing_count = self._count_existing_rows()
+            if self._existing_count > 0:
+                log(f"  Resuming: found {self._existing_count:,} existing records")
+                self._file = open(self.filepath, 'a', newline='', encoding='utf-8')
+            else:
+                self._file = open(self.filepath, 'w', newline='', encoding='utf-8')
+        else:
+            self._file = open(self.filepath, 'w', newline='', encoding='utf-8')
         return self
+    
+    def _count_existing_rows(self) -> int:
+        """Count rows in existing file and capture fieldnames."""
+        try:
+            with open(self.filepath, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                self._fieldnames = reader.fieldnames
+                return sum(1 for _ in reader)
+        except Exception:
+            return 0
     
     def __exit__(self, *_):
         if self._file:
             self._file.close()
+    
+    @property
+    def existing_count(self) -> int:
+        """Number of records already in file (for resume)."""
+        return self._existing_count
     
     def rows_write(self, rows: list[dict]) -> None:
         """Write rows to CSV (thread-safe)."""
@@ -158,8 +186,11 @@ class CSVWriter:
             return
         with self._lock:
             if self._writer is None:
-                self._writer = csv.DictWriter(self._file, fieldnames=rows[0].keys(), extrasaction='ignore')
-                self._writer.writeheader()
+                # Use existing fieldnames if resuming, otherwise use first row's keys
+                fieldnames = self._fieldnames or rows[0].keys()
+                self._writer = csv.DictWriter(self._file, fieldnames=fieldnames, extrasaction='ignore')
+                if self._existing_count == 0:
+                    self._writer.writeheader()
             for row in rows:
                 self._writer.writerow(row)
             self._file.flush()
@@ -277,11 +308,19 @@ def dataset_fetch(client: Socrata, dataset: str, output: Path,
     else:
         items, fetch_fn, desc = _offset_pages_build(client, dataset_id, config)
     
-    # Execute fetch
+    # Execute fetch with resume support
     if stream:
-        with CSVWriter(output) as w:
-            items_fetch_parallel(items, fetch_fn, writer=w, stream_to_disk=True, description=desc)
-            log(f"  Written {w.row_count:,} records to {output}")
+        with CSVWriter(output, resume=True) as w:
+            # Skip items that were already fetched (based on existing row count)
+            if w.existing_count > 0:
+                items = _items_skip_completed(items, w.existing_count, desc)
+            
+            if not items:
+                log(f"  Already complete: {w.existing_count:,} records in {output}")
+            else:
+                items_fetch_parallel(items, fetch_fn, writer=w, stream_to_disk=True, description=desc)
+                total_records = w.existing_count + w.row_count
+                log(f"  Written {w.row_count:,} new records ({total_records:,} total) to {output}")
         return None
     
     rows = items_fetch_parallel(items, fetch_fn, stream_to_disk=False, description=desc)
@@ -289,6 +328,26 @@ def dataset_fetch(client: Socrata, dataset: str, output: Path,
     df.to_csv(output, index=False)
     log(f"  Written {len(df):,} records to {output}")
     return df
+
+
+def _items_skip_completed(items: list, existing_count: int, desc: str) -> list:
+    """Skip items that were already fetched based on existing record count."""
+    if desc == "pages":
+        # For offset-based pagination, calculate how many pages to skip
+        page_size = 10000
+        pages_done = existing_count // page_size
+        if pages_done > 0:
+            log(f"  Skipping {pages_done} completed pages ({existing_count:,} records)")
+            return items[pages_done:]
+    elif desc == "batches":
+        # For kenteken batches, estimate batches completed (1000 kentekens per batch)
+        # This is approximate since not all kentekens return equal records
+        batch_size = 1000
+        batches_done = existing_count // batch_size
+        if batches_done > 0:
+            log(f"  Skipping ~{batches_done} completed batches ({existing_count:,} records)")
+            return items[batches_done:]
+    return items
 
 
 def _kenteken_batches_build(client, dataset_id, kentekens, config):
