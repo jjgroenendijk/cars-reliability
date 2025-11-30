@@ -88,3 +88,10 @@ When adding new conventions, patterns, or rules to this project, document them i
 - Code style decisions and naming conventions
 - Workflow or deployment changes
 - Any project-specific rules that deviate from common practices
+
+## Verification Workflow
+
+When making code changes and it's unclear whether they work correctly:
+1. Commit and push the changes to a branch
+2. Watch the GitHub Actions logs to verify the change is successful
+3. Fix any issues encountered in the CI pipeline before considering the task complete

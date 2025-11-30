@@ -109,20 +109,31 @@ def calculate_defects_by_brand(
         defect_types=("gebrek_identificatie", "nunique")
     ).reset_index()
     
-    # Join with vehicle data to get brand
-    merged = vehicles[["kenteken", "merk", "handelsbenaming"]].merge(
+    # Join with vehicle data to get brand and age
+    vehicle_cols = ["kenteken", "merk", "handelsbenaming"]
+    if "age_years" in vehicles.columns:
+        vehicle_cols.append("age_years")
+    merged = vehicles[vehicle_cols].merge(
         inspection_stats,
         on="kenteken",
         how="inner"
     )
     
     # Aggregate by brand
-    brand_stats = merged.groupby("merk").agg(
-        vehicle_count=("kenteken", "nunique"),
-        total_inspections=("inspection_id", "nunique"),
-        total_defects=("total_defects", "sum"),
-        total_defect_types=("defect_types", "sum"),
-    ).reset_index()
+    agg_dict = {
+        "vehicle_count": ("kenteken", "nunique"),
+        "total_inspections": ("inspection_id", "nunique"),
+        "total_defects": ("total_defects", "sum"),
+        "total_defect_types": ("defect_types", "sum"),
+    }
+    if "age_years" in merged.columns:
+        agg_dict["avg_age_years"] = ("age_years", "mean")
+    
+    brand_stats = merged.groupby("merk").agg(**agg_dict).reset_index()
+    
+    # Round average age
+    if "avg_age_years" in brand_stats.columns:
+        brand_stats["avg_age_years"] = brand_stats["avg_age_years"].round(1)
     
     # If we have inspections data, calculate pass rate (inspections without defects)
     if inspections is not None and len(inspections) > 0:
@@ -167,6 +178,14 @@ def calculate_defects_by_brand(
         brand_stats["total_inspections"] / brand_stats["vehicle_count"]
     ).round(2)
     
+    # Calculate defects per year (normalized by vehicle age)
+    if "avg_age_years" in brand_stats.columns:
+        brand_stats["defects_per_year"] = (
+            brand_stats["avg_defects_per_inspection"] / brand_stats["avg_age_years"]
+        ).round(3)
+        # Handle division by zero or very young cars
+        brand_stats.loc[brand_stats["avg_age_years"] < 1, "defects_per_year"] = None
+    
     # Filter to brands with enough data (at least 100 vehicles)
     brand_stats = brand_stats[brand_stats["vehicle_count"] >= 100]
     
@@ -209,20 +228,31 @@ def calculate_defects_by_model(
         defect_types=("gebrek_identificatie", "nunique")
     ).reset_index()
     
-    # Join with vehicle data to get brand and model
-    merged = vehicles[["kenteken", "merk", "handelsbenaming"]].merge(
+    # Join with vehicle data to get brand, model and age
+    vehicle_cols = ["kenteken", "merk", "handelsbenaming"]
+    if "age_years" in vehicles.columns:
+        vehicle_cols.append("age_years")
+    merged = vehicles[vehicle_cols].merge(
         inspection_stats,
         on="kenteken",
         how="inner"
     )
     
     # Aggregate by brand and model
-    model_stats = merged.groupby(["merk", "handelsbenaming"]).agg(
-        vehicle_count=("kenteken", "nunique"),
-        total_inspections=("inspection_id", "nunique"),
-        total_defects=("total_defects", "sum"),
-        total_defect_types=("defect_types", "sum"),
-    ).reset_index()
+    agg_dict = {
+        "vehicle_count": ("kenteken", "nunique"),
+        "total_inspections": ("inspection_id", "nunique"),
+        "total_defects": ("total_defects", "sum"),
+        "total_defect_types": ("defect_types", "sum"),
+    }
+    if "age_years" in merged.columns:
+        agg_dict["avg_age_years"] = ("age_years", "mean")
+    
+    model_stats = merged.groupby(["merk", "handelsbenaming"]).agg(**agg_dict).reset_index()
+    
+    # Round average age
+    if "avg_age_years" in model_stats.columns:
+        model_stats["avg_age_years"] = model_stats["avg_age_years"].round(1)
     
     # If we have inspections data, calculate pass rate (inspections without defects)
     if inspections is not None and len(inspections) > 0:
@@ -266,6 +296,14 @@ def calculate_defects_by_model(
         model_stats["total_inspections"] / model_stats["vehicle_count"]
     ).round(2)
     
+    # Calculate defects per year (normalized by vehicle age)
+    if "avg_age_years" in model_stats.columns:
+        model_stats["defects_per_year"] = (
+            model_stats["avg_defects_per_inspection"] / model_stats["avg_age_years"]
+        ).round(3)
+        # Handle division by zero or very young cars
+        model_stats.loc[model_stats["avg_age_years"] < 1, "defects_per_year"] = None
+    
     # Filter to models with enough data
     model_stats = model_stats[model_stats["vehicle_count"] >= min_vehicles]
     
@@ -295,7 +333,9 @@ def save_results(
         "sample_percent": sample_percent,
         "total_vehicles": total_vehicles,
         "total_inspections": total_inspections,
-        "brands": brand_stats.to_dict(orient="records")
+        "brands": brand_stats.to_dict(orient="records"),
+        "top_10_reliable": brand_stats.head(10).to_dict(orient="records"),
+        "top_10_unreliable": brand_stats.tail(10).iloc[::-1].to_dict(orient="records"),
     }
     with open(output_dir / "brand_reliability.json", "w") as f:
         json.dump(brand_data, f, indent=2)
@@ -308,6 +348,8 @@ def save_results(
         "total_inspections": total_inspections,
         "most_reliable": model_stats.to_dict(orient="records"),
         "least_reliable": model_stats.tail(50).to_dict(orient="records"),
+        "top_10_reliable": model_stats.head(10).to_dict(orient="records"),
+        "top_10_unreliable": model_stats.tail(10).iloc[::-1].to_dict(orient="records"),
     }
     with open(output_dir / "model_reliability.json", "w") as f:
         json.dump(model_data, f, indent=2)

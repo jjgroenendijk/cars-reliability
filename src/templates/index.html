@@ -14,13 +14,93 @@
     <p class="summary-stats" id="summary-stats">Loading data...</p>
     
     <nav class="nav">
-        <button class="nav-btn active" data-view="brands">Reliability by Brand</button>
+        <button class="nav-btn active" data-view="top10">Top 10 Lists</button>
+        <button class="nav-btn" data-view="brands">Reliability by Brand</button>
         <button class="nav-btn" data-view="models">Reliability by Model</button>
         <button class="nav-btn" data-view="about">About the Data</button>
     </nav>
     
+    <!-- Top 10 View -->
+    <section id="view-top10" class="view-section active">
+        <h2>Top 10 Most Reliable and Least Reliable Cars</h2>
+        <div class="info-box card">
+            <p><strong>How to read these lists:</strong> Lower defect numbers indicate more reliable vehicles.
+            Rankings are based on average defects per inspection. Models with fewer than 50 vehicles are excluded.</p>
+        </div>
+        
+        <div class="top10-container">
+            <div class="card top10-card">
+                <h3>Top 10 Most Reliable Models</h3>
+                <table id="top10-reliable-table" class="top10-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Brand</th>
+                            <th>Model</th>
+                            <th>Defects/Insp.</th>
+                            <th>Defects/Year</th>
+                            <th>Avg Age</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top10-reliable-tbody"></tbody>
+                </table>
+            </div>
+            
+            <div class="card top10-card">
+                <h3>Top 10 Least Reliable Models</h3>
+                <table id="top10-unreliable-table" class="top10-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Brand</th>
+                            <th>Model</th>
+                            <th>Defects/Insp.</th>
+                            <th>Defects/Year</th>
+                            <th>Avg Age</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top10-unreliable-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="top10-container">
+            <div class="card top10-card">
+                <h3>Top 10 Most Reliable Brands</h3>
+                <table id="top10-reliable-brands-table" class="top10-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Brand</th>
+                            <th>Defects/Insp.</th>
+                            <th>Defects/Year</th>
+                            <th>Avg Age</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top10-reliable-brands-tbody"></tbody>
+                </table>
+            </div>
+            
+            <div class="card top10-card">
+                <h3>Top 10 Least Reliable Brands</h3>
+                <table id="top10-unreliable-brands-table" class="top10-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Brand</th>
+                            <th>Defects/Insp.</th>
+                            <th>Defects/Year</th>
+                            <th>Avg Age</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top10-unreliable-brands-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+    
     <!-- Brand Reliability View -->
-    <section id="view-brands" class="view-section active">
+    <section id="view-brands" class="view-section">
         <h2>Reliability by Brand</h2>
         <div class="info-box card">
             <p><strong>How to read this table:</strong> Lower defect numbers indicate more reliable vehicles. 
@@ -38,7 +118,8 @@
                         <th data-col="vehicle_count" data-type="number">Vehicles<span class="sort-indicator"></span></th>
                         <th data-col="total_inspections" data-type="number">Inspections<span class="sort-indicator"></span></th>
                         <th data-col="avg_defects_per_inspection" data-type="number">Defects per Inspection<span class="sort-indicator"></span></th>
-                        <th data-col="avg_defect_types_per_inspection" data-type="number">Issue Types per Inspection<span class="sort-indicator"></span></th>
+                        <th data-col="defects_per_year" data-type="number">Defects per Year<span class="sort-indicator"></span></th>
+                        <th data-col="avg_age_years" data-type="number">Avg Age<span class="sort-indicator"></span></th>
                     </tr>
                 </thead>
                 <tbody id="brand-tbody"></tbody>
