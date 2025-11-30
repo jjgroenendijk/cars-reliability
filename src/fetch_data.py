@@ -10,10 +10,12 @@ Datasets:
 Environment variables:
 - RDW_APP_TOKEN: Socrata app token for higher rate limits (recommended)
 - DATA_SAMPLE_PERCENT: Percentage of data to fetch (1-100, default 100)
-- FETCH_WORKERS: Number of parallel workers for batch fetching (default 4)
+- FETCH_WORKERS: Number of parallel workers for batch fetching (default 2)
 - CI: Set to 'true' in CI environments to disable progress bar animations
+- FETCH_DATASET: Single dataset to fetch (for parallel CI jobs)
 """
 
+import csv
 import os
 import sys
 import time
@@ -61,6 +63,60 @@ class CIProgressLogger:
             pct = int(self.count / self.total * 100)
             elapsed = time.time() - self.start_time
             log(f"  {self.desc}: {self.count}/{self.total} ({pct}%) - {elapsed:.0f}s elapsed")
+
+
+class StreamingCSVWriter:
+    """Write CSV rows as they arrive, with thread-safe appending."""
+    
+    def __init__(self, filepath: Path, fieldnames: list[str] | None = None):
+        self.filepath = filepath
+        self.fieldnames = fieldnames
+        self._file = None
+        self._writer = None
+        self._lock = Lock()
+        self._row_count = 0
+        self._header_written = False
+    
+    def __enter__(self):
+        self._file = open(self.filepath, 'w', newline='', encoding='utf-8')
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._file:
+            self._file.close()
+        return False
+    
+    def write_rows(self, rows: list[dict]) -> int:
+        """Thread-safe write of multiple rows. Returns number of rows written."""
+        if not rows:
+            return 0
+        
+        with self._lock:
+            # Initialize writer with fieldnames from first batch if not provided
+            if self._writer is None:
+                if self.fieldnames is None:
+                    self.fieldnames = list(rows[0].keys())
+                self._writer = csv.DictWriter(self._file, fieldnames=self.fieldnames, extrasaction='ignore')
+            
+            # Write header on first batch
+            if not self._header_written:
+                self._writer.writeheader()
+                self._header_written = True
+            
+            # Write rows
+            for row in rows:
+                self._writer.writerow(row)
+            
+            # Flush to disk immediately
+            self._file.flush()
+            os.fsync(self._file.fileno())
+            
+            self._row_count += len(rows)
+            return len(rows)
+    
+    @property
+    def row_count(self) -> int:
+        return self._row_count
 
 
 def retry_with_backoff(max_retries: int = 5, base_delay: float = 2.0):
@@ -152,16 +208,17 @@ def get_client() -> Socrata:
     return Socrata(RDW_DOMAIN, app_token, timeout=60)
 
 
-def fetch_defects_found(client: Socrata, limit: int | None = None) -> pd.DataFrame:
+def fetch_defects_found(client: Socrata, limit: int | None = None, output_file: Path | None = None) -> pd.DataFrame:
     """
     Fetch defects found during inspections using parallel pagination.
     
     Args:
         client: Socrata client
         limit: Maximum number of records to fetch (default from environment)
+        output_file: If provided, stream results directly to this CSV file
     
     Returns:
-        DataFrame with defect data
+        DataFrame with defect data (or empty DataFrame if streaming to file)
     """
     # Get dataset size and calculate limit dynamically
     total_size = get_dataset_size(client, DATASETS["defects_found"])
@@ -175,8 +232,15 @@ def fetch_defects_found(client: Socrata, limit: int | None = None) -> pd.DataFra
     
     # Use pagination for large datasets
     page_size = 50000  # Socrata recommended max per request
-    all_results = []
+    all_results = [] if output_file is None else None
     results_lock = Lock()
+    
+    # Set up streaming writer if output file provided
+    csv_writer = None
+    if output_file:
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        csv_writer = StreamingCSVWriter(output_file)
+        csv_writer.__enter__()
     
     # Calculate all page offsets upfront
     offsets = list(range(0, limit, page_size))
@@ -201,20 +265,31 @@ def fetch_defects_found(client: Socrata, limit: int | None = None) -> pd.DataFra
         except Exception as e:
             return (offset, [], str(e))
     
-    ci_logger = CIProgressLogger(total_pages, "Defects pages", log_interval=max(1, total_pages // 10))
-    with tqdm(total=total_pages, desc="  Defects", unit="pages", **get_tqdm_kwargs()) as pbar:
-        with ThreadPoolExecutor(max_workers=num_workers) as executor:
-            futures = {executor.submit(process_page, offset): offset for offset in offsets}
-            
-            for future in as_completed(futures):
-                offset, results, error = future.result()
-                if error:
-                    log(f"\n  Error at offset {offset}: {error}")
-                elif results:
-                    with results_lock:
-                        all_results.extend(results)
-                pbar.update(1)
-                ci_logger.update(1)
+    try:
+        ci_logger = CIProgressLogger(total_pages, "Defects pages", log_interval=max(1, total_pages // 10))
+        with tqdm(total=total_pages, desc="  Defects", unit="pages", **get_tqdm_kwargs()) as pbar:
+            with ThreadPoolExecutor(max_workers=num_workers) as executor:
+                futures = {executor.submit(process_page, offset): offset for offset in offsets}
+                
+                for future in as_completed(futures):
+                    offset, results, error = future.result()
+                    if error:
+                        log(f"\n  Error at offset {offset}: {error}")
+                    elif results:
+                        if csv_writer:
+                            csv_writer.write_rows(results)
+                        else:
+                            with results_lock:
+                                all_results.extend(results)
+                    pbar.update(1)
+                    ci_logger.update(1)
+    finally:
+        if csv_writer:
+            csv_writer.__exit__(None, None, None)
+    
+    if csv_writer:
+        log(f"  Streamed {csv_writer.row_count:,} defect records to {output_file}")
+        return pd.DataFrame()  # Return empty, data is in file
     
     df = pd.DataFrame.from_records(all_results)
     log(f"  Fetched {len(df):,} defect records")
