@@ -90,7 +90,7 @@ def get_client() -> Socrata:
 
 def fetch_defects_found(client: Socrata, limit: int | None = None) -> pd.DataFrame:
     """
-    Fetch defects found during inspections.
+    Fetch defects found during inspections using pagination.
     
     Args:
         client: Socrata client
@@ -105,13 +105,44 @@ def fetch_defects_found(client: Socrata, limit: int | None = None) -> pd.DataFra
     sample_percent = get_sample_percent()
     print(f"Fetching defects found (limit: {limit:,}, {sample_percent}% of full dataset)...")
     
-    results = client.get(
-        DATASETS["defects_found"],
-        limit=limit,
-    )
+    # Use pagination for large datasets
+    page_size = 50000  # Socrata recommended max per request
+    all_results = []
+    offset = 0
     
-    df = pd.DataFrame.from_records(results)
-    print(f"  Fetched {len(df)} defect records")
+    with tqdm(total=limit, desc="  Defects", unit="records") as pbar:
+        while offset < limit:
+            # Calculate how many records to fetch this page
+            fetch_size = min(page_size, limit - offset)
+            
+            try:
+                results = client.get(
+                    DATASETS["defects_found"],
+                    limit=fetch_size,
+                    offset=offset,
+                    order="kenteken",  # Consistent ordering for pagination
+                )
+                
+                if not results:
+                    # No more data available
+                    break
+                    
+                all_results.extend(results)
+                fetched = len(results)
+                pbar.update(fetched)
+                offset += fetched
+                
+                # If we got fewer than requested, we've reached the end
+                if fetched < fetch_size:
+                    break
+                    
+            except Exception as e:
+                print(f"\n  Error at offset {offset}: {e}")
+                # Try to continue with next page
+                offset += page_size
+    
+    df = pd.DataFrame.from_records(all_results)
+    print(f"  Fetched {len(df):,} defect records")
     return df
 
 
