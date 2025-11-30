@@ -14,8 +14,10 @@ data/*.csv
 data/*.json
 data/*.parquet
 
-# Generated site data (produced by pipeline)
+# Generated site files (produced by pipeline)
 site/data/*.json
+site/index.html
+site/js/app.js
 
 # IDE
 .vscode/
