@@ -1,137 +1,138 @@
-# Code Simplification TODO
+# Code Simplification Opportunities
 
-This document tracks proposals to reduce complexity and simplify the codebase.
+Analysis of the codebase identified the following opportunities to reduce complexity, nesting, and code duplication.
 
-## 1. Generic Parallel Fetch Helper (High Impact)
+## High Priority
 
-**Status:** COMPLETED
+### 1. Extract Duplicate Inspection ID Logic in `process_data.py`
 
-**Problem:** The old `fetch_pipeline.py` and `fetch_single.py` had nearly identical parallel fetching logic repeated 4-5 times each (~8 times total).
+**Location:** `calculate_defects_by_brand()` and `calculate_defects_by_model()` (lines ~85-180 and ~200-310)
 
-**Solution:** Extracted into `parallel_fetch()` and `parallel_fetch_to_writer()` in `rdw_client.py`. Consolidated both scripts into a single `download.py` with `--stream`/`--no-stream` and `--all` flags.
+**Issue:** Both functions duplicate the same pattern:
 
-**Result:** 
-- Removed `fetch_pipeline.py` (294 lines)
-- Removed `fetch_single.py` (218 lines)  
-- Added `download.py` (280 lines) - unified, cleaner interface
-- Added ~100 lines to `rdw_client.py` for helpers
-- **Net reduction: ~130 lines**
+- Create `inspection_id` from `kenteken + meld_datum_door_keuringsinstantie`
+- Convert `aantal_gebreken_geconstateerd` to numeric
+- Group by inspection to get defect stats
+- Merge with vehicles
+- Calculate pass rates from inspections data
 
----
-
-## 2. Consolidate Brand/Model Calculation (High Impact)
-
-**Status:** Not Started
-
-**Problem:** `calculate_defects_by_brand` and `calculate_defects_by_model` in `process_data.py` are 95% identical (lines 83-180 and 190-280). The only difference is the groupby keys.
-
-**Solution:** Create a single `calculate_defects_by_group()` function:
+**Suggestion:** Extract a shared `prepare_inspection_stats()` function that handles the common data preparation. The brand/model functions would then only handle the aggregation logic specific to their grouping level.
 
 ```python
-def calculate_defects_by_group(
-    vehicles: pd.DataFrame, 
-    defects: pd.DataFrame,
-    inspections: pd.DataFrame | None,
-    group_cols: list[str],  # ["merk"] or ["merk", "handelsbenaming"]
-    min_count: int = 50
-) -> pd.DataFrame:
+# Before: ~120 lines duplicated across two functions
+# After: One ~60-line helper + two ~40-line aggregation functions
 ```
 
-**Impact:** Eliminate ~90 lines of duplicate code.
+### 2. Simplify Pass Rate Calculation Block
 
----
+**Location:** `process_data.py`, lines ~145-170 and ~260-285
 
-## 3. Remove fetch_pipeline.py
+**Issue:** The pass rate calculation logic is deeply nested (4+ levels) and repeated twice. Each block:
 
-**Status:** COMPLETED (merged with item 1)
+1. Copies inspections dataframe
+2. Creates inspection_id
+3. Merges with vehicles
+4. Groups by brand/model
+5. Merges back with stats
+6. Calculates pass rate
 
-Both `fetch_pipeline.py` and `fetch_single.py` were consolidated into a single `download.py` script with:
+**Suggestion:** Create a `calculate_pass_rate()` helper that takes the base stats and groupby columns, reducing ~25 lines to ~5 per call.
 
-- `python download.py <dataset>` - fetch single dataset (streaming by default)
-- `python download.py --all` - fetch all datasets 
-- `--stream` / `--no-stream` flags to control memory vs disk mode
+### 3. ~~Unify `parallel_fetch` and `parallel_fetch_to_writer` in `rdw_client.py`~~ DONE
 
-**Note:** These files no longer exist in the codebase.
+**Location:** `rdw_client.py`
 
----
+**Status:** Merged into a single `parallel_fetch()` function with a `stream_to_disk` boolean parameter.
 
-## 4. Progress Tracker Helper
+## Medium Priority
 
-**Status:** Not Started
+### 4. Simplify `fetch_dataset()` Branching in `download.py`
 
-**Problem:** Progress logging pattern is repeated everywhere:
+**Location:** `download.py`, lines ~75-155
 
-```python
-if completed % max(1, total // 10) == 0 or completed == total:
-    log(f"  Progress: {completed}/{total} ({completed * 100 // total}%)")
+**Issue:** The function has complex conditional logic:
+
+- Special case for `defect_codes`
+- Kentekens vs offset pagination branch
+- Each branch defines a nested `@retry_with_backoff` decorated function
+
+**Suggestion:** Extract kenteken-batch fetching and offset-pagination fetching into separate helper functions. This would reduce `fetch_dataset()` from ~80 lines to ~30 lines.
+
+### 5. Reduce Repetitive Table Rendering in `app.js`
+
+**Location:** `src/templates/app.js`, lines ~95-150 (renderTop10Tables) and ~155-240 (renderBrandTable, renderModelTable)
+
+**Issue:** Four nearly identical table rendering loops for top-10 lists, plus similar logic in brand/model tables. Each differs only in:
+
+- Target element ID
+- Data source array
+- Column configuration
+
+**Suggestion:** Create a generic `renderTable(elementId, data, columns)` helper:
+
+```javascript
+const columns = [
+    { key: 'merk', label: 'Brand' },
+    { key: 'avg_defects_per_inspection', label: 'Defects/Insp', format: v => formatValue(v, 2) }
+];
+renderTable('top10-reliable-tbody', top10ReliableModels, columns);
 ```
 
-**Solution:** Create a progress context manager:
+### 6. Simplify Sorting Logic in `app.js`
 
-```python
-class ProgressTracker:
-    def __init__(self, total, description="items"):
-        self.total = total
-        self.completed = 0
-    
-    def tick(self):
-        self.completed += 1
-        if self.completed % max(1, self.total // 10) == 0:
-            log(f"  Progress: {self.completed}/{self.total}")
-```
+**Location:** `app.js`, lines ~270-295
 
-**Impact:** Reduce ~30 lines across multiple files.
+**Issue:** Brand and model table sorting handlers are nearly identical, differing only in variable names.
 
----
+**Suggestion:** Create a factory function:
 
-## 5. Use Dataclasses for Dataset Config
-
-**Status:** Low Priority
-
-**Problem:** Nested dict in `download.py` is functional but could be more type-safe.
-
-**Current state:** `DATASET_CONFIGS` dict in `download.py` works well. The structure is simple and adding dataclasses would add complexity without significant benefit.
-
-**Original proposal:** Replace with dataclass:
-
-```python
-@dataclass
-class DatasetConfig:
-    select: str | None = None
-    extra_where: str = ""
-    limit_mult: int = 1
-
-DATASET_CONFIGS = {
-    "vehicles": DatasetConfig(
-        select="kenteken,merk,...",
-        extra_where=" AND voertuigsoort='Personenauto'"
-    ),
-    ...
+```javascript
+function createSortHandler(tableId, sortState) {
+    return (th) => {
+        const col = th.dataset.col;
+        if (sortState.col === col) {
+            sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortState.col = col;
+            sortState.dir = 'asc';
+        }
+        sortState.render();
+    };
 }
 ```
 
-**Impact:** Improved type safety and readability.
+## Low Priority
 
----
+### 7. Consolidate Configuration in `download.py`
 
-## 6. Remove Dead/Unused Code
+**Location:** `download.py`, lines ~45-65
 
-**Status:** In Progress
+**Issue:** `DATASET_CONFIGS` could include the default kenteken requirement flag, making the kenteken validation in `main()` data-driven rather than hardcoded.
 
-**Items:**
+### 8. Simplify Argument Validation in `download.py`
 
-- `test_streaming_csv.py` in `src/` - should be in a `tests/` folder or removed
-- The `least_reliable` key in `model_reliability.json` output is never used by `app.js` (only `most_reliable` is used)
+**Location:** `download.py`, lines ~305-345
 
----
+**Issue:** The streaming mode determination logic could be simplified with early returns or a helper function.
 
-## Summary - Potential Line Reduction
+### 9. Use Constants for Magic Numbers
 
-| Change | Lines Removed | Status |
-|--------|--------------|--------|
-| Generic parallel fetch helper | ~130 | COMPLETED |
-| Consolidate brand/model calculation | ~90 | Not Started |
-| Remove fetch_pipeline.py | ~324 | COMPLETED |
-| Progress tracker helper | ~30 | Not Started |
-| Use dataclasses for config | ~0 | Low Priority |
-| **Remaining** | **~120 lines** | |
+**Location:** Multiple files
+
+**Issue:** Several magic numbers appear without explanation:
+
+- `100` minimum vehicles for brand stats
+- `50` minimum vehicles for model stats
+- `50000` page size for offset pagination
+- `1000` batch size for kenteken queries
+
+**Suggestion:** Define these as named constants at module level with brief comments.
+
+## Refactoring Notes
+
+When implementing these changes:
+
+1. Ensure all tests pass after each refactor
+2. Keep function signatures backward-compatible where possible
+3. Consider adding type hints during refactoring
+4. Run the full pipeline locally before committing

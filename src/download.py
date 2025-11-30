@@ -41,7 +41,6 @@ from rdw_client import (
     get_sample_percent,
     log,
     parallel_fetch,
-    parallel_fetch_to_writer,
     retry_with_backoff,
 )
 
@@ -167,14 +166,15 @@ def fetch_dataset(
     # Execute fetch
     if stream:
         with StreamingCSVWriter(output_file) as writer:
-            parallel_fetch_to_writer(items, fetch_fn, writer, description=description)
+            parallel_fetch(items, fetch_fn, writer=writer, stream_to_disk=True, description=description)
             log(f"  Written {writer.row_count:,} records to {output_file}")
         return None
     else:
-        results = parallel_fetch(items, fetch_fn, description=description)
+        results = parallel_fetch(items, fetch_fn, stream_to_disk=False, description=description)
         df = pd.DataFrame.from_records(results)
         df.to_csv(output_file, index=False)
         log(f"  Written {len(df):,} records to {output_file}")
+        return df
         return df
 
 

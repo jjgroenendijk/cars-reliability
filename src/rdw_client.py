@@ -87,10 +87,13 @@ def retry_with_backoff(max_retries: int = 5, base_delay: float = 2.0):
                     return func(*args, **kwargs)
                 except Exception as e:
                     last_exception = e
+                    error_type = type(e).__name__
                     if attempt < max_retries - 1:
                         delay = base_delay * (2 ** attempt)
-                        log(f"  Retry {attempt + 1}/{max_retries} after {delay:.0f}s: {type(e).__name__}")
+                        log(f"  Retry {attempt + 1}/{max_retries} after {delay:.0f}s: {error_type}: {str(e)[:100]}")
                         time.sleep(delay)
+                    else:
+                        log(f"  Failed after {max_retries} retries: {error_type}: {str(e)[:100]}")
             raise last_exception
         return wrapper
     return decorator
@@ -99,6 +102,8 @@ def retry_with_backoff(max_retries: int = 5, base_delay: float = 2.0):
 def parallel_fetch(
     items: list[T],
     fetch_fn: Callable[[T], list[dict]],
+    writer: "StreamingCSVWriter | None" = None,
+    stream_to_disk: bool = False,
     num_workers: int | None = None,
     description: str = "items",
     delay: float = 0.1,
@@ -110,84 +115,30 @@ def parallel_fetch(
         items: List of items to process (e.g., offsets, batches of kentekens)
         fetch_fn: Function that takes an item and returns list of result dicts.
                   Should raise exceptions on failure (will be caught and logged).
+        writer: StreamingCSVWriter to write results to (required if stream_to_disk=True)
+        stream_to_disk: If True, write results immediately to writer instead of
+                        collecting in memory. Better for large datasets.
         num_workers: Number of parallel workers (default: from env FETCH_WORKERS)
         description: Description for logging (e.g., "pages", "batches")
         delay: Delay between requests to avoid rate limiting
     
     Returns:
-        List of all results from successful fetches
+        List of all results from successful fetches (empty list if stream_to_disk=True)
     """
+    if stream_to_disk and writer is None:
+        raise ValueError("writer is required when stream_to_disk=True")
+    
     if num_workers is None:
         num_workers = get_num_workers()
     
     total = len(items)
+    start_time = time.time()
     log(f"  Fetching {total} {description} with {num_workers} workers...")
     
     all_results = []
     results_lock = Lock()
     completed_count = 0
-    
-    def process_item(item: T) -> tuple[list[dict], str | None]:
-        """Wrapper that catches exceptions and returns (results, error)."""
-        try:
-            time.sleep(delay)
-            return (fetch_fn(item), None)
-        except Exception as e:
-            return ([], str(e))
-    
-    with ThreadPoolExecutor(max_workers=num_workers) as executor:
-        futures = {executor.submit(process_item, item): item for item in items}
-        
-        for future in as_completed(futures):
-            results, error = future.result()
-            completed_count += 1
-            
-            if error:
-                log(f"  Warning: {description} failed: {error}")
-            elif results:
-                with results_lock:
-                    all_results.extend(results)
-            
-            # Log progress at 10% intervals
-            if completed_count % max(1, total // 10) == 0 or completed_count == total:
-                log(f"  Progress: {completed_count}/{total} {description} ({completed_count * 100 // total}%)")
-    
-    return all_results
-
-
-def parallel_fetch_to_writer(
-    items: list[T],
-    fetch_fn: Callable[[T], list[dict]],
-    writer: "StreamingCSVWriter",
-    num_workers: int | None = None,
-    description: str = "items",
-    delay: float = 0.1,
-) -> int:
-    """
-    Generic parallel fetch that streams results to a CSV writer.
-    
-    Similar to parallel_fetch but writes results immediately instead of
-    collecting them in memory. Better for large datasets.
-    
-    Args:
-        items: List of items to process (e.g., offsets, batches of kentekens)
-        fetch_fn: Function that takes an item and returns list of result dicts.
-                  Should raise exceptions on failure (will be caught and logged).
-        writer: StreamingCSVWriter to write results to
-        num_workers: Number of parallel workers (default: from env FETCH_WORKERS)
-        description: Description for logging (e.g., "pages", "batches")
-        delay: Delay between requests to avoid rate limiting
-    
-    Returns:
-        Total number of items processed successfully
-    """
-    if num_workers is None:
-        num_workers = get_num_workers()
-    
-    total = len(items)
-    log(f"  Fetching {total} {description} with {num_workers} workers...")
-    
-    completed_count = 0
+    total_records = 0
     errors = 0
     
     def process_item(item: T) -> tuple[list[dict], str | None]:
@@ -209,13 +160,26 @@ def parallel_fetch_to_writer(
                 errors += 1
                 log(f"  Warning: {description} failed: {error}")
             elif results:
-                writer.write_rows(results)
+                if stream_to_disk:
+                    writer.write_rows(results)
+                    total_records += len(results)
+                else:
+                    with results_lock:
+                        all_results.extend(results)
+                        total_records += len(results)
             
             # Log progress at 10% intervals
             if completed_count % max(1, total // 10) == 0 or completed_count == total:
-                log(f"  Progress: {completed_count}/{total} {description} ({completed_count * 100 // total}%)")
+                elapsed = time.time() - start_time
+                rate = total_records / elapsed if elapsed > 0 else 0
+                log(f"  Progress: {completed_count}/{total} {description} ({completed_count * 100 // total}%) - {total_records:,} records ({rate:,.0f}/s)")
     
-    return completed_count - errors
+    # Summary
+    elapsed = time.time() - start_time
+    rate = total_records / elapsed if elapsed > 0 else 0
+    log(f"  Completed: {total_records:,} records in {elapsed:.1f}s ({rate:,.0f}/s), {errors} errors")
+    
+    return all_results
 
 
 class StreamingCSVWriter:
