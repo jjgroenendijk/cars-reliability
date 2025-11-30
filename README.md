@@ -57,10 +57,10 @@ See the [docs/](docs/index.md) folder for detailed documentation:
 
 | Branch | Data Sample | Purpose |
 |--------|-------------|--------|
-| `main` | 100% (~25M records) | Production - deployed to GitHub Pages |
-| `dev` | 1% (~250k records) | Development - fast iteration |
+| `main` | 100% (full dataset) | Production - deployed to GitHub Pages |
+| `dev` | 1% (~245k records) | Development - fast iteration |
 
-The `DATA_SAMPLE_PERCENT` environment variable controls how much data to fetch.
+The `DATA_SAMPLE_PERCENT` environment variable controls how much data to fetch. Dataset size is queried dynamically from the API.
 
 ## Local Development
 
@@ -72,8 +72,8 @@ source venv/bin/activate  # Linux/Mac
 # Install dependencies
 pip install -r requirements.txt
 
-# Run pipeline (1% sample for speed)
-DATA_SAMPLE_PERCENT=1 python src/fetch_data.py
+# Run pipeline (1% sample for speed, 8 parallel workers)
+DATA_SAMPLE_PERCENT=1 FETCH_WORKERS=8 python src/fetch_data.py
 python src/process_data.py
 python src/generate_site.py
 
@@ -81,9 +81,9 @@ python src/generate_site.py
 cd site && python -m http.server 8000
 ```
 
-For full dataset (takes longer):
+For faster fetching with an app token (optional, get one at [opendata.rdw.nl](https://opendata.rdw.nl/)):
 ```bash
-DATA_SAMPLE_PERCENT=100 python src/fetch_data.py
+RDW_APP_TOKEN=your_token DATA_SAMPLE_PERCENT=1 python src/fetch_data.py
 ```
 
 ## License

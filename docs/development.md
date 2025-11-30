@@ -80,9 +80,11 @@ src/
 |----------|-------------|----------|
 | `DATA_SAMPLE_PERCENT` | Percentage of full dataset to fetch (1-100) | 100 |
 | `RDW_APP_TOKEN` | Socrata app token for higher rate limits | None |
-| `FETCH_WORKERS` | Number of parallel threads for batch fetching | 4 |
+| `FETCH_WORKERS` | Number of parallel threads for batch fetching | 8 |
 
 Get an app token at [opendata.rdw.nl](https://opendata.rdw.nl/) (free registration).
+
+**Note:** Dataset size is queried dynamically from the API, so percentages always reflect the current data.
 
 ### Using an App Token Locally
 
@@ -101,16 +103,19 @@ source .env && RDW_APP_TOKEN=$APP_Token python src/fetch_data.py
 ### Data Sampling
 
 ```bash
-# Quick dev run (1% sample, ~250k records)
-DATA_SAMPLE_PERCENT=1 python src/fetch_data.py
+# Quick dev run (1% sample, ~245k records, 8 workers)
+DATA_SAMPLE_PERCENT=1 FETCH_WORKERS=8 python src/fetch_data.py
 
-# Full production run (~25M records, takes longer)
-DATA_SAMPLE_PERCENT=100 python src/fetch_data.py
+# Full production run (~24.5M records, takes ~15-20 min)
+DATA_SAMPLE_PERCENT=100 FETCH_WORKERS=8 python src/fetch_data.py
 ```
+
+The fetch script queries the actual dataset size from the API, so these numbers adjust automatically as RDW adds more data.
 
 ### Adjusting Thresholds
 
 In `src/process_data.py`:
+
 ```python
 # Lower threshold includes more models (default is 50)
 model_stats = calculate_defects_by_model(vehicles, defects, min_vehicles=20)
@@ -165,10 +170,13 @@ gh run watch
 ## Troubleshooting
 
 ### "No such column" API Error
+
 The RDW schema changes occasionally. Check the [dataset page](https://opendata.rdw.nl/Voertuigen/Open-Data-RDW-Gekentekende_voertuigen/m9d7-ebf2) for current column names.
 
 ### Rate Limiting
+
 If you see 429 errors, the built-in retry logic will handle transient failures. For persistent issues:
+
 - Add an app token (see Configuration)
 - Reduce batch sizes
 - Add delays between requests

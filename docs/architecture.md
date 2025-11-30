@@ -48,9 +48,11 @@ cars/
 
 ### 1. Fetch (`src/fetch_data.py`)
 
+- Queries dataset size dynamically via `SELECT count(*)`
 - Connects to RDW Open Data via Socrata SODA API
-- Fetches defect records from `Geconstateerde Gebreken` dataset
-- For each unique license plate (kenteken), fetches vehicle info
+- Fetches defect records in parallel pages (50k records each)
+- For each unique license plate (kenteken), fetches vehicle and fuel info in parallel batches
+- Uses configurable worker threads (`FETCH_WORKERS`, default 8)
 - Saves raw data as CSV files in `data/`
 
 ### 2. Process (`src/process_data.py`)
@@ -118,11 +120,29 @@ GitHub Actions caches fetched data to speed up repeated runs:
 
 ## Data Sampling
 
-The `DATA_SAMPLE_PERCENT` environment variable controls how much of the full dataset to fetch:
+The `DATA_SAMPLE_PERCENT` environment variable controls how much of the full dataset to fetch.
+
+Dataset size is queried dynamically from the API at runtime using `SELECT count(*)`, so the percentages always reflect the current dataset size.
 
 | Sample | Records | Use Case |
 |--------|---------|----------|
-| 1% | ~250k defects | Dev branch, fast iteration |
-| 100% | ~25M defects | Main branch, production |
+| 1% | ~245k defects | Dev branch, fast iteration |
+| 100% | ~24.5M defects | Main branch, production |
 
 The website displays a warning banner when viewing sample data.
+
+## Performance Optimizations
+
+### Parallel Fetching
+
+All batch operations use `ThreadPoolExecutor` for parallel requests:
+
+- Defects: Fetched in 50k record pages, parallelized across workers
+- Vehicles: Fetched in 1k kenteken batches, parallelized
+- Fuel: Same as vehicles
+
+Default is 8 workers (`FETCH_WORKERS=8`), which provides ~2-3x speedup over sequential fetching.
+
+### App Token
+
+Using an RDW app token (`RDW_APP_TOKEN`) removes rate limiting and significantly speeds up API calls.
