@@ -5,8 +5,14 @@ on:
   schedule:
     - cron: '0 0 * * 0'
   
-  # Allow manual trigger
+  # Allow manual trigger with cache bypass option
   workflow_dispatch:
+    inputs:
+      force_fetch:
+        description: 'Force fresh data fetch (bypass cache)'
+        required: false
+        default: false
+        type: boolean
   
   # Run on push to main or dev branches
   push:
@@ -62,10 +68,44 @@ jobs:
           fi
           echo "Branch: ${{ github.ref_name }}, Sample: $DATA_SAMPLE_PERCENT%"
       
+      - name: Generate cache key
+        id: cache-key
+        run: |
+          # Cache key based on: branch, week number, and fetch script hash
+          WEEK=$(date +%Y-W%V)
+          SCRIPT_HASH=$(sha256sum src/fetch_data.py | cut -c1-8)
+          echo "key=rdw-data-${{ github.ref_name }}-${WEEK}-${SCRIPT_HASH}" >> $GITHUB_OUTPUT
+          echo "Cache key: rdw-data-${{ github.ref_name }}-${WEEK}-${SCRIPT_HASH}"
+      
+      - name: Restore data cache
+        if: inputs.force_fetch != 'true'
+        id: cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: data/
+          key: ${{ steps.cache-key.outputs.key }}
+      
       - name: Fetch data from RDW
+        if: steps.cache-restore.outputs.cache-hit != 'true'
         run: python src/fetch_data.py
         env:
           DATA_SAMPLE_PERCENT: ${{ env.DATA_SAMPLE_PERCENT }}
+      
+      - name: Save data cache
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: data/
+          key: ${{ steps.cache-key.outputs.key }}
+      
+      - name: Report cache status
+        run: |
+          if [ "${{ steps.cache-restore.outputs.cache-hit }}" = "true" ]; then
+            echo "### Cache hit - using cached data" >> $GITHUB_STEP_SUMMARY
+            cat data/fetch_metadata.json >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Fresh data fetched from RDW" >> $GITHUB_STEP_SUMMARY
+          fi
       
       - name: Process data
         run: python src/process_data.py

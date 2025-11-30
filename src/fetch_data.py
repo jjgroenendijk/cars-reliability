@@ -12,10 +12,33 @@ Environment variables:
 """
 
 import os
+import time
+from functools import wraps
 from pathlib import Path
 
 import pandas as pd
 from sodapy import Socrata
+from tqdm import tqdm
+
+
+def retry_with_backoff(max_retries: int = 3, base_delay: float = 1.0):
+    """Decorator to retry a function with exponential backoff."""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            last_exception = None
+            for attempt in range(max_retries):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    last_exception = e
+                    if attempt < max_retries - 1:
+                        delay = base_delay * (2 ** attempt)
+                        print(f"  Retry {attempt + 1}/{max_retries} after {delay}s: {e}")
+                        time.sleep(delay)
+            raise last_exception
+        return wrapper
+    return decorator
 
 # RDW Open Data domain
 RDW_DOMAIN = "opendata.rdw.nl"
@@ -115,25 +138,27 @@ def fetch_vehicles_for_kentekens(
     
     all_results = []
     unique_kentekens = list(set(kentekens))
+    total_batches = (len(unique_kentekens) + batch_size - 1) // batch_size
     
-    for i in range(0, len(unique_kentekens), batch_size):
-        batch = unique_kentekens[i:i + batch_size]
-        # Create IN clause for SoQL
-        kenteken_list = ",".join(f"'{k}'" for k in batch)
-        
-        try:
-            results = client.get(
-                DATASETS["vehicles"],
-                select=",".join(columns),
-                where=f"kenteken IN ({kenteken_list}) AND voertuigsoort='Personenauto'",
-                limit=batch_size,
-            )
-            all_results.extend(results)
-        except Exception as e:
-            print(f"  Warning: batch {i//batch_size} failed: {e}")
-        
-        if (i // batch_size) % 10 == 0:
-            print(f"  Processed {min(i + batch_size, len(unique_kentekens))}/{len(unique_kentekens)} kentekens...")
+    @retry_with_backoff(max_retries=3, base_delay=2.0)
+    def fetch_batch(batch_kentekens):
+        kenteken_list = ",".join(f"'{k}'" for k in batch_kentekens)
+        return client.get(
+            DATASETS["vehicles"],
+            select=",".join(columns),
+            where=f"kenteken IN ({kenteken_list}) AND voertuigsoort='Personenauto'",
+            limit=batch_size,
+        )
+    
+    with tqdm(total=total_batches, desc="  Vehicles", unit="batch") as pbar:
+        for i in range(0, len(unique_kentekens), batch_size):
+            batch = unique_kentekens[i:i + batch_size]
+            try:
+                results = fetch_batch(batch)
+                all_results.extend(results)
+            except Exception as e:
+                print(f"  Warning: batch {i//batch_size} failed after retries: {e}")
+            pbar.update(1)
     
     df = pd.DataFrame.from_records(all_results)
     print(f"  Fetched info for {len(df)} passenger cars")
@@ -182,23 +207,26 @@ def fetch_fuel_for_kentekens(
     
     all_results = []
     unique_kentekens = list(set(kentekens))
+    total_batches = (len(unique_kentekens) + batch_size - 1) // batch_size
     
-    for i in range(0, len(unique_kentekens), batch_size):
-        batch = unique_kentekens[i:i + batch_size]
-        kenteken_list = ",".join(f"'{k}'" for k in batch)
-        
-        try:
-            results = client.get(
-                "8ys7-d773",  # Fuel dataset
-                where=f"kenteken IN ({kenteken_list}) AND brandstof_volgnummer='1'",  # Primary fuel only
-                limit=batch_size,
-            )
-            all_results.extend(results)
-        except Exception as e:
-            print(f"  Warning: fuel batch {i//batch_size} failed: {e}")
-        
-        if (i // batch_size) % 10 == 0:
-            print(f"  Processed {min(i + batch_size, len(unique_kentekens))}/{len(unique_kentekens)} kentekens...")
+    @retry_with_backoff(max_retries=3, base_delay=2.0)
+    def fetch_batch(batch_kentekens):
+        kenteken_list = ",".join(f"'{k}'" for k in batch_kentekens)
+        return client.get(
+            "8ys7-d773",  # Fuel dataset
+            where=f"kenteken IN ({kenteken_list}) AND brandstof_volgnummer='1'",  # Primary fuel only
+            limit=batch_size,
+        )
+    
+    with tqdm(total=total_batches, desc="  Fuel", unit="batch") as pbar:
+        for i in range(0, len(unique_kentekens), batch_size):
+            batch = unique_kentekens[i:i + batch_size]
+            try:
+                results = fetch_batch(batch)
+                all_results.extend(results)
+            except Exception as e:
+                print(f"  Warning: fuel batch {i//batch_size} failed after retries: {e}")
+            pbar.update(1)
     
     df = pd.DataFrame.from_records(all_results)
     print(f"  Fetched fuel info for {len(df)} vehicles")
@@ -253,7 +281,6 @@ def main():
     print(f"  - defect_codes.csv: {len(defect_codes_df):,} records")
     print(f"  - fuel.csv: {len(fuel_df):,} records")
     print(f"  - fetch_metadata.json: sample={sample_percent}%")
-    print(f"  - fuel.csv: {len(fuel_df)} records")
     
     client.close()
 

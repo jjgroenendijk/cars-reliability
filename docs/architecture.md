@@ -97,6 +97,25 @@ The defects dataset is smaller and more focused. Starting there ensures we only 
 - **Rate limiting**: Without an app token, API calls are throttled
 - **Data freshness**: RDW updates daily, but we only fetch weekly
 
+## Resilience Features
+
+### API Retry Logic
+
+The fetch script includes exponential backoff retry for API calls:
+
+- 3 retries per batch with 2s base delay
+- Backoff multiplier: 2x (delays: 2s, 4s, 8s)
+- Failed batches are logged but don't stop the entire fetch
+
+### Data Caching
+
+GitHub Actions caches fetched data to speed up repeated runs:
+
+- Cache key: `rdw-data-{branch}-{week}-{script-hash}`
+- Fresh data is fetched weekly (cache key includes week number)
+- Script changes invalidate cache automatically
+- Manual workflow dispatch has "force fetch" option to bypass cache
+
 ## Data Sampling
 
 The `DATA_SAMPLE_PERCENT` environment variable controls how much of the full dataset to fetch:

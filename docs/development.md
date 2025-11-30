@@ -153,13 +153,23 @@ gh run watch
 The RDW schema changes occasionally. Check the [dataset page](https://opendata.rdw.nl/Voertuigen/Open-Data-RDW-Gekentekende_voertuigen/m9d7-ebf2) for current column names.
 
 ### Rate Limiting
-If you see 429 errors:
+If you see 429 errors, the built-in retry logic will handle transient failures. For persistent issues:
 - Add an app token (see Configuration)
 - Reduce batch sizes
 - Add delays between requests
 
+### Bypassing Cache in CI
+
+To force a fresh data fetch in GitHub Actions:
+
+1. Go to Actions → "Update Car Reliability Data" → "Run workflow"
+2. Check the "Force fresh data fetch" checkbox
+3. Click "Run workflow"
+
 ### No Data Overlap
+
 If brand stats are empty, the defects and vehicles aren't matching:
+
 ```python
 # Debug: check for common kentekens
 vehicles = pd.read_csv('data/vehicles.csv')
