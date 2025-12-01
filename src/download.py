@@ -280,16 +280,22 @@ def items_fetch_parallel(items: list, fetch_fn, writer: CSVWriter | None = None,
 # =============================================================================
 
 def dataset_fetch(client: Socrata, dataset: str, output: Path,
-                  kentekens: list[str] | None = None, stream: bool = True) -> pd.DataFrame | None:
+                  kentekens: list[str] | None = None, stream: bool = True,
+                  partition: str | None = None) -> pd.DataFrame | None:
     """
     Fetch a dataset and write to CSV.
+    
+    Args:
+        partition: Optional kenteken prefix (0-9, A-Z) to filter data.
+                   Used for parallel job splitting.
     
     Returns DataFrame if stream=False, None otherwise.
     """
     config = DATASET_CONFIGS[dataset]
     dataset_id = DATASETS[dataset]
     
-    log(f"\n--- Starting: {dataset} ---")
+    partition_suffix = f" (partition: {partition})" if partition else ""
+    log(f"\n--- Starting: {dataset}{partition_suffix} ---")
     stats_log()
     
     # Small reference table - fetch directly
@@ -306,7 +312,7 @@ def dataset_fetch(client: Socrata, dataset: str, output: Path,
     if kentekens:
         items, fetch_fn, desc = _kenteken_batches_build(client, dataset_id, kentekens, config)
     else:
-        items, fetch_fn, desc = _offset_pages_build(client, dataset_id, config)
+        items, fetch_fn, desc = _offset_pages_build(client, dataset_id, config, partition=partition)
     
     # Execute fetch with resume support
     if stream:
@@ -368,9 +374,20 @@ def _kenteken_batches_build(client, dataset_id, kentekens, config):
     return batches, fetch, "batches"
 
 
-def _offset_pages_build(client, dataset_id, config):
-    """Build paginated fetch with offset."""
-    total = _dataset_size_get(client, dataset_id)
+def _offset_pages_build(client, dataset_id, config, partition: str | None = None):
+    """Build paginated fetch with offset.
+    
+    Args:
+        partition: Optional kenteken prefix (0-9, A-Z) to filter by.
+    """
+    # Get total count (with partition filter if specified)
+    if partition:
+        where_count = f"kenteken LIKE '{partition}%'"
+        total = _dataset_size_get(client, dataset_id, where=where_count)
+        log(f"Partition '{partition}': {total:,} records")
+    else:
+        total = _dataset_size_get(client, dataset_id)
+    
     sample = env_sample_percent()
     limit = max(10000, int(total * sample / 100))
     log(f"Fetching {sample}% of {total:,} = {limit:,} records")
@@ -382,17 +399,26 @@ def _offset_pages_build(client, dataset_id, config):
     @retry_with_backoff()
     def fetch(offset):
         kwargs = {"limit": min(page_size, limit - offset), "offset": offset, "order": "kenteken"}
+        # Build where clause
+        where_parts = []
+        if partition:
+            where_parts.append(f"kenteken LIKE '{partition}%'")
         if config["where"]:
-            kwargs["where"] = config["where"]
+            where_parts.append(config["where"])
+        if where_parts:
+            kwargs["where"] = " AND ".join(where_parts)
         return client.get(dataset_id, **kwargs)
     
     return offsets, fetch, "pages"
 
 
-def _dataset_size_get(client, dataset_id) -> int:
+def _dataset_size_get(client, dataset_id, where: str | None = None) -> int:
     """Get total record count for a dataset."""
     try:
-        result = client.get(dataset_id, select="count(*)", limit=1)
+        kwargs = {"select": "count(*)", "limit": 1}
+        if where:
+            kwargs["where"] = where
+        result = client.get(dataset_id, **kwargs)
         return int(result[0]["count"]) if result else 25_000_000
     except Exception:
         return 25_000_000
@@ -465,7 +491,7 @@ def kentekens_load(csv_path: Path) -> list[str]:
 def main():
     parser = argparse.ArgumentParser(
         description="Download RDW datasets",
-        epilog="Examples:\n  python download.py inspections\n  python download.py --all",
+        epilog="Examples:\n  python download.py inspections\n  python download.py inspections --partition A\n  python download.py --all",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("dataset", nargs="?", choices=list(DATASETS.keys()))
@@ -474,6 +500,8 @@ def main():
     parser.add_argument("--output", type=Path, help="Output file (default: data/<dataset>.csv)")
     parser.add_argument("--stream", action="store_true", default=None, help="Stream to disk")
     parser.add_argument("--no-stream", action="store_true", help="Collect in memory first")
+    parser.add_argument("--partition", type=str, 
+                        help="Kenteken prefix to filter (0-9, A-Z). For parallel job splitting.")
     
     args = parser.parse_args()
     
@@ -481,6 +509,10 @@ def main():
         parser.error("Specify a dataset or use --all")
     if args.all and args.dataset:
         parser.error("Cannot use both dataset and --all")
+    if args.partition and args.all:
+        parser.error("Cannot use --partition with --all")
+    if args.partition and len(args.partition) != 1:
+        parser.error("--partition must be a single character (0-9, A-Z)")
     
     stream = not args.no_stream if args.no_stream else (args.stream if args.stream else not args.all)
     
@@ -491,9 +523,16 @@ def main():
         if args.all:
             datasets_fetch_all(client, stream=stream)
         else:
-            output = args.output or DATA_DIR / f"{args.dataset}.csv"
+            # Determine output filename (include partition suffix if specified)
+            if args.output:
+                output = args.output
+            elif args.partition:
+                output = DATA_DIR / f"{args.dataset}_{args.partition}.csv"
+            else:
+                output = DATA_DIR / f"{args.dataset}.csv"
+            
             log(f"\n{'='*60}")
-            log(f"DOWNLOADING: {args.dataset}")
+            log(f"DOWNLOADING: {args.dataset}" + (f" (partition: {args.partition})" if args.partition else ""))
             log(f"Output: {output}, Mode: {'stream' if stream else 'memory'}")
             log(f"Sample: {env_sample_percent()}%, Workers: {env_workers()}")
             log(f"{'='*60}\n")
@@ -506,7 +545,7 @@ def main():
             elif args.dataset in ("vehicles", "fuel"):
                 sys.exit(f"Error: --kentekens-from required for {args.dataset}")
             
-            dataset_fetch(client, args.dataset, output, kentekens=kentekens, stream=stream)
+            dataset_fetch(client, args.dataset, output, kentekens=kentekens, stream=stream, partition=args.partition)
             log(f"\nDone! Output: {output}")
     finally:
         client.close()

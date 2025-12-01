@@ -1,0 +1,127 @@
+name: Deploy Website
+
+on:
+  # Trigger after process workflow completes
+  workflow_run:
+    workflows: ["Process Data"]
+    types:
+      - completed
+  
+  # Allow manual trigger
+  workflow_dispatch:
+  
+  # Run on push to site templates
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/templates/**'
+      - 'src/generate_site.py'
+      - '.github/workflows/website.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: read
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Run if process succeeded, or on push/manual trigger
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Download processed data from process workflow
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v4
+        with:
+          name: processed-data
+          path: site/data
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+      
+      - name: Download processed data (push/manual trigger)
+        if: github.event_name != 'workflow_run'
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: process.yml
+          name: processed-data
+          path: site/data
+          search_artifacts: true
+        continue-on-error: true
+      
+      - name: Check for existing site data
+        id: check-data
+        run: |
+          if [ -f "site/data/brand_reliability.json" ]; then
+            echo "has_data=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_data=false" >> $GITHUB_OUTPUT
+            echo "WARNING: No processed data found, using existing site/data if available"
+          fi
+      
+      - name: Generate static site
+        run: python src/generate_site.py
+      
+      - name: Verify site structure
+        run: |
+          if [ ! -f "site/index.html" ]; then
+            echo "ERROR: Missing site/index.html"
+            exit 1
+          fi
+          echo "Site structure:"
+          find site -type f | head -20
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'site'
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      
+      - name: Deploy summary
+        run: |
+          echo "### Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed to:** ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+          for f in site/index.html site/css/styles.css site/js/app.js; do
+            if [ -f "$f" ]; then
+              name=$(basename "$f")
+              size=$(du -h "$f" | cut -f1)
+              echo "| ${name} | ${size} |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
