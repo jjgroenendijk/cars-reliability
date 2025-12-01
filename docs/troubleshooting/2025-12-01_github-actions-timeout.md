@@ -160,3 +160,15 @@ fi
 1. Commit and push this fix
 2. Monitor the triggered workflow run
 3. Update this document with results
+
+---
+
+## Verification (2025-12-01 15:43 UTC)
+
+**Run #48** triggered after fix commit `faa191c`:
+- Status: In Progress
+- Event: push
+- Expected Sample: 10% (due to fix)
+- Expected Duration: ~25-30 minutes
+
+Will monitor this run to confirm the fix resolves the timeout issue for push events.
