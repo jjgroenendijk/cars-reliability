@@ -71,8 +71,7 @@ Starting from `inspections.csv` (all APK results) avoids sample bias. Starting f
 
 ### Directory Structure
 
-- `src/download.py` - Data fetching (API client, streaming CSV, retry logic)
-- `src/download.py` - Unified data fetching script
+- `src/download.py` - Data fetching (API client, streaming CSV, resume support, retry logic)
 - `src/process_data.py` - Metrics calculation (defects per inspection, pass rate)
 - `src/generate_site.py` - Template copying to site/
 - `src/templates/` - HTML and JavaScript templates
@@ -151,3 +150,22 @@ Run the full pipeline locally with `DATA_SAMPLE_PERCENT=1` to catch issues befor
 - Python functions must use `<subject>_<verb>` naming convention (e.g., `dataset_download`, `metadata_load`, `results_save`)
 - Simplicity is paramount: avoid deep nesting and complexity
 - Prefer feature flags (boolean parameters) over nested conditionals
+
+## Troubleshooting Documentation
+
+**MANDATORY:** When troubleshooting any issue, create a document in:
+
+```text
+docs/troubleshooting/YYYY-MM-DD_<issue-slug>.md
+```
+
+This document MUST include:
+
+1. **Date and Status** - When the issue was identified and current state
+2. **Symptoms** - What was observed (error messages, behavior)
+3. **Root Cause Analysis** - Investigation findings
+4. **Changes Made** - All commits and modifications with dates
+5. **Expected Resolution** - How the fix should work
+6. **Next Steps** - What to do if issue persists
+
+This rule is STRICT. Every troubleshooting session must produce a document, even if the issue is resolved quickly. This creates institutional knowledge and prevents re-investigating the same issues.

@@ -106,3 +106,22 @@ When making code changes and it's unclear whether they work correctly:
 1. Commit and push the changes to a branch
 2. Watch the GitHub Actions logs to verify the change is successful
 3. Fix any issues encountered in the CI pipeline before considering the task complete
+
+## Troubleshooting Documentation
+
+**MANDATORY:** When troubleshooting any issue, create a document in:
+
+```
+docs/troubleshooting/YYYY-MM-DD_<issue-slug>.md
+```
+
+This document MUST include:
+
+1. **Date and Status** - When the issue was identified and current state
+2. **Symptoms** - What was observed (error messages, behavior)
+3. **Root Cause Analysis** - Investigation findings
+4. **Changes Made** - All commits and modifications with dates
+5. **Expected Resolution** - How the fix should work
+6. **Next Steps** - What to do if issue persists
+
+This rule is STRICT. Every troubleshooting session must produce a document, even if the issue is resolved quickly. This creates institutional knowledge and prevents re-investigating the same issues.
