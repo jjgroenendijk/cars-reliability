@@ -6,9 +6,9 @@
 import type { BrandStats, ModelStats, Rankings, DataSet } from "./types";
 
 /**
- * Base path for data files. Uses relative path so it works with Next.js basePath.
+ * Base path for data files. Uses NEXT_PUBLIC_BASE_PATH for production deployments.
  */
-const DATA_BASE_PATH = "data";
+const DATA_BASE_PATH = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/data`;
 
 /**
  * Load brand statistics from JSON file.

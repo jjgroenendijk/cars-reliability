@@ -37,9 +37,10 @@ export default function FuelsPage() {
   useEffect(() => {
     async function data_fetch() {
       try {
+        const base_path = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
         const [stats_res, rankings_res] = await Promise.all([
-          fetch("data/brand_stats.json"),
-          fetch("data/rankings.json"),
+          fetch(`${base_path}/data/brand_stats.json`),
+          fetch(`${base_path}/data/rankings.json`),
         ]);
 
         if (!stats_res.ok) throw new Error("Could not load brand data");

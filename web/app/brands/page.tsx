@@ -55,9 +55,10 @@ export default function BrandsPage() {
   useEffect(() => {
     async function data_fetch() {
       try {
+        const base_path = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
         const [stats_response, rankings_response] = await Promise.all([
-          fetch("data/brand_stats.json"),
-          fetch("data/rankings.json"),
+          fetch(`${base_path}/data/brand_stats.json`),
+          fetch(`${base_path}/data/rankings.json`),
         ]);
 
         if (!stats_response.ok) {
