@@ -10,8 +10,10 @@ interface NavLink {
 
 const NAV_LINKS: NavLink[] = [
   { href: "/", label: "Home" },
+  { href: "/rankings", label: "Top 10" },
   { href: "/brands", label: "Brands" },
   { href: "/models", label: "Models" },
+  { href: "/fuels", label: "Fuel Types" },
   { href: "/lookup", label: "License Plate Lookup" },
   { href: "/about", label: "About" },
 ];

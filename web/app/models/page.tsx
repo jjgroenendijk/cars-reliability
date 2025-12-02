@@ -1,11 +1,35 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import type { ModelStats, Rankings } from "@/app/lib/types";
+import type { ModelStats, Rankings, AgeBracketStats } from "@/app/lib/types";
 import { ReliabilityTable, type Column } from "@/app/components/reliability_table";
 import { timestamp_format } from "@/app/lib/data_load";
 
-const MODEL_COLUMNS: Column<ModelStats>[] = [
+type AgeBracketKey = "all" | "4_7" | "8_12" | "13_20" | "5_15";
+
+interface AgeBracketOption {
+  key: AgeBracketKey;
+  label: string;
+}
+
+const AGE_BRACKET_OPTIONS: AgeBracketOption[] = [
+  { key: "all", label: "All Ages" },
+  { key: "4_7", label: "4-7 years" },
+  { key: "8_12", label: "8-12 years" },
+  { key: "13_20", label: "13-20 years" },
+  { key: "5_15", label: "5-15 years" },
+];
+
+interface ModelStatsFiltered {
+  merk: string;
+  handelsbenaming: string;
+  vehicle_count: number;
+  total_inspections: number;
+  total_defects: number;
+  avg_defects_per_inspection: number | null;
+}
+
+const MODEL_COLUMNS_FULL: Column<ModelStats>[] = [
   { key: "merk", label: "Brand" },
   { key: "handelsbenaming", label: "Model" },
   { key: "vehicle_count", label: "Vehicles" },
@@ -15,12 +39,21 @@ const MODEL_COLUMNS: Column<ModelStats>[] = [
   { key: "defects_per_year", label: "Defects/Year" },
 ];
 
+const MODEL_COLUMNS_FILTERED: Column<ModelStatsFiltered>[] = [
+  { key: "merk", label: "Brand" },
+  { key: "handelsbenaming", label: "Model" },
+  { key: "vehicle_count", label: "Vehicles" },
+  { key: "total_inspections", label: "Inspections" },
+  { key: "avg_defects_per_inspection", label: "Avg. Defects" },
+];
+
 export default function ModelsPage() {
   const [model_stats, setModelStats] = useState<ModelStats[]>([]);
   const [generated_at, setGeneratedAt] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected_brand, setSelectedBrand] = useState<string>("");
+  const [selected_age_bracket, setSelectedAgeBracket] = useState<AgeBracketKey>("all");
 
   useEffect(() => {
     async function data_fetch() {
@@ -56,13 +89,34 @@ export default function ModelsPage() {
     return unique_brands.sort((a, b) => a.localeCompare(b, "nl-NL"));
   }, [model_stats]);
 
-  // Filter data by selected brand
-  const filtered_data = useMemo(() => {
-    if (!selected_brand) {
-      return model_stats;
+  // Filter data by selected brand and transform by age bracket
+  const filtered_data = useMemo((): ModelStatsFiltered[] | ModelStats[] => {
+    const result = selected_brand
+      ? model_stats.filter((m) => m.merk === selected_brand)
+      : model_stats;
+
+    if (selected_age_bracket === "all") {
+      return result;
     }
-    return model_stats.filter((m) => m.merk === selected_brand);
-  }, [model_stats, selected_brand]);
+
+    // Filter to models with data for this age bracket (100+ inspections)
+    return result
+      .filter((m) => {
+        const bracket = m.age_brackets[selected_age_bracket];
+        return bracket !== null && bracket.total_inspections >= 100;
+      })
+      .map((m) => {
+        const bracket = m.age_brackets[selected_age_bracket] as AgeBracketStats;
+        return {
+          merk: m.merk,
+          handelsbenaming: m.handelsbenaming,
+          vehicle_count: bracket.vehicle_count,
+          total_inspections: bracket.total_inspections,
+          total_defects: bracket.total_defects,
+          avg_defects_per_inspection: bracket.avg_defects_per_inspection,
+        };
+      });
+  }, [model_stats, selected_brand, selected_age_bracket]);
 
   if (loading) {
     return (
@@ -93,45 +147,84 @@ export default function ModelsPage() {
         </h1>
         <p className="text-gray-600 dark:text-gray-300">
           Overview of all car models sorted by reliability based on MOT inspection data.
-          Filter by brand or click a column header to sort.
+          Filter by brand and age, or click a column header to sort.
         </p>
       </div>
 
-      {/* Brand Filter */}
-      <div className="mb-6">
-        <label
-          htmlFor="brand-filter"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-        >
-          Filter by brand
-        </label>
-        <select
-          id="brand-filter"
-          value={selected_brand}
-          onChange={(e) => setSelectedBrand(e.target.value)}
-          className="w-full sm:w-64 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                   bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                   focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="">All brands</option>
-          {brands.map((brand) => (
-            <option key={brand} value={brand}>
-              {brand}
-            </option>
-          ))}
-        </select>
+      {/* Filters */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-4">
+        {/* Brand Filter */}
+        <div>
+          <label
+            htmlFor="brand-filter"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
+            Filter by brand
+          </label>
+          <select
+            id="brand-filter"
+            value={selected_brand}
+            onChange={(e) => setSelectedBrand(e.target.value)}
+            className="w-full sm:w-64 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                     focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">All brands</option>
+            {brands.map((brand) => (
+              <option key={brand} value={brand}>
+                {brand}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Age Bracket Filter */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Vehicle Age
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {AGE_BRACKET_OPTIONS.map((option) => (
+              <button
+                key={option.key}
+                onClick={() => setSelectedAgeBracket(option.key)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  selected_age_bracket === option.key
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <ReliabilityTable
-          data={filtered_data}
-          columns={MODEL_COLUMNS}
-          defaultSortKey="avg_defects_per_inspection"
-          defaultSortDirection="asc"
-          filterKey="handelsbenaming"
-          filterPlaceholder="Search model..."
-          emptyMessage="No model data available"
-        />
+        {selected_age_bracket === "all" ? (
+          <ReliabilityTable
+            data={filtered_data as ModelStats[]}
+            columns={MODEL_COLUMNS_FULL}
+            defaultSortKey="avg_defects_per_inspection"
+            defaultSortDirection="asc"
+            filterKey="handelsbenaming"
+            filterPlaceholder="Search model..."
+            emptyMessage="No model data available"
+          />
+        ) : (
+          <ReliabilityTable
+            data={filtered_data as ModelStatsFiltered[]}
+            columns={MODEL_COLUMNS_FILTERED}
+            defaultSortKey="avg_defects_per_inspection"
+            defaultSortDirection="asc"
+            filterKey="handelsbenaming"
+            filterPlaceholder="Search model..."
+            emptyMessage={`No models with 100+ inspections in ${
+              AGE_BRACKET_OPTIONS.find((o) => o.key === selected_age_bracket)?.label ?? ""
+            } range`}
+          />
+        )}
       </div>
 
       {/* Legend */}

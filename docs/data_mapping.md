@@ -171,6 +171,13 @@ Array of brand statistics, sorted by `avg_defects_per_inspection` ascending.
   "avg_defects_per_inspection": 0.2421,
   "avg_age_years": 8.5,
   "defects_per_year": 0.0285,
+  "fuel_breakdown": {
+    "Benzine": 8000,
+    "Diesel": 3000,
+    "Elektriciteit": 500,
+    "LPG": 200,
+    "other": 45
+  },
   "age_brackets": {
     "4_7": { "vehicle_count": 1000, "total_inspections": 2000, "total_defects": 300, "avg_defects_per_inspection": 0.15 },
     "8_12": { ... },
@@ -194,6 +201,13 @@ Array of model statistics, sorted by `avg_defects_per_inspection` ascending.
   "avg_defects_per_inspection": 0.2088,
   "avg_age_years": 7.2,
   "defects_per_year": 0.0290,
+  "fuel_breakdown": {
+    "Benzine": 5000,
+    "Diesel": 500,
+    "Elektriciteit": 100,
+    "LPG": 50,
+    "other": 28
+  },
   "age_brackets": { ... }
 }
 ```

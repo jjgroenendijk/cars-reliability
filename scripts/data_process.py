@@ -70,10 +70,36 @@ def bracket_empty() -> dict[str, dict[str, int]]:
     return {b: {"count": 0, "defects": 0, "inspections": 0} for b in AGE_BRACKETS}
 
 
+def fuel_index_create(fuel_data: list[dict[str, Any]]) -> dict[str, set[str]]:
+    """Create an index of fuel types by kenteken (some vehicles have multiple fuels)."""
+    fuel_index: dict[str, set[str]] = defaultdict(set)
+    for record in fuel_data:
+        kenteken = record.get("kenteken")
+        fuel = record.get("brandstof_omschrijving")
+        if kenteken and fuel:
+            fuel_index[kenteken].add(fuel)
+    return dict(fuel_index)
+
+
+def fuel_breakdown_empty() -> dict[str, int]:
+    """Create empty fuel breakdown structure with common fuel types."""
+    return {
+        "Benzine": 0,
+        "Diesel": 0,
+        "Elektriciteit": 0,
+        "LPG": 0,
+        "other": 0,
+    }
+
+
+MAIN_FUEL_TYPES = {"Benzine", "Diesel", "Elektriciteit", "LPG"}
+
+
 def stats_aggregate(
     vehicle_index: dict[str, dict[str, Any]],
     inspection_counts: dict[str, int],
     defect_counts: dict[str, int],
+    fuel_index: dict[str, set[str]],
     reference_date: datetime,
 ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     """Aggregate statistics by brand and model."""
@@ -86,6 +112,7 @@ def stats_aggregate(
             "age_sum": 0,
             "age_count": 0,
             "age_brackets": bracket_empty(),
+            "fuel_breakdown": fuel_breakdown_empty(),
         }
 
     brand_data: dict[str, dict[str, Any]] = defaultdict(new_stats)
@@ -122,6 +149,16 @@ def stats_aggregate(
 
         model_data[model_key]["merk"] = merk
         model_data[model_key]["handelsbenaming"] = handelsbenaming
+
+        # Track fuel types for this vehicle
+        fuels = fuel_index.get(kenteken, set())
+        for fuel in fuels:
+            if fuel in MAIN_FUEL_TYPES:
+                brand_data[merk]["fuel_breakdown"][fuel] += 1
+                model_data[model_key]["fuel_breakdown"][fuel] += 1
+            else:
+                brand_data[merk]["fuel_breakdown"]["other"] += 1
+                model_data[model_key]["fuel_breakdown"]["other"] += 1
 
     return dict(brand_data), dict(model_data)
 
@@ -160,6 +197,8 @@ def metrics_calculate(stats: dict[str, Any]) -> dict[str, Any]:
         else:
             age_brackets_result[bracket_name] = None
     result["age_brackets"] = age_brackets_result
+
+    # Keep fuel_breakdown as-is (already has the structure we need)
 
     del result["age_sum"]
     del result["age_count"]
@@ -282,6 +321,7 @@ def main() -> None:
         vehicles = json_load(DIR_RAW / "gekentekende_voertuigen.json")
         inspections_agg = json_load(DIR_RAW / "meldingen_keuringsinstantie.json")
         defects_agg = json_load(DIR_RAW / "geconstateerde_gebreken.json")
+        fuel_data = json_load(DIR_RAW / "brandstof.json")
     except FileNotFoundError as e:
         print(f"FAIL: {e}", flush=True)
         exit(1)
@@ -291,12 +331,13 @@ def main() -> None:
     vehicle_index = vehicles_index(vehicles)
     inspection_counts = counts_from_aggregated(inspections_agg, "inspection_count")
     defect_counts = counts_from_aggregated(defects_agg, "defect_count")
+    fuel_index = fuel_index_create(fuel_data)
 
     total_inspections = sum(inspection_counts.values())
     total_defects = sum(defect_counts.values())
 
     brand_data, model_data = stats_aggregate(
-        vehicle_index, inspection_counts, defect_counts, reference_date
+        vehicle_index, inspection_counts, defect_counts, fuel_index, reference_date
     )
 
     brand_stats = stats_filter_brands(brand_data)

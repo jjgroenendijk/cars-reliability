@@ -15,7 +15,7 @@
 - [x] Enable parallel fetching for grouped queries (meldingen/gebreken) with $order clause
 - [x] Stream parallel downloads to disk immediately instead of buffering in memory
 - [x] Add detailed progress output (percentage, page, rows, filesize)
-- [ ] Split `scripts/data_download.py` below 400 LOC (currently 405 lines)
+- [x] Split `scripts/data_download.py` below 400 LOC (332 lines)
 
 ## Stage 2: Data Processing (Python)
 
@@ -34,17 +34,17 @@
 - [x] Create homepage with reliability overview
 - [x] Create brand reliability table (sortable, filterable)
 - [x] Create model reliability table (sortable, filterable)
-- [ ] Create top 10 / bottom 10 pages for brands and models (homepage only shows top 5 previews)
-- [ ] Create age-filtered views
+- [x] Create top 10 / bottom 10 page for brands and models (/rankings route)
+- [x] Create age-filtered views (age bracket filters on brands and models pages)
 - [x] Create license plate lookup (live RDW query)
 - [x] Add inspection history view (live RDW query)
 - [x] Add defect detail descriptions in lookup (hx2c-gt7k join)
 - [x] Create about/methodology page
 - [x] Configure static export for GitHub Pages
 - [x] Add RDW attribution and data generation timestamp to the site
-- [ ] Add common issues per model view (frequent defects)
-- [ ] Add fuel type breakdown visualization (electric vs. diesel vs. petrol)
-- [ ] Add historical reliability trend view
+- [ ] Add common issues per model view (frequent defects) - requires downloading raw defect codes
+- [x] Add fuel type breakdown visualization (electric vs. diesel vs. petrol)
+- [ ] Add historical reliability trend view - requires historical data storage
 - [x] Enforce snake_case naming in React components, props, and state to comply with AI rules
 - [x] Translate UI copy to English (keep RDW field names in Dutch only)
 - [x] Split `web/app/lookup/page.tsx` below 400 LOC by extracting components/hooks

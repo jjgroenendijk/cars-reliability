@@ -11,6 +11,15 @@ export interface AgeBracketStats {
   avg_defects_per_inspection: number;
 }
 
+/** Fuel type breakdown counts */
+export interface FuelBreakdown {
+  Benzine: number;
+  Diesel: number;
+  Elektriciteit: number;
+  LPG: number;
+  other: number;
+}
+
 export interface BrandStats {
   merk: string;
   vehicle_count: number;
@@ -19,6 +28,7 @@ export interface BrandStats {
   avg_defects_per_inspection: number | null;
   avg_age_years: number | null;
   defects_per_year: number | null;
+  fuel_breakdown: FuelBreakdown;
   age_brackets: {
     "4_7": AgeBracketStats | null;
     "8_12": AgeBracketStats | null;
@@ -36,6 +46,7 @@ export interface ModelStats {
   avg_defects_per_inspection: number | null;
   avg_age_years: number | null;
   defects_per_year: number | null;
+  fuel_breakdown: FuelBreakdown;
   age_brackets: {
     "4_7": AgeBracketStats | null;
     "8_12": AgeBracketStats | null;

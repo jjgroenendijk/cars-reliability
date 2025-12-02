@@ -91,8 +91,8 @@ export default function HomePage() {
           title="Most Reliable Brands"
           subtitle="Top 5"
           entries={rankings.most_reliable_brands.slice(0, 5)}
-          link_href="/brands"
-          link_text="View All Brands"
+          link_href="/rankings"
+          link_text="View Full Top 10"
           highlight_color="green"
         />
 
@@ -101,8 +101,8 @@ export default function HomePage() {
           title="Least Reliable Brands"
           subtitle="Top 5"
           entries={rankings.least_reliable_brands.slice(0, 5)}
-          link_href="/brands"
-          link_text="View All Brands"
+          link_href="/rankings"
+          link_text="View Full Top 10"
           highlight_color="red"
         />
 
@@ -111,8 +111,8 @@ export default function HomePage() {
           title="Most Reliable Models"
           subtitle="Top 5"
           entries={rankings.most_reliable_models.slice(0, 5)}
-          link_href="/models"
-          link_text="View All Models"
+          link_href="/rankings"
+          link_text="View Full Top 10"
           highlight_color="green"
           show_model
         />
@@ -122,8 +122,8 @@ export default function HomePage() {
           title="Least Reliable Models"
           subtitle="Top 5"
           entries={rankings.least_reliable_models.slice(0, 5)}
-          link_href="/models"
-          link_text="View All Models"
+          link_href="/rankings"
+          link_text="View Full Top 10"
           highlight_color="red"
           show_model
         />
