@@ -1,36 +1,54 @@
 /**
  * TypeScript interfaces for Dutch Car Reliability data structures.
- * These types match the JSON output from the data processing pipeline.
+ * These types match the JSON output from the data processing pipeline (scripts/data_process.py).
  */
 
-export interface BrandStats {
-  brand: string;
+/** Age bracket statistics for a specific age range */
+export interface AgeBracketStats {
+  vehicle_count: number;
   total_inspections: number;
   total_defects: number;
-  defect_rate: number;
   avg_defects_per_inspection: number;
-  model_count: number;
-  oldest_year: number;
-  newest_year: number;
+}
+
+export interface BrandStats {
+  merk: string;
+  vehicle_count: number;
+  total_inspections: number;
+  total_defects: number;
+  avg_defects_per_inspection: number | null;
+  avg_age_years: number | null;
+  defects_per_year: number | null;
+  age_brackets: {
+    "4_7": AgeBracketStats | null;
+    "8_12": AgeBracketStats | null;
+    "13_20": AgeBracketStats | null;
+    "5_15": AgeBracketStats | null;
+  };
 }
 
 export interface ModelStats {
-  brand: string;
-  model: string;
+  merk: string;
+  handelsbenaming: string;
+  vehicle_count: number;
   total_inspections: number;
   total_defects: number;
-  defect_rate: number;
-  avg_defects_per_inspection: number;
-  oldest_year: number;
-  newest_year: number;
-  sample_size_category: "small" | "medium" | "large";
+  avg_defects_per_inspection: number | null;
+  avg_age_years: number | null;
+  defects_per_year: number | null;
+  age_brackets: {
+    "4_7": AgeBracketStats | null;
+    "8_12": AgeBracketStats | null;
+    "13_20": AgeBracketStats | null;
+    "5_15": AgeBracketStats | null;
+  };
 }
 
 export interface RankingEntry {
   rank: number;
-  brand: string;
-  model?: string;
-  defect_rate: number;
+  merk: string;
+  handelsbenaming?: string;
+  avg_defects_per_inspection: number;
   total_inspections: number;
 }
 

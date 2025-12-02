@@ -19,6 +19,7 @@
 - Tailwind CSS 4.1
 - Python 3.11+
 - Node.js 22+
+- `.env` stores the RDW app token; never commit it.
 
 This file must always mention which frameworks and versions are in use.
 
@@ -33,7 +34,9 @@ This file must always mention which frameworks and versions are in use.
 - Simplicity first: keep code (especially website code) minimal and straightforward before introducing abstractions.
 - File split: split early before hitting the cap.
 - Language: everything must be in English except for preserved dataset field names (RDW fields stay Dutch).
+- RDW field names must stay exactly as provided by the datasets; do not rename them. Keep `docs/data_mapping.md` updated when fields are used.
 - Mock data is not allowed; do not invent sample data—use real RDW data or explicitly request it.
+- Logging: keep logs minimal; do not print date/time stamps.
 - Python typing: always add type hints and docstrings.
 - Python env: activate `venv/` via `source venv/bin/activate` before Python work.
 - Python formatting: run `ruff format` (with venv active) before commit; hook + CI enforce it.
@@ -56,6 +59,7 @@ This file must always mention which frameworks and versions are in use.
 
 - `docs/ai-rules.md`: AI assistant guidance, code rules, frameworks, verification workflow.
 - `docs/api-limits.md`: RDW API rate limits and pagination strategies.
+- `docs/data_mapping.md`: RDW field names, data structures, and pipeline output formats.
 - `docs/metrics.md`: Reliability calculations, formulas, age-bracket definitions, sample size thresholds.
 - `docs/requirements.md`: Project requirements and acceptance criteria.
 - `docs/todo.md`: Task tracking for outstanding work items.
@@ -83,3 +87,7 @@ If a new requirement is suspected, ask the user to confirm, then add it.
 - Run changes locally to verify functionality.
 - Commit and push.
 - Watch GitHub Actions until green.
+
+## Pipeline Discipline
+
+- Stage order is strict: Stage 1 (download) must complete successfully before Stage 2 (process) runs; Stage 2 must succeed before Stage 3 (build) runs. If a stage fails, later stages must not run and the pipeline should cancel.

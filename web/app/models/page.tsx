@@ -6,25 +6,13 @@ import { ReliabilityTable, type Column } from "@/app/components/reliability_tabl
 import { timestamp_format } from "@/app/lib/data_load";
 
 const MODEL_COLUMNS: Column<ModelStats>[] = [
-  { key: "brand", label: "Merk" },
-  { key: "model", label: "Model" },
+  { key: "merk", label: "Merk" },
+  { key: "handelsbenaming", label: "Model" },
+  { key: "vehicle_count", label: "Voertuigen" },
   { key: "total_inspections", label: "Keuringen" },
-  { key: "defect_rate", label: "Gebrekenpercentage" },
   { key: "avg_defects_per_inspection", label: "Gem. gebreken" },
-  { key: "oldest_year", label: "Vanaf" },
-  { key: "newest_year", label: "Tot" },
-  {
-    key: "sample_size_category",
-    label: "Steekproef",
-    format: (value) => {
-      const labels: Record<string, string> = {
-        small: "Klein",
-        medium: "Middel",
-        large: "Groot",
-      };
-      return labels[String(value)] ?? String(value);
-    },
-  },
+  { key: "avg_age_years", label: "Gem. leeftijd" },
+  { key: "defects_per_year", label: "Gebreken/jaar" },
 ];
 
 export default function ModelsPage() {
@@ -64,7 +52,7 @@ export default function ModelsPage() {
 
   // Extract unique brands for filter dropdown
   const brands = useMemo(() => {
-    const uniqueBrands = [...new Set(modelStats.map((m) => m.brand))];
+    const uniqueBrands = [...new Set(modelStats.map((m) => m.merk))];
     return uniqueBrands.sort((a, b) => a.localeCompare(b, "nl-NL"));
   }, [modelStats]);
 
@@ -73,7 +61,7 @@ export default function ModelsPage() {
     if (!selectedBrand) {
       return modelStats;
     }
-    return modelStats.filter((m) => m.brand === selectedBrand);
+    return modelStats.filter((m) => m.merk === selectedBrand);
   }, [modelStats, selectedBrand]);
 
   if (loading) {
@@ -138,9 +126,9 @@ export default function ModelsPage() {
         <ReliabilityTable
           data={filteredData}
           columns={MODEL_COLUMNS}
-          defaultSortKey="defect_rate"
+          defaultSortKey="avg_defects_per_inspection"
           defaultSortDirection="asc"
-          filterKey="model"
+          filterKey="handelsbenaming"
           filterPlaceholder="Zoek model..."
           emptyMessage="Geen modelgegevens beschikbaar"
         />

@@ -27,6 +27,7 @@ Stage 1 (Download) leads to Stage 2 (Process) leads to Stage 3 (Build).
 - Each stage MUST have its own workflow file
 - Stages communicate via GitHub Actions cache/artifacts
 - Each stage can be re-run independently
+- Stage 2 and Stage 3 MUST only run after their preceding stage completes successfully; if a stage fails, subsequent stages MUST be skipped and the pipeline canceled.
 
 ---
 
@@ -51,6 +52,7 @@ All data comes from [RDW Open Data](https://opendata.rdw.nl/) via the Socrata AP
 - Processing MUST complete within GitHub Actions time limits
 - The method (full download vs. SoQL aggregation) is flexible
 - Weekly refresh schedule (Sundays at midnight UTC)
+- Preserve original RDW field names throughout the pipeline; do not rename them in code. Keep `docs/data_mapping.md` current as the source for field definitions.
 
 ### Caching
 
@@ -130,6 +132,7 @@ All data comes from [RDW Open Data](https://opendata.rdw.nl/) via the Socrata AP
 ### Environment Setup
 
 Activate Python venv, install Python requirements, then install Node dependencies in `web/`.
+- `.env` contains the RDW app token; keep it local and out of version control.
 
 ### Pipeline Commands
 
@@ -141,6 +144,7 @@ Run `data_download.py` (Stage 1), then `data_process.py` (Stage 2), copy process
 - Formatting: run `ruff format` (venv active) before committing; hook enforces this.
 - Python quality: `python -m pytest scripts/` (when present), `python -m mypy scripts/`.
 - TypeScript quality: `npm run lint`, `npx tsc --noEmit`, `npm run build`.
+- Logging: avoid printing date/time stamps in logs; keep output minimal.
 
 ### Git Hooks
 

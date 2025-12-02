@@ -6,13 +6,12 @@ import { ReliabilityTable, type Column } from "@/app/components/reliability_tabl
 import { timestamp_format } from "@/app/lib/data_load";
 
 const BRAND_COLUMNS: Column<BrandStats>[] = [
-  { key: "brand", label: "Merk" },
+  { key: "merk", label: "Merk" },
+  { key: "vehicle_count", label: "Voertuigen" },
   { key: "total_inspections", label: "Keuringen" },
-  { key: "defect_rate", label: "Gebrekenpercentage" },
   { key: "avg_defects_per_inspection", label: "Gem. gebreken" },
-  { key: "model_count", label: "Modellen" },
-  { key: "oldest_year", label: "Vanaf" },
-  { key: "newest_year", label: "Tot" },
+  { key: "avg_age_years", label: "Gem. leeftijd" },
+  { key: "defects_per_year", label: "Gebreken/jaar" },
 ];
 
 export default function BrandsPage() {
@@ -86,9 +85,9 @@ export default function BrandsPage() {
         <ReliabilityTable
           data={brandStats}
           columns={BRAND_COLUMNS}
-          defaultSortKey="defect_rate"
+          defaultSortKey="avg_defects_per_inspection"
           defaultSortDirection="asc"
-          filterKey="brand"
+          filterKey="merk"
           filterPlaceholder="Zoek merk..."
           emptyMessage="Geen merkgegevens beschikbaar"
         />

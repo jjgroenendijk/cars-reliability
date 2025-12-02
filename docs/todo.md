@@ -26,11 +26,20 @@
 - [x] Create homepage with reliability overview
 - [x] Create brand reliability table (sortable, filterable)
 - [x] Create model reliability table (sortable, filterable)
-- [x] Create top 10 / bottom 10 pages
+- [ ] Create top 10 / bottom 10 pages for brands and models (homepage only shows top 5 previews)
 - [ ] Create age-filtered views
 - [x] Create license plate lookup (live RDW query)
+- [ ] Add inspection history view (live RDW query)
+- [ ] Add defect detail descriptions in lookup (hx2c-gt7k join)
 - [x] Create about/methodology page
 - [x] Configure static export for GitHub Pages
+- [ ] Add RDW attribution and data generation timestamp to the site
+- [ ] Add common issues per model view (frequent defects)
+- [ ] Add fuel type breakdown visualization (electric vs. diesel vs. petrol)
+- [ ] Add historical reliability trend view
+- [ ] Enforce snake_case naming in React components, props, and state to comply with AI rules
+- [ ] Translate UI copy to English (keep RDW field names in Dutch only)
+- [ ] Split `web/app/lookup/page.tsx` below 400 LOC by extracting components/hooks
 
 ## Infrastructure
 
@@ -39,6 +48,8 @@
 - [x] Create `.github/workflows/website_build.yml`
 - [x] Set up caching strategy between workflows
 - [x] Configure weekly schedule (Sunday midnight UTC)
+- [x] Enforce stage gating so Stage 2 and 3 only run after the previous stage succeeds (remove direct push/dispatch paths)
+- [x] Add gitignore coverage for `data/raw/` and `data/processed/` outputs; remove committed raw JSON
 
 ## Development Setup
 
@@ -46,6 +57,18 @@
 - [x] Set up pre-commit hook for LOC warning when files exceed 400 lines
 - [x] Create data directories (`data/raw/`, `data/processed/`)
 - [ ] Add VS Code tasks for common operations
+
+## Documentation
+
+- [ ] Document Brandstof dataset (`8ys7-d773`) fields in `docs/data_mapping.md`
+- [ ] Record lookup/live query fields in `docs/data_mapping.md` once inspection history and defect details are added
+
+## Experiments
+
+- [ ] Evaluate bulk CSV export (`scripts/data_download_bulk.py`) as alternative to paginated API
+  - Current finding: 7GB download for gekentekende_voertuigen (all 98 columns)
+  - Server-side SoQL filtering may still be more efficient
+  - Needs further testing with smaller datasets (inspections, defects)
 
 ## Testing / Verification
 

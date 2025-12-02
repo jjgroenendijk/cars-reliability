@@ -7,16 +7,10 @@ reliability statistics. Outputs processed data to data/processed/.
 """
 
 import json
-import logging
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
 
 THRESHOLD_BRAND = 100
 THRESHOLD_MODEL = 50
@@ -28,11 +22,8 @@ DIR_PROCESSED = Path(__file__).parent.parent / "data" / "processed"
 
 def json_load(filepath: Path) -> list[dict[str, Any]]:
     """Load JSON data from a file."""
-    logger.info("Loading %s", filepath)
     with open(filepath, encoding="utf-8") as f:
-        data = json.load(f)
-    logger.info("Loaded %d records from %s", len(data), filepath.name)
-    return data
+        return json.load(f)
 
 
 def json_save(data: Any, filepath: Path) -> None:
@@ -40,7 +31,6 @@ def json_save(data: Any, filepath: Path) -> None:
     filepath.parent.mkdir(parents=True, exist_ok=True)
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
-    logger.info("Saved %s (%.2f KB)", filepath, filepath.stat().st_size / 1024)
 
 
 def age_calculate(datum_eerste_toelating: str, reference_date: datetime) -> int | None:
@@ -59,18 +49,20 @@ def age_calculate(datum_eerste_toelating: str, reference_date: datetime) -> int 
 
 def vehicles_index(vehicles: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     """Create an index of vehicles by kenteken (license plate)."""
-    index = {v["kenteken"]: v for v in vehicles if v.get("kenteken")}
-    logger.info("Indexed %d vehicles by kenteken", len(index))
-    return index
+    return {v["kenteken"]: v for v in vehicles if v.get("kenteken")}
 
 
-def records_count_by_kenteken(records: list[dict[str, Any]]) -> dict[str, int]:
-    """Count records per kenteken."""
-    counts: dict[str, int] = defaultdict(int)
+def counts_from_aggregated(
+    records: list[dict[str, Any]], count_field: str
+) -> dict[str, int]:
+    """Extract counts from pre-aggregated API response."""
+    counts: dict[str, int] = {}
     for record in records:
-        if kenteken := record.get("kenteken"):
-            counts[kenteken] += 1
-    return dict(counts)
+        kenteken = record.get("kenteken")
+        count = record.get(count_field)
+        if kenteken and count is not None:
+            counts[kenteken] = int(count)
+    return counts
 
 
 def bracket_empty() -> dict[str, dict[str, int]]:
@@ -85,7 +77,6 @@ def stats_aggregate(
     reference_date: datetime,
 ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     """Aggregate statistics by brand and model."""
-    logger.info("Aggregating statistics by brand and model")
 
     def new_stats() -> dict[str, Any]:
         return {
@@ -99,12 +90,10 @@ def stats_aggregate(
 
     brand_data: dict[str, dict[str, Any]] = defaultdict(new_stats)
     model_data: dict[str, dict[str, Any]] = defaultdict(new_stats)
-    processed_count, skipped = 0, 0
 
     for kenteken, vehicle in vehicle_index.items():
         insp_count = inspection_counts.get(kenteken, 0)
         if insp_count == 0:
-            skipped += 1
             continue
 
         def_count = defect_counts.get(kenteken, 0)
@@ -133,12 +122,7 @@ def stats_aggregate(
 
         model_data[model_key]["merk"] = merk
         model_data[model_key]["handelsbenaming"] = handelsbenaming
-        processed_count += 1
 
-    logger.info(
-        "Aggregated %d vehicles (%d skipped - no inspections)", processed_count, skipped
-    )
-    logger.info("Found %d brands, %d models", len(brand_data), len(model_data))
     return dict(brand_data), dict(model_data)
 
 
@@ -190,36 +174,35 @@ def stats_filter_brands(brand_data: dict[str, dict[str, Any]]) -> list[dict[str,
             entry = metrics_calculate(stats)
             entry["merk"] = merk
             result.append(entry)
-    logger.info(
-        "Filtered brands: %d of %d meet threshold (%d)",
-        len(result),
-        len(brand_data),
-        THRESHOLD_BRAND,
-    )
     return result
 
 
 def stats_filter_models(model_data: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     """Filter and format model statistics meeting threshold."""
-    result = [
+    return [
         metrics_calculate(stats)
         for stats in model_data.values()
         if stats["vehicle_count"] >= THRESHOLD_MODEL
     ]
-    logger.info(
-        "Filtered models: %d of %d meet threshold (%d)",
-        len(result),
-        len(model_data),
-        THRESHOLD_MODEL,
-    )
-    return result
+
+
+def ranking_entry_format(item: dict[str, Any], rank: int) -> dict[str, Any]:
+    """Format a stats item as a ranking entry for the website."""
+    entry = {
+        "rank": rank,
+        "merk": item.get("merk", ""),
+        "avg_defects_per_inspection": item.get("avg_defects_per_inspection", 0),
+        "total_inspections": item.get("total_inspections", 0),
+    }
+    if handelsbenaming := item.get("handelsbenaming"):
+        entry["handelsbenaming"] = handelsbenaming
+    return entry
 
 
 def rankings_generate(
     brand_stats: list[dict[str, Any]], model_stats: list[dict[str, Any]]
 ) -> dict[str, Any]:
     """Generate reliability rankings."""
-    logger.info("Generating rankings")
 
     def sort_key(item: dict[str, Any], ascending: bool = True) -> tuple:
         avg_def = item.get("avg_defects_per_inspection")
@@ -239,19 +222,25 @@ def rankings_generate(
         m for m in model_stats if m.get("avg_defects_per_inspection") is not None
     ]
 
+    top_brands = sorted(valid_brands, key=lambda x: sort_key(x, True))[:10]
+    bottom_brands = sorted(valid_brands, key=lambda x: sort_key(x, False))[:10]
+    top_models = sorted(valid_models, key=lambda x: sort_key(x, True))[:10]
+    bottom_models = sorted(valid_models, key=lambda x: sort_key(x, False))[:10]
+
     return {
-        "top_10_brands_reliable": sorted(valid_brands, key=lambda x: sort_key(x, True))[
-            :10
+        "most_reliable_brands": [
+            ranking_entry_format(b, i + 1) for i, b in enumerate(top_brands)
         ],
-        "bottom_10_brands_reliable": sorted(
-            valid_brands, key=lambda x: sort_key(x, False)
-        )[:10],
-        "top_10_models_reliable": sorted(valid_models, key=lambda x: sort_key(x, True))[
-            :10
+        "least_reliable_brands": [
+            ranking_entry_format(b, i + 1) for i, b in enumerate(bottom_brands)
         ],
-        "bottom_10_models_reliable": sorted(
-            valid_models, key=lambda x: sort_key(x, False)
-        )[:10],
+        "most_reliable_models": [
+            ranking_entry_format(m, i + 1) for i, m in enumerate(top_models)
+        ],
+        "least_reliable_models": [
+            ranking_entry_format(m, i + 1) for i, m in enumerate(bottom_models)
+        ],
+        "generated_at": datetime.now().isoformat(),
     }
 
 
@@ -285,22 +274,26 @@ def metadata_create(
 
 def main() -> None:
     """Main entry point for the data processing script."""
-    logger.info("Starting data processing (Stage 2)")
+    print("Stage2: Processing", flush=True)
     start_time = datetime.now()
     reference_date = datetime.now()
 
     try:
         vehicles = json_load(DIR_RAW / "gekentekende_voertuigen.json")
-        inspections = json_load(DIR_RAW / "meldingen_keuringsinstantie.json")
-        defects = json_load(DIR_RAW / "geconstateerde_gebreken.json")
+        inspections_agg = json_load(DIR_RAW / "meldingen_keuringsinstantie.json")
+        defects_agg = json_load(DIR_RAW / "geconstateerde_gebreken.json")
     except FileNotFoundError as e:
-        logger.error("Raw data file not found: %s", e)
-        logger.error("Run Stage 1 (data_download.py) first")
+        print(f"FAIL: {e}", flush=True)
         exit(1)
 
+    print(f"Loaded {len(vehicles) // 1000}k vehicles", flush=True)
+
     vehicle_index = vehicles_index(vehicles)
-    inspection_counts = records_count_by_kenteken(inspections)
-    defect_counts = records_count_by_kenteken(defects)
+    inspection_counts = counts_from_aggregated(inspections_agg, "inspection_count")
+    defect_counts = counts_from_aggregated(defects_agg, "defect_count")
+
+    total_inspections = sum(inspection_counts.values())
+    total_defects = sum(defect_counts.values())
 
     brand_data, model_data = stats_aggregate(
         vehicle_index, inspection_counts, defect_counts, reference_date
@@ -317,8 +310,8 @@ def main() -> None:
         len(brand_stats),
         len(model_stats),
         len(vehicle_index),
-        len(inspections),
-        len(defects),
+        total_inspections,
+        total_defects,
     )
 
     DIR_PROCESSED.mkdir(parents=True, exist_ok=True)
@@ -328,17 +321,10 @@ def main() -> None:
     json_save(metadata, DIR_PROCESSED / "metadata.json")
 
     elapsed = (datetime.now() - start_time).total_seconds()
-    logger.info("=" * 50)
-    logger.info("Processing Summary")
-    logger.info("=" * 50)
-    logger.info("  Vehicles processed: %d", len(vehicle_index))
-    logger.info("  Inspections: %d", len(inspections))
-    logger.info("  Defects: %d", len(defects))
-    logger.info("  Brands (above threshold): %d", len(brand_stats))
-    logger.info("  Models (above threshold): %d", len(model_stats))
-    logger.info("=" * 50)
-    logger.info("Total processing time: %.1f seconds", elapsed)
-    logger.info("Output saved to: %s", DIR_PROCESSED)
+    print(
+        f"Done: {len(brand_stats)} brands, {len(model_stats)} models in {elapsed:.0f}s",
+        flush=True,
+    )
 
 
 if __name__ == "__main__":

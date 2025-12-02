@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { Rankings, RankingEntry } from "@/app/lib/types";
-import { timestamp_format, percentage_format, number_format } from "@/app/lib/data_load";
+import { timestamp_format, number_format } from "@/app/lib/data_load";
 
 export default function HomePage() {
   const [rankings, setRankings] = useState<Rankings | null>(null);
@@ -206,12 +206,12 @@ function RankingCard({
                 </span>
                 <div>
                   <span className="font-medium text-gray-900 dark:text-white">
-                    {entry.brand}
+                    {entry.merk}
                   </span>
-                  {showModel && entry.model && (
+                  {showModel && entry.handelsbenaming && (
                     <span className="text-gray-600 dark:text-gray-400">
                       {" "}
-                      {entry.model}
+                      {entry.handelsbenaming}
                     </span>
                   )}
                 </div>
@@ -224,7 +224,7 @@ function RankingCard({
                       : "text-red-600 dark:text-red-400"
                   }`}
                 >
-                  {percentage_format(entry.defect_rate)}
+                  {entry.avg_defects_per_inspection.toFixed(2)}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
                   ({number_format(entry.total_inspections)} keuringen)
