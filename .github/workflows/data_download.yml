@@ -24,7 +24,7 @@ env:
 jobs:
   download-gekentekende-voertuigen:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -56,9 +56,14 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: pip install -r requirements.txt
 
-      - name: Download dataset
+      - name: Download dataset (with retry)
         if: steps.cache.outputs.cache-hit != 'true'
-        run: python scripts/data_download.py --dataset gekentekende_voertuigen
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 20
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: python scripts/data_download.py --dataset gekentekende_voertuigen
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
@@ -84,7 +89,7 @@ jobs:
 
   download-meldingen-keuringsinstantie:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -116,9 +121,14 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: pip install -r requirements.txt
 
-      - name: Download dataset
+      - name: Download dataset (with retry)
         if: steps.cache.outputs.cache-hit != 'true'
-        run: python scripts/data_download.py --dataset meldingen_keuringsinstantie
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 20
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: python scripts/data_download.py --dataset meldingen_keuringsinstantie
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
@@ -144,7 +154,7 @@ jobs:
 
   download-geconstateerde-gebreken:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -176,9 +186,14 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: pip install -r requirements.txt
 
-      - name: Download dataset
+      - name: Download dataset (with retry)
         if: steps.cache.outputs.cache-hit != 'true'
-        run: python scripts/data_download.py --dataset geconstateerde_gebreken
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 20
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: python scripts/data_download.py --dataset geconstateerde_gebreken
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
@@ -233,9 +248,14 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: pip install -r requirements.txt
 
-      - name: Download dataset
+      - name: Download dataset (with retry)
         if: steps.cache.outputs.cache-hit != 'true'
-        run: python scripts/data_download.py --dataset gebreken
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_wait_seconds: 10
+          command: python scripts/data_download.py --dataset gebreken
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
 
@@ -260,7 +280,7 @@ jobs:
 
   download-brandstof:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -289,9 +309,14 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: pip install -r requirements.txt
 
-      - name: Download dataset
+      - name: Download dataset (with retry)
         if: steps.cache.outputs.cache-hit != 'true'
-        run: python scripts/data_download.py --dataset brandstof
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 25
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: python scripts/data_download.py --dataset brandstof
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
 
