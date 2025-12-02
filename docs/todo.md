@@ -29,17 +29,17 @@
 - [ ] Create top 10 / bottom 10 pages for brands and models (homepage only shows top 5 previews)
 - [ ] Create age-filtered views
 - [x] Create license plate lookup (live RDW query)
-- [ ] Add inspection history view (live RDW query)
-- [ ] Add defect detail descriptions in lookup (hx2c-gt7k join)
+- [x] Add inspection history view (live RDW query)
+- [x] Add defect detail descriptions in lookup (hx2c-gt7k join)
 - [x] Create about/methodology page
 - [x] Configure static export for GitHub Pages
-- [ ] Add RDW attribution and data generation timestamp to the site
+- [x] Add RDW attribution and data generation timestamp to the site
 - [ ] Add common issues per model view (frequent defects)
 - [ ] Add fuel type breakdown visualization (electric vs. diesel vs. petrol)
 - [ ] Add historical reliability trend view
-- [ ] Enforce snake_case naming in React components, props, and state to comply with AI rules
-- [ ] Translate UI copy to English (keep RDW field names in Dutch only)
-- [ ] Split `web/app/lookup/page.tsx` below 400 LOC by extracting components/hooks
+- [x] Enforce snake_case naming in React components, props, and state to comply with AI rules
+- [x] Translate UI copy to English (keep RDW field names in Dutch only)
+- [x] Split `web/app/lookup/page.tsx` below 400 LOC by extracting components/hooks
 
 ## Infrastructure
 
@@ -56,12 +56,12 @@
 - [x] Create Python venv and install dependencies
 - [x] Set up pre-commit hook for LOC warning when files exceed 400 lines
 - [x] Create data directories (`data/raw/`, `data/processed/`)
-- [ ] Add VS Code tasks for common operations
+- [x] Add VS Code tasks for common operations
 
 ## Documentation
 
-- [ ] Document Brandstof dataset (`8ys7-d773`) fields in `docs/data_mapping.md`
-- [ ] Record lookup/live query fields in `docs/data_mapping.md` once inspection history and defect details are added
+- [x] Document Brandstof dataset (`8ys7-d773`) fields in `docs/data_mapping.md`
+- [x] Record lookup/live query fields in `docs/data_mapping.md` once inspection history and defect details are added
 
 ## Experiments
 

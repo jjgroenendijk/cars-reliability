@@ -10,10 +10,10 @@ interface NavLink {
 
 const NAV_LINKS: NavLink[] = [
   { href: "/", label: "Home" },
-  { href: "/brands", label: "Merken" },
-  { href: "/models", label: "Modellen" },
-  { href: "/lookup", label: "Kenteken opzoeken" },
-  { href: "/about", label: "Over" },
+  { href: "/brands", label: "Brands" },
+  { href: "/models", label: "Models" },
+  { href: "/lookup", label: "License Plate Lookup" },
+  { href: "/about", label: "About" },
 ];
 
 export function Navigation() {
@@ -27,7 +27,7 @@ export function Navigation() {
             href="/"
             className="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
           >
-            Auto Betrouwbaarheid NL
+            Dutch Car Reliability
           </Link>
 
           <ul className="flex flex-wrap gap-1 sm:gap-2">

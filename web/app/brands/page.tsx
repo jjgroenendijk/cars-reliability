@@ -6,41 +6,41 @@ import { ReliabilityTable, type Column } from "@/app/components/reliability_tabl
 import { timestamp_format } from "@/app/lib/data_load";
 
 const BRAND_COLUMNS: Column<BrandStats>[] = [
-  { key: "merk", label: "Merk" },
-  { key: "vehicle_count", label: "Voertuigen" },
-  { key: "total_inspections", label: "Keuringen" },
-  { key: "avg_defects_per_inspection", label: "Gem. gebreken" },
-  { key: "avg_age_years", label: "Gem. leeftijd" },
-  { key: "defects_per_year", label: "Gebreken/jaar" },
+  { key: "merk", label: "Brand" },
+  { key: "vehicle_count", label: "Vehicles" },
+  { key: "total_inspections", label: "Inspections" },
+  { key: "avg_defects_per_inspection", label: "Avg. Defects" },
+  { key: "avg_age_years", label: "Avg. Age" },
+  { key: "defects_per_year", label: "Defects/Year" },
 ];
 
 export default function BrandsPage() {
-  const [brandStats, setBrandStats] = useState<BrandStats[]>([]);
-  const [generatedAt, setGeneratedAt] = useState<string>("");
+  const [brand_stats, setBrandStats] = useState<BrandStats[]>([]);
+  const [generated_at, setGeneratedAt] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function data_fetch() {
       try {
-        const [statsResponse, rankingsResponse] = await Promise.all([
+        const [stats_response, rankings_response] = await Promise.all([
           fetch("/data/brand_stats.json"),
           fetch("/data/rankings.json"),
         ]);
 
-        if (!statsResponse.ok) {
-          throw new Error("Kon merkgegevens niet laden");
+        if (!stats_response.ok) {
+          throw new Error("Could not load brand data");
         }
 
-        const stats: BrandStats[] = await statsResponse.json();
+        const stats: BrandStats[] = await stats_response.json();
         setBrandStats(stats);
 
-        if (rankingsResponse.ok) {
-          const rankings: Rankings = await rankingsResponse.json();
+        if (rankings_response.ok) {
+          const rankings: Rankings = await rankings_response.json();
           setGeneratedAt(rankings.generated_at);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Onbekende fout");
+        setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
         setLoading(false);
       }
@@ -51,7 +51,7 @@ export default function BrandsPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <div className="text-gray-600 dark:text-gray-400">Gegevens laden...</div>
+        <div className="text-gray-600 dark:text-gray-400">Loading data...</div>
       </div>
     );
   }
@@ -60,7 +60,7 @@ export default function BrandsPage() {
     return (
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-          Betrouwbaarheid per merk
+          Reliability by Brand
         </h1>
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4">
           <p className="text-red-800 dark:text-red-200">{error}</p>
@@ -73,47 +73,47 @@ export default function BrandsPage() {
     <div className="max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Betrouwbaarheid per merk
+          Reliability by Brand
         </h1>
         <p className="text-gray-600 dark:text-gray-300">
-          Overzicht van alle automerken gesorteerd op betrouwbaarheid op basis van APK-keuringsgegevens.
-          Klik op een kolomkop om te sorteren.
+          Overview of all car brands sorted by reliability based on MOT inspection data.
+          Click a column header to sort.
         </p>
       </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <ReliabilityTable
-          data={brandStats}
+          data={brand_stats}
           columns={BRAND_COLUMNS}
           defaultSortKey="avg_defects_per_inspection"
           defaultSortDirection="asc"
           filterKey="merk"
-          filterPlaceholder="Zoek merk..."
-          emptyMessage="Geen merkgegevens beschikbaar"
+          filterPlaceholder="Search brand..."
+          emptyMessage="No brand data available"
         />
       </div>
 
       {/* Legend */}
       <div className="mt-6 bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-          Legenda
+          Legend
         </h3>
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600 dark:text-gray-400">
           <div>
-            <dt className="inline font-medium">Keuringen:</dt>
-            <dd className="inline ml-1">Totaal aantal APK-keuringen</dd>
+            <dt className="inline font-medium">Inspections:</dt>
+            <dd className="inline ml-1">Total number of MOT inspections</dd>
           </div>
           <div>
-            <dt className="inline font-medium">Gebrekenpercentage:</dt>
-            <dd className="inline ml-1">Percentage keuringen met gebreken</dd>
+            <dt className="inline font-medium">Defect Rate:</dt>
+            <dd className="inline ml-1">Percentage of inspections with defects</dd>
           </div>
           <div>
-            <dt className="inline font-medium">Gem. gebreken:</dt>
-            <dd className="inline ml-1">Gemiddeld aantal gebreken per keuring</dd>
+            <dt className="inline font-medium">Avg. Defects:</dt>
+            <dd className="inline ml-1">Average number of defects per inspection</dd>
           </div>
           <div>
-            <dt className="inline font-medium">Modellen:</dt>
-            <dd className="inline ml-1">Aantal verschillende modellen</dd>
+            <dt className="inline font-medium">Models:</dt>
+            <dd className="inline ml-1">Number of different models</dd>
           </div>
         </dl>
       </div>
@@ -122,9 +122,9 @@ export default function BrandsPage() {
       <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
         <p>
           Data: RDW Open Data
-          {generatedAt && (
+          {generated_at && (
             <span className="ml-2">
-              | Bijgewerkt: {timestamp_format(generatedAt)}
+              | Updated: {timestamp_format(generated_at)}
             </span>
           )}
         </p>

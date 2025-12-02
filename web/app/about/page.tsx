@@ -1,38 +1,37 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Over - Methodologie en Data",
+  title: "About - Methodology and Data",
   description:
-    "Informatie over de methodologie en databronnen van de Nederlandse Auto Betrouwbaarheidsanalyse.",
+    "Information about the methodology and data sources of the Dutch Car Reliability Analysis.",
 };
 
 export default function AboutPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
-        Over dit project
+        About this project
       </h1>
 
       {/* Introduction */}
       <section className="mb-12">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-          Wat is Auto Betrouwbaarheid NL?
+          What is Dutch Car Reliability?
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mb-4">
-          Auto Betrouwbaarheid NL is een onafhankelijk project dat de betrouwbaarheid van
-          auto merken en modellen in Nederland analyseert op basis van openbare APK-keuringsgegevens.
-          Het doel is om consumenten te helpen bij het maken van weloverwogen keuzes bij de
-          aankoop van een auto.
+          Dutch Car Reliability is an independent project that analyzes the reliability of
+          car brands and models in the Netherlands based on public MOT inspection data.
+          The goal is to help consumers make informed choices when purchasing a car.
         </p>
       </section>
 
       {/* Data Sources */}
       <section className="mb-12">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-          Databronnen
+          Data Sources
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mb-4">
-          Alle gegevens zijn afkomstig van{" "}
+          All data comes from{" "}
           <a
             href="https://opendata.rdw.nl/"
             target="_blank"
@@ -41,25 +40,25 @@ export default function AboutPage() {
           >
             RDW Open Data
           </a>
-          , de officiële open data portal van de Rijksdienst voor het Wegverkeer.
-          De volgende datasets worden gebruikt:
+          , the official open data portal of the Netherlands Vehicle Authority.
+          The following datasets are used:
         </p>
 
         <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300 ml-4">
           <li>
-            <strong>Gekentekende Voertuigen</strong> - Basisinformatie over geregistreerde voertuigen
+            <strong>Gekentekende Voertuigen</strong> - Basic information about registered vehicles
           </li>
           <li>
-            <strong>Meldingen Keuringsinstantie</strong> - APK-keuringsresultaten
+            <strong>Meldingen Keuringsinstantie</strong> - MOT inspection results
           </li>
           <li>
-            <strong>Geconstateerde Gebreken</strong> - Gebreken gevonden tijdens APK-keuringen
+            <strong>Geconstateerde Gebreken</strong> - Defects found during MOT inspections
           </li>
           <li>
-            <strong>Gebreken</strong> - Omschrijvingen van gebrektypen
+            <strong>Gebreken</strong> - Descriptions of defect types
           </li>
           <li>
-            <strong>Brandstof</strong> - Brandstofgegevens van voertuigen
+            <strong>Brandstof</strong> - Fuel data for vehicles
           </li>
         </ul>
       </section>
@@ -67,56 +66,55 @@ export default function AboutPage() {
       {/* Methodology */}
       <section className="mb-12">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-          Methodologie
+          Methodology
         </h2>
 
         <div className="space-y-6">
           <div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              Betrouwbaarheidsscore
+              Reliability Score
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              De betrouwbaarheidsscore is gebaseerd op het <strong>gebrekenpercentage</strong>:
-              het percentage APK-keuringen waarbij een of meer gebreken zijn geconstateerd.
-              Een lager percentage betekent een hogere betrouwbaarheid.
+              The reliability score is based on the average number of defects per inspection.
+              A lower number indicates higher reliability.
             </p>
           </div>
 
           <div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              Gemiddelde gebreken per keuring
+              Average Defects per Inspection
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Dit getal geeft aan hoeveel gebreken gemiddeld worden gevonden per APK-keuring.
-              Een lager getal wijst op betere bouwkwaliteit of onderhoud.
+              This number indicates how many defects are found on average per MOT inspection.
+              A lower number points to better build quality or maintenance.
             </p>
           </div>
 
           <div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              Steekproefgrootte
+              Sample Size
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              De betrouwbaarheid van de statistieken hangt af van het aantal keuringen.
-              Modellen worden gecategoriseerd als:
+              The reliability of the statistics depends on the number of inspections.
+              Models are categorized as:
             </p>
             <ul className="list-disc list-inside mt-2 text-gray-600 dark:text-gray-300 ml-4">
-              <li><strong>Klein</strong> - Minder dan 100 keuringen</li>
-              <li><strong>Middel</strong> - 100 tot 1.000 keuringen</li>
-              <li><strong>Groot</strong> - Meer dan 1.000 keuringen</li>
+              <li><strong>Small</strong> - Less than 100 inspections</li>
+              <li><strong>Medium</strong> - 100 to 1,000 inspections</li>
+              <li><strong>Large</strong> - More than 1,000 inspections</li>
             </ul>
             <p className="text-gray-600 dark:text-gray-300 mt-2">
-              Statistieken gebaseerd op een grote steekproef zijn betrouwbaarder.
+              Statistics based on a large sample are more reliable.
             </p>
           </div>
 
           <div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              Datafilters
+              Data Filters
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Alleen personenautos (voertuigsoort: Personenauto) worden meegenomen in de analyse.
-              Vrachtwagens, motorfietsen en andere voertuigtypen zijn uitgesloten.
+              Only passenger cars (voertuigsoort: Personenauto) are included in the analysis.
+              Trucks, motorcycles, and other vehicle types are excluded.
             </p>
           </div>
         </div>
@@ -125,31 +123,31 @@ export default function AboutPage() {
       {/* Limitations */}
       <section className="mb-12">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-          Beperkingen
+          Limitations
         </h2>
 
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-6">
           <ul className="space-y-3 text-gray-700 dark:text-gray-300">
             <li>
-              <strong>Correlatie is geen causaliteit:</strong> Een hoog gebrekenpercentage kan
-              wijzen op mindere bouwkwaliteit, maar ook op slecht onderhoud door eigenaren of
-              intensiever gebruik.
+              <strong>Correlation is not causation:</strong> A high defect rate may indicate
+              poor build quality, but could also reflect poor maintenance by owners or
+              more intensive use.
             </li>
             <li>
-              <strong>Leeftijdseffect:</strong> Oudere autos hebben vaker gebreken. De statistieken
-              worden niet gecorrigeerd voor leeftijd.
+              <strong>Age effect:</strong> Older cars have more defects. The statistics
+              are not adjusted for age.
             </li>
             <li>
-              <strong>Modeljaren:</strong> Verschillende bouwjaren van hetzelfde model kunnen sterk
-              verschillende betrouwbaarheid hebben.
+              <strong>Model years:</strong> Different build years of the same model can have
+              vastly different reliability.
             </li>
             <li>
-              <strong>Selectiebias:</strong> Bepaalde merken worden vaker gekocht door mensen die
-              hun auto beter onderhouden.
+              <strong>Selection bias:</strong> Certain brands are more often bought by people
+              who maintain their cars better.
             </li>
             <li>
-              <strong>Historische data:</strong> De statistieken zijn gebaseerd op alle beschikbare
-              keuringsgegevens en weerspiegelen niet noodzakelijk de huidige situatie.
+              <strong>Historical data:</strong> The statistics are based on all available
+              inspection data and do not necessarily reflect the current situation.
             </li>
           </ul>
         </div>
@@ -158,44 +156,44 @@ export default function AboutPage() {
       {/* Update Frequency */}
       <section className="mb-12">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-          Updatefrequentie
+          Update Frequency
         </h2>
         <p className="text-gray-600 dark:text-gray-300">
-          De statistieken worden wekelijks bijgewerkt op basis van de nieuwste gegevens van
-          RDW Open Data. De datum en tijd van de laatste update wordt weergegeven bij de tabellen.
+          The statistics are updated weekly based on the latest data from RDW Open Data.
+          The date and time of the last update is displayed with the tables.
         </p>
       </section>
 
       {/* License & Attribution */}
       <section className="mb-12">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-          Licentie en Bronvermelding
+          License and Attribution
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mb-4">
-          De gebruikte data van RDW Open Data is beschikbaar onder de{" "}
+          The RDW Open Data used is available under the{" "}
           <a
-            href="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
+            href="https://creativecommons.org/publicdomain/zero/1.0/deed.en"
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-600 dark:text-blue-400 hover:underline"
           >
-            CC0 1.0 Universeel (Public Domain)
+            CC0 1.0 Universal (Public Domain)
           </a>{" "}
-          licentie.
+          license.
         </p>
         <p className="text-gray-600 dark:text-gray-300">
-          Deze website is niet gelieerd aan, gesponsord door, of goedgekeurd door de
-          Rijksdienst voor het Wegverkeer (RDW).
+          This website is not affiliated with, sponsored by, or endorsed by the
+          Netherlands Vehicle Authority (RDW).
         </p>
       </section>
 
       {/* Technical Details */}
       <section className="mb-12">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-          Technische Details
+          Technical Details
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mb-4">
-          Dit project is open source. De broncode en documentatie zijn beschikbaar op GitHub.
+          This project is open source. The source code and documentation are available on GitHub.
         </p>
         <dl className="space-y-2 text-gray-600 dark:text-gray-300">
           <div className="flex gap-2">
@@ -203,7 +201,7 @@ export default function AboutPage() {
             <dd>Next.js, TypeScript, Tailwind CSS</dd>
           </div>
           <div className="flex gap-2">
-            <dt className="font-medium">Data verwerking:</dt>
+            <dt className="font-medium">Data Processing:</dt>
             <dd>Python</dd>
           </div>
           <div className="flex gap-2">
@@ -223,7 +221,7 @@ export default function AboutPage() {
           Contact
         </h2>
         <p className="text-gray-600 dark:text-gray-300">
-          Voor vragen, suggesties of bugmeldingen kunt u een issue aanmaken op de{" "}
+          For questions, suggestions, or bug reports, please open an issue on the{" "}
           <a
             href="https://github.com/jjgroenendijk/cars-reliability"
             target="_blank"

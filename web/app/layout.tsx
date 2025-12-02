@@ -15,27 +15,27 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Auto Betrouwbaarheid NL - Nederlandse Auto Betrouwbaarheidsanalyse",
-    template: "%s | Auto Betrouwbaarheid NL",
+    default: "Dutch Car Reliability - Netherlands Vehicle Reliability Analysis",
+    template: "%s | Dutch Car Reliability",
   },
   description:
-    "Analyse van APK-keuringsgegevens van RDW Open Data om de betrouwbaarheid van auto merken en modellen in Nederland te bepalen.",
+    "Analysis of MOT inspection data from RDW Open Data to determine the reliability of car brands and models in the Netherlands.",
   keywords: [
-    "auto betrouwbaarheid",
-    "APK keuring",
+    "car reliability",
+    "MOT inspection",
     "RDW",
-    "Nederlandse auto's",
-    "auto statistieken",
-    "betrouwbaarste auto",
-    "kenteken opzoeken",
+    "Dutch cars",
+    "car statistics",
+    "most reliable car",
+    "license plate lookup",
   ],
-  authors: [{ name: "Auto Betrouwbaarheid NL" }],
+  authors: [{ name: "Dutch Car Reliability" }],
   openGraph: {
-    title: "Auto Betrouwbaarheid NL",
+    title: "Dutch Car Reliability",
     description:
-      "Ontdek de meest en minst betrouwbare auto merken en modellen in Nederland op basis van APK-gegevens.",
+      "Discover the most and least reliable car brands and models in the Netherlands based on MOT inspection data.",
     type: "website",
-    locale: "nl_NL",
+    locale: "en_US",
   },
   robots: {
     index: true,
@@ -49,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="nl">
+    <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
@@ -63,7 +63,7 @@ export default function RootLayout({
           <div className="container mx-auto px-4 py-6">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Data afkomstig van{" "}
+                Data from{" "}
                 <a
                   href="https://opendata.rdw.nl/"
                   target="_blank"
@@ -74,7 +74,7 @@ export default function RootLayout({
                 </a>
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-500">
-                Deze website is niet gelieerd aan de RDW
+                This website is not affiliated with the RDW
               </p>
             </div>
           </div>

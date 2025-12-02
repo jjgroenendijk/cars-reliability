@@ -84,6 +84,74 @@ Defect code reference table.
 | `ingangsdatum_gebrek` | string | Validity start date (YYYYMMDD) |
 | `einddatum_gebrek` | string | Validity end date (YYYYMMDD) |
 
+### Brandstof (`8ys7-d773`)
+
+Fuel type data for vehicles.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `kenteken` | string | License plate (foreign key) |
+| `brandstof_omschrijving` | string | Fuel type description (e.g., "Benzine", "Diesel", "Elektriciteit") |
+| `brandstof_volgnummer` | string | Fuel sequence number (for dual-fuel vehicles) |
+| `brandstofverbruik_buiten_de_stad` | string | Fuel consumption outside city (l/100km) |
+| `brandstofverbruik_gecombineerd` | string | Combined fuel consumption (l/100km) |
+| `brandstofverbruik_stad` | string | City fuel consumption (l/100km) |
+| `co2_uitstoot_gecombineerd` | string | CO2 emissions combined (g/km) |
+| `emissieklasse` | string | Emission class (e.g., "Euro 5") |
+| `geluidsniveau_rijdend` | string | Noise level while driving (dB) |
+| `geluidsniveau_stationair` | string | Stationary noise level (dB) |
+
+---
+
+## Live Query Fields (License Plate Lookup)
+
+The lookup page queries RDW APIs directly from the browser. The following fields are used:
+
+### Vehicle Details (from `m9d7-ebf2`)
+
+| Field | Type | UI Label | Description |
+|-------|------|----------|-------------|
+| `kenteken` | string | License Plate | License plate number |
+| `merk` | string | Brand | Vehicle brand |
+| `handelsbenaming` | string | Model | Vehicle model name |
+| `datum_eerste_toelating` | string | First Registration | First registration date (YYYYMMDD) |
+| `datum_tenaamstelling` | string | Registration Date | Current owner registration date (YYYYMMDD) |
+| `vervaldatum_apk` | string | MOT Expiry Date | APK expiry date (YYYYMMDD) |
+| `eerste_kleur` | string | Color | Primary vehicle color |
+| `aantal_deuren` | string | Number of Doors | Door count |
+| `aantal_zitplaatsen` | string | Number of Seats | Seat count |
+| `cilinderinhoud` | string | Engine Capacity | Engine displacement in cc |
+| `massa_ledig_voertuig` | string | Empty Mass | Vehicle empty weight in kg |
+| `wam_verzekerd` | string | Insured | WAM insurance status ("Ja"/"Nee") |
+| `catalogusprijs` | string | Catalog Price | Original catalog price in EUR |
+| `voertuigsoort` | string | (filter) | Vehicle type - used to filter to "Personenauto" |
+
+### Inspection History (from `sgfe-77wx`)
+
+| Field | Type | UI Label | Description |
+|-------|------|----------|-------------|
+| `kenteken` | string | - | License plate (query filter) |
+| `meld_datum_door_keuringsinstantie` | string | Date | Inspection date (YYYYMMDD) |
+| `meld_tijd_door_keuringsinstantie` | string | Time | Inspection time (HH:MM) |
+| `soort_meldingomschrijving` | string | Result | Inspection result (e.g., "Goedgekeurd", "Afgekeurd") |
+| `km_stand` | string | Mileage | Odometer reading at inspection |
+
+### Defects Found (from `a34c-vvps`)
+
+| Field | Type | UI Label | Description |
+|-------|------|----------|-------------|
+| `kenteken` | string | - | License plate (query filter) |
+| `meld_datum_door_keuringsinstantie` | string | - | Inspection date (used to group defects by inspection) |
+| `gebrek_identificatie` | string | Defect Code | Defect identifier code |
+| `aantal_gebreken` | string | Count | Number of this defect type found |
+
+### Defect Descriptions (from `hx2c-gt7k`)
+
+| Field | Type | UI Label | Description |
+|-------|------|----------|-------------|
+| `gebrek_identificatie` | string | - | Defect code (used for join) |
+| `gebrek_omschrijving` | string | Description | Human-readable defect description (Dutch) |
+
 ---
 
 ## Processed Data Output

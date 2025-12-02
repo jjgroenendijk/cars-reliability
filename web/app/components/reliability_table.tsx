@@ -90,9 +90,9 @@ export function ReliabilityTable<T extends object>({
     return (
       <span className="ml-1">
         {sortConfig.direction === "asc" ? (
-          <span aria-label="Oplopend gesorteerd">[A]</span>
+          <span aria-label="Sorted ascending">[A]</span>
         ) : (
-          <span aria-label="Aflopend gesorteerd">[Z]</span>
+          <span aria-label="Sorted descending">[Z]</span>
         )}
       </span>
     );
@@ -202,7 +202,7 @@ export function ReliabilityTable<T extends object>({
       </div>
 
       <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-        {sortedAndFilteredData.length} van {data.length} resultaten
+        {sortedAndFilteredData.length} of {data.length} results
       </div>
     </div>
   );
