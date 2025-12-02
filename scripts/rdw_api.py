@@ -214,12 +214,17 @@ class MultiDatasetProgress:
         Args:
             datasets: dict of {name: (total_rows, total_pages)}
         """
+        import sys
+
         self.datasets = list(datasets.keys())
         self.total_pages = {name: info[1] for name, info in datasets.items()}
         self.completed_pages: dict[str, int] = {name: 0 for name in self.datasets}
         self.done: set[str] = set()
         self.lock = threading.Lock()
         self.last_output_len = 0
+        self.is_tty = sys.stdout.isatty()
+        # For non-TTY: track last printed percentage to avoid spam
+        self.last_pct: dict[str, int] = {name: -1 for name in self.datasets}
 
     def update(self, name: str, pages_done: int = 1) -> None:
         """Update progress for a dataset."""
@@ -237,29 +242,46 @@ class MultiDatasetProgress:
         """Render progress line to terminal."""
         import sys
 
-        parts = []
-        for name in self.datasets:
-            if name in self.done:
-                parts.append(f"{name}: done")
-            else:
-                current = self.completed_pages[name]
-                total = self.total_pages[name]
-                if total > 0:
-                    pct = min(100, int((current / total) * 100))
-                    parts.append(f"{name}: {pct}% ({current}/{total})")
+        if self.is_tty:
+            # Interactive: overwrite line with carriage return
+            parts = []
+            for name in self.datasets:
+                if name in self.done:
+                    parts.append(f"{name}: done")
                 else:
-                    parts.append(f"{name}: (0/0)")
+                    current = self.completed_pages[name]
+                    total = self.total_pages[name]
+                    if total > 0:
+                        pct = min(100, int((current / total) * 100))
+                        parts.append(f"{name}: {pct}% ({current}/{total})")
+                    else:
+                        parts.append(f"{name}: (0/0)")
 
-        line = "  ".join(parts)
-        # Clear previous line and write new one (use sys.stdout directly)
-        clear = " " * self.last_output_len
-        sys.stdout.write(f"\r{clear}\r{line}")
-        sys.stdout.flush()
-        self.last_output_len = len(line)
+            line = "  ".join(parts)
+            clear = " " * self.last_output_len
+            sys.stdout.write(f"\r{clear}\r{line}")
+            sys.stdout.flush()
+            self.last_output_len = len(line)
+        else:
+            # Non-TTY (CI): print only on 10% increments or done
+            for name in self.datasets:
+                if name in self.done and self.last_pct[name] != 100:
+                    print(f"{name}: done", flush=True)
+                    self.last_pct[name] = 100
+                elif name not in self.done:
+                    current = self.completed_pages[name]
+                    total = self.total_pages[name]
+                    if total > 0:
+                        pct = min(100, int((current / total) * 100))
+                        # Print only every 10%
+                        if pct >= self.last_pct[name] + 10:
+                            print(f"{name}: {pct}%", flush=True)
+                            self.last_pct[name] = pct
 
     def finish(self) -> None:
         """Print final newline."""
         import sys
 
-        sys.stdout.write("\n")
-        sys.stdout.flush()
+        if self.is_tty:
+            sys.stdout.write("\n")
+            sys.stdout.flush()
