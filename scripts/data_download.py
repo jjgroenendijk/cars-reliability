@@ -86,13 +86,15 @@ def datasets_build() -> dict[str, dict[str, Any]]:
             "id": "sgfe-77wx",
             "select": "kenteken,count(kenteken) as inspection_count",
             "group": "kenteken",
-            "parallel_pages": False,
+            "order": "kenteken",
+            "parallel_pages": True,
         },
         "geconstateerde_gebreken": {
             "id": "a34c-vvps",
             "select": "kenteken,count(kenteken) as defect_count",
             "group": "kenteken",
-            "parallel_pages": False,
+            "order": "kenteken",
+            "parallel_pages": True,
         },
         "gebreken": {
             "id": "hx2c-gt7k",
@@ -123,49 +125,79 @@ def dataset_fetch_parallel(
     session: requests.Session,
     progress: MultiDatasetProgress | None = None,
 ) -> tuple[str, int]:
-    """Fetch dataset using parallel page downloads."""
+    """Fetch dataset using parallel page downloads with streaming to disk."""
     dataset_id = config["id"]
     page_size = config.get("page_size", PAGE_SIZE)
     filter_clause = config.get("filter")
     select_clause = config.get("select")
+    group_clause = config.get("group")
+    order_clause = config.get("order")
 
-    total_rows = row_count_get(session, dataset_id, filter_clause)
+    # For grouped queries, count distinct values; otherwise count all rows
+    group_field = group_clause if group_clause else None
+    total_rows = row_count_get(session, dataset_id, filter_clause, group_field)
     total_pages = math.ceil(total_rows / page_size) if total_rows > 0 else 1
 
     offsets = list(range(0, total_rows, page_size))
-    results: dict[int, list[dict[str, Any]]] = {}
-    results_lock = threading.Lock()
 
-    def fetch_page(offset: int) -> None:
+    # Track completed pages and pending writes
+    completed_pages: dict[int, list[dict[str, Any]]] = {}
+    completed_lock = threading.Lock()
+    next_write_idx = 0  # Index into offsets list for next page to write
+
+    filepath = DIR_RAW / f"{name}.json"
+    record_count = 0
+
+    def fetch_page(offset: int) -> int:
+        """Fetch a page and return the number of rows fetched."""
         page = page_fetch(
-            session, dataset_id, offset, page_size, select_clause, filter_clause, None
+            session,
+            dataset_id,
+            offset,
+            page_size,
+            select_clause,
+            filter_clause,
+            group_clause,
+            order_clause,
         )
-        with results_lock:
-            results[offset] = page
+        rows_fetched = len(page)
+        with completed_lock:
+            completed_pages[offset] = page
         if progress:
-            progress.update(name)
+            progress.update(name, pages_done=1, rows_done=rows_fetched)
+        return rows_fetched
 
     workers = RATE_LIMITER.get_workers()
 
-    with ThreadPoolExecutor(max_workers=workers) as ex:
-        futures = {ex.submit(fetch_page, off): off for off in offsets}
-        for future in as_completed(futures):
-            if exc := future.exception():
-                raise exc
-
-    # Stream to disk
-    filepath = DIR_RAW / f"{name}.json"
-    record_count = 0
+    # Open file for streaming writes
     with open(filepath, "w", encoding="utf-8") as f:
         f.write("[")
         first = True
-        for offset in offsets:
-            for record in results.get(offset, []):
-                if not first:
-                    f.write(",")
-                first = False
-                json.dump(record, f, ensure_ascii=False)
-                record_count += 1
+
+        with ThreadPoolExecutor(max_workers=workers) as ex:
+            futures = {ex.submit(fetch_page, off): off for off in offsets}
+
+            for future in as_completed(futures):
+                if exc := future.exception():
+                    raise exc
+
+                # Try to write any consecutive completed pages
+                with completed_lock:
+                    while next_write_idx < len(offsets):
+                        offset_to_write = offsets[next_write_idx]
+                        if offset_to_write not in completed_pages:
+                            break  # Wait for this page
+
+                        # Write this page
+                        for record in completed_pages.pop(offset_to_write):
+                            if not first:
+                                f.write(",")
+                            first = False
+                            json.dump(record, f, ensure_ascii=False)
+                            record_count += 1
+
+                        next_write_idx += 1
+
         f.write("]")
 
     if progress:
@@ -206,6 +238,7 @@ def dataset_fetch_sequential(
             if not page:
                 break
 
+            rows_fetched = len(page)
             for record in page:
                 if not first:
                     f.write(",")
@@ -214,7 +247,7 @@ def dataset_fetch_sequential(
                 record_count += 1
 
             if progress:
-                progress.update(name)
+                progress.update(name, pages_done=1, rows_done=rows_fetched)
 
             if len(page) < page_size:
                 break
@@ -294,7 +327,9 @@ def main() -> None:
     total_rows = 0
     row_counts: list[tuple[str, int, int]] = []
     for name, config in datasets.items():
-        count = row_count_get(session, config["id"], config.get("filter"))
+        # For grouped queries, count distinct values
+        group_field = config.get("group") if config.get("group") else None
+        count = row_count_get(session, config["id"], config.get("filter"), group_field)
         pages = math.ceil(count / config.get("page_size", PAGE_SIZE))
         row_counts.append((name, count, pages))
         total_rows += count

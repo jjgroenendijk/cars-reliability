@@ -12,6 +12,8 @@
 - [x] Implement multi-threaded downloads in `data_download.py` to reduce wall-clock time
 - [x] Add Brandstof dataset (`8ys7-d773`) to download script
 - [x] Add `--dataset` flag to download individual datasets for per-dataset caching
+- [x] Enable parallel fetching for grouped queries (meldingen/gebreken) with $order clause
+- [x] Stream parallel downloads to disk immediately instead of buffering in memory
 
 ## Stage 2: Data Processing (Python)
 

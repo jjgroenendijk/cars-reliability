@@ -153,14 +153,32 @@ def api_get(
 
 
 def row_count_get(
-    session: requests.Session, dataset_id: str, filter_clause: str | None = None
+    session: requests.Session,
+    dataset_id: str,
+    filter_clause: str | None = None,
+    group_field: str | None = None,
 ) -> int:
-    """Get total row count for a dataset."""
-    url = f"{API_BASE_URL}/{dataset_id}.json?$select=count(*)"
+    """Get total row count for a dataset.
+
+    Args:
+        session: HTTP session
+        dataset_id: Socrata dataset ID
+        filter_clause: Optional WHERE clause
+        group_field: If set, count distinct values of this field (for grouped queries)
+    """
+    if group_field:
+        url = f"{API_BASE_URL}/{dataset_id}.json?$select=count(distinct {group_field})"
+    else:
+        url = f"{API_BASE_URL}/{dataset_id}.json?$select=count(*)"
     if filter_clause:
         url += f"&$where={requests.utils.quote(filter_clause)}"
     data = api_get(session, url, timeout=60)
-    return int(data[0].get("count", 0)) if data else 0
+    # Response key varies: "count" or "count_distinct_<field>"
+    if data:
+        for key in data[0]:
+            if key.startswith("count"):
+                return int(data[0][key])
+    return 0
 
 
 def page_fetch(
@@ -171,6 +189,7 @@ def page_fetch(
     select_clause: str | None = None,
     filter_clause: str | None = None,
     group_clause: str | None = None,
+    order_clause: str | None = None,
 ) -> list[dict[str, Any]]:
     """Fetch a single page of data."""
     url = f"{API_BASE_URL}/{dataset_id}.json?$limit={page_size}&$offset={offset}"
@@ -180,6 +199,8 @@ def page_fetch(
         url += f"&$where={requests.utils.quote(filter_clause)}"
     if group_clause:
         url += f"&$group={requests.utils.quote(group_clause)}"
+    if order_clause:
+        url += f"&$order={requests.utils.quote(order_clause)}"
     return api_get(session, url)
 
 
@@ -215,16 +236,19 @@ class MultiDatasetProgress:
             datasets: dict of {name: (total_rows, total_pages)}
         """
         self.datasets = list(datasets.keys())
+        self.total_rows = {name: info[0] for name, info in datasets.items()}
         self.total_pages = {name: info[1] for name, info in datasets.items()}
         self.completed_pages: dict[str, int] = {name: 0 for name in self.datasets}
+        self.completed_rows: dict[str, int] = {name: 0 for name in self.datasets}
         self.done: set[str] = set()
         self.lock = threading.Lock()
         self.last_pct: dict[str, int] = {name: -1 for name in self.datasets}
 
-    def update(self, name: str, pages_done: int = 1) -> None:
+    def update(self, name: str, pages_done: int = 1, rows_done: int = 0) -> None:
         """Update progress for a dataset."""
         with self.lock:
             self.completed_pages[name] += pages_done
+            self.completed_rows[name] += rows_done
             self._print_progress(name)
 
     def mark_done(self, name: str) -> None:
@@ -235,13 +259,28 @@ class MultiDatasetProgress:
 
     def _print_progress(self, name: str) -> None:
         """Print progress if percentage changed."""
+        from pathlib import Path
+
         current = self.completed_pages[name]
         total = self.total_pages[name]
         if total > 0:
             pct = min(100, int((current / total) * 100))
             if pct > self.last_pct[name]:
                 self.last_pct[name] = pct
-                print(f"{name}: {pct}%", flush=True)
+                rows = self.completed_rows[name]
+                total_rows = self.total_rows[name]
+                filepath = (
+                    Path(__file__).parent.parent / "data" / "raw" / f"{name}.json"
+                )
+                size_mb = (
+                    filepath.stat().st_size / (1024 * 1024)
+                    if filepath.exists()
+                    else 0.0
+                )
+                print(
+                    f"{name}: {pct}% | page {current}/{total} | rows {rows:,}/{total_rows:,} | {size_mb:.1f} MB",
+                    flush=True,
+                )
 
     def _print_done(self, name: str) -> None:
         """Print done message with file size."""
