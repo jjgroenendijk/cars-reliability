@@ -55,6 +55,14 @@ This file must always mention which frameworks and versions are in use.
   - Gebreken (`hx2c-gt7k`)
   - Brandstof (`8ys7-d773`)
 
+## Feature Flags
+
+GitHub repository variables control optional behavior. Set in Settings > Secrets and variables > Actions > Variables.
+
+| Variable | Values | Description |
+|----------|--------|-------------|
+| `INSPECTION_DAYS_LIMIT` | number / unset | When set to a positive number (e.g., `365`), only includes inspections from the past N days in Stage 1 download. Uses `meld_datum_door_keuringsinstantie` field for filtering. |
+
 ## Documentation
 
 - `docs/ai-rules.md`: AI assistant guidance, code rules, frameworks, verification workflow.

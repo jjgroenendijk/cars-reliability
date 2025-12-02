@@ -202,3 +202,58 @@ class ProgressTracker:
                 if pct >= self.last_pct + 5 or pct == 100:
                     self.last_pct = pct
                     log_always(f"[{self.name}] {pct}%")
+
+
+class MultiDatasetProgress:
+    """Thread-safe progress tracker for multiple datasets on a single line."""
+
+    def __init__(self, datasets: dict[str, tuple[int, int]]) -> None:
+        """
+        Initialize with dataset info.
+
+        Args:
+            datasets: dict of {name: (total_rows, total_pages)}
+        """
+        self.datasets = list(datasets.keys())
+        self.total_pages = {name: info[1] for name, info in datasets.items()}
+        self.completed_pages: dict[str, int] = {name: 0 for name in self.datasets}
+        self.done: set[str] = set()
+        self.lock = threading.Lock()
+        self.last_output_len = 0
+
+    def update(self, name: str, pages_done: int = 1) -> None:
+        """Update progress for a dataset."""
+        with self.lock:
+            self.completed_pages[name] += pages_done
+            self._render()
+
+    def mark_done(self, name: str) -> None:
+        """Mark a dataset as complete."""
+        with self.lock:
+            self.done.add(name)
+            self._render()
+
+    def _render(self) -> None:
+        """Render progress line to terminal."""
+        parts = []
+        for name in self.datasets:
+            if name in self.done:
+                parts.append(f"{name}: done")
+            else:
+                current = self.completed_pages[name]
+                total = self.total_pages[name]
+                if total > 0:
+                    pct = min(100, int((current / total) * 100))
+                    parts.append(f"{name}: {pct}% ({current}/{total})")
+                else:
+                    parts.append(f"{name}: (0/0)")
+
+        line = "  ".join(parts)
+        # Clear previous line and write new one
+        clear = " " * self.last_output_len
+        print(f"\r{clear}\r{line}", end="", flush=True)
+        self.last_output_len = len(line)
+
+    def finish(self) -> None:
+        """Print final newline."""
+        print(flush=True)

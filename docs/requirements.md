@@ -55,6 +55,14 @@ All data comes from [RDW Open Data](https://opendata.rdw.nl/) via the Socrata AP
 
 - Vehicle type: `voertuigsoort='Personenauto'` - Exclude trucks, motorcycles
 
+### Optional Data Filters
+
+These filters are controlled via GitHub repository variables (Settings > Secrets and variables > Actions > Variables):
+
+| Variable | Values | Description |
+|----------|--------|-------------|
+| `INSPECTION_DAYS_LIMIT` | number / unset | When set to a positive number (e.g., `365`), only includes inspections from the past N days. Filters both `meldingen_keuringsinstantie` and `geconstateerde_gebreken` datasets using `meld_datum_door_keuringsinstantie >= 'YYYYMMDD'`. |
+
 ### Data Processing Constraints
 
 - Processing MUST complete within GitHub Actions time limits

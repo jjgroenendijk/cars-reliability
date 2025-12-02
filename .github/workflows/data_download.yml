@@ -29,11 +29,16 @@ jobs:
 
       - name: Calculate cache key (weekly rotation)
         id: cache-key
+        env:
+          INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
         run: |
           # Use ISO week number for 7-day cache rotation
           WEEK=$(date +'%Y-W%V')
+          # Include days limit in cache key to invalidate on change
+          DAYS="${INSPECTION_DAYS_LIMIT:-all}"
           echo "week=$WEEK" >> $GITHUB_OUTPUT
-          echo "Cache key week: $WEEK"
+          echo "days=$DAYS" >> $GITHUB_OUTPUT
+          echo "Cache key week: $WEEK, days: $DAYS"
 
       - name: Restore raw data from cache
         id: cache-restore
@@ -41,7 +46,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: data/raw
-          key: raw-data-v2-${{ steps.cache-key.outputs.week }}
+          key: raw-data-v2-${{ steps.cache-key.outputs.week }}-days-${{ steps.cache-key.outputs.days }}
 
       - name: Check cache status
         id: cache-check
@@ -80,6 +85,7 @@ jobs:
         if: steps.cache-check.outputs.cache_hit != 'true'
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
+          INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
         run: python scripts/data_download.py
 
       - name: Save raw data to cache
@@ -87,7 +93,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: data/raw
-          key: raw-data-v2-${{ steps.cache-key.outputs.week }}
+          key: raw-data-v2-${{ steps.cache-key.outputs.week }}-days-${{ steps.cache-key.outputs.days }}
 
       - name: Upload raw data artifact
         uses: actions/upload-artifact@v4
