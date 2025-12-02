@@ -59,8 +59,8 @@ export default function ModelsPage() {
     async function data_fetch() {
       try {
         const [stats_response, rankings_response] = await Promise.all([
-          fetch("/data/model_stats.json"),
-          fetch("/data/rankings.json"),
+          fetch("data/model_stats.json"),
+          fetch("data/rankings.json"),
         ]);
 
         if (!stats_response.ok) {

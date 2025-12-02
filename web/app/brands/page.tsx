@@ -56,8 +56,8 @@ export default function BrandsPage() {
     async function data_fetch() {
       try {
         const [stats_response, rankings_response] = await Promise.all([
-          fetch("/data/brand_stats.json"),
-          fetch("/data/rankings.json"),
+          fetch("data/brand_stats.json"),
+          fetch("data/rankings.json"),
         ]);
 
         if (!stats_response.ok) {

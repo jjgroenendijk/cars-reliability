@@ -38,8 +38,8 @@ export default function FuelsPage() {
     async function data_fetch() {
       try {
         const [stats_res, rankings_res] = await Promise.all([
-          fetch("/data/brand_stats.json"),
-          fetch("/data/rankings.json"),
+          fetch("data/brand_stats.json"),
+          fetch("data/rankings.json"),
         ]);
 
         if (!stats_res.ok) throw new Error("Could not load brand data");

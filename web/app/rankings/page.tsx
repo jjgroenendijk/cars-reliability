@@ -13,7 +13,7 @@ export default function RankingsPage() {
   useEffect(() => {
     async function data_fetch() {
       try {
-        const response = await fetch("/data/rankings.json");
+        const response = await fetch("data/rankings.json");
         if (!response.ok) {
           throw new Error("Could not load rankings data");
         }
