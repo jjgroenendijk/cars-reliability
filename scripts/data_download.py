@@ -144,12 +144,14 @@ def dataset_fetch_parallel(
     completed_pages: dict[int, list[dict[str, Any]]] = {}
     completed_lock = threading.Lock()
     next_write_idx = 0  # Index into offsets list for next page to write
+    pages_written = 0  # Track pages written for progress
 
     filepath = DIR_RAW / f"{name}.json"
     record_count = 0
+    bytes_written = 0
 
-    def fetch_page(offset: int) -> int:
-        """Fetch a page and return the number of rows fetched."""
+    def fetch_page(offset: int) -> list[dict[str, Any]]:
+        """Fetch a page and return the data."""
         page = page_fetch(
             session,
             dataset_id,
@@ -160,18 +162,16 @@ def dataset_fetch_parallel(
             group_clause,
             order_clause,
         )
-        rows_fetched = len(page)
         with completed_lock:
             completed_pages[offset] = page
-        if progress:
-            progress.update(name, pages_done=1, rows_done=rows_fetched)
-        return rows_fetched
+        return page
 
     workers = RATE_LIMITER.get_workers()
 
     # Open file for streaming writes
     with open(filepath, "w", encoding="utf-8") as f:
         f.write("[")
+        bytes_written += 1
         first = True
 
         with ThreadPoolExecutor(max_workers=workers) as ex:
@@ -188,17 +188,35 @@ def dataset_fetch_parallel(
                         if offset_to_write not in completed_pages:
                             break  # Wait for this page
 
-                        # Write this page
-                        for record in completed_pages.pop(offset_to_write):
+                        # Write this page and track bytes
+                        page_data = completed_pages.pop(offset_to_write)
+                        page_rows = len(page_data)
+                        page_bytes = 0
+                        for record in page_data:
                             if not first:
                                 f.write(",")
+                                page_bytes += 1
                             first = False
-                            json.dump(record, f, ensure_ascii=False)
+                            record_str = json.dumps(record, ensure_ascii=False)
+                            f.write(record_str)
+                            page_bytes += len(record_str.encode("utf-8"))
                             record_count += 1
 
                         next_write_idx += 1
+                        pages_written += 1
+                        bytes_written += page_bytes
+
+                        # Update progress after writing
+                        if progress:
+                            progress.update(
+                                name,
+                                pages_done=1,
+                                rows_done=page_rows,
+                                bytes_written=page_bytes,
+                            )
 
         f.write("]")
+        bytes_written += 1
 
     if progress:
         progress.mark_done(name)
@@ -239,15 +257,21 @@ def dataset_fetch_sequential(
                 break
 
             rows_fetched = len(page)
+            page_bytes = 0
             for record in page:
                 if not first:
                     f.write(",")
+                    page_bytes += 1
                 first = False
-                json.dump(record, f, ensure_ascii=False)
+                record_str = json.dumps(record, ensure_ascii=False)
+                f.write(record_str)
+                page_bytes += len(record_str.encode("utf-8"))
                 record_count += 1
 
             if progress:
-                progress.update(name, pages_done=1, rows_done=rows_fetched)
+                progress.update(
+                    name, pages_done=1, rows_done=rows_fetched, bytes_written=page_bytes
+                )
 
             if len(page) < page_size:
                 break

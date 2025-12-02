@@ -240,15 +240,19 @@ class MultiDatasetProgress:
         self.total_pages = {name: info[1] for name, info in datasets.items()}
         self.completed_pages: dict[str, int] = {name: 0 for name in self.datasets}
         self.completed_rows: dict[str, int] = {name: 0 for name in self.datasets}
+        self.written_bytes: dict[str, int] = {name: 0 for name in self.datasets}
         self.done: set[str] = set()
         self.lock = threading.Lock()
         self.last_pct: dict[str, int] = {name: -1 for name in self.datasets}
 
-    def update(self, name: str, pages_done: int = 1, rows_done: int = 0) -> None:
+    def update(
+        self, name: str, pages_done: int = 1, rows_done: int = 0, bytes_written: int = 0
+    ) -> None:
         """Update progress for a dataset."""
         with self.lock:
             self.completed_pages[name] += pages_done
             self.completed_rows[name] += rows_done
+            self.written_bytes[name] += bytes_written
             self._print_progress(name)
 
     def mark_done(self, name: str) -> None:
@@ -259,8 +263,6 @@ class MultiDatasetProgress:
 
     def _print_progress(self, name: str) -> None:
         """Print progress if percentage changed."""
-        from pathlib import Path
-
         current = self.completed_pages[name]
         total = self.total_pages[name]
         if total > 0:
@@ -269,14 +271,7 @@ class MultiDatasetProgress:
                 self.last_pct[name] = pct
                 rows = self.completed_rows[name]
                 total_rows = self.total_rows[name]
-                filepath = (
-                    Path(__file__).parent.parent / "data" / "raw" / f"{name}.json"
-                )
-                size_mb = (
-                    filepath.stat().st_size / (1024 * 1024)
-                    if filepath.exists()
-                    else 0.0
-                )
+                size_mb = self.written_bytes[name] / (1024 * 1024)
                 print(
                     f"{name}: {pct}% | page {current}/{total} | rows {rows:,}/{total_rows:,} | {size_mb:.1f} MB",
                     flush=True,
