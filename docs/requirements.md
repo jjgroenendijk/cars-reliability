@@ -95,6 +95,7 @@ All data comes from [RDW Open Data](https://opendata.rdw.nl/) via the Socrata AP
 
 ### Design Requirements
 
+- Simplicity first: keep code minimal and straightforward, especially the website code; avoid abstractions until there is a clear need.
 - Responsive design (mobile-friendly)
 - No emojis in UI
 - Clear data attribution to RDW
@@ -143,7 +144,7 @@ Run `data_download.py` (Stage 1), then `data_process.py` (Stage 2), copy process
 
 ### Git Hooks
 
-- Install a pre-commit hook that runs LOC checks and `ruff format`; it MUST block commits on violations.
+- Pre-commit hook (stored locally at `.git/hooks/pre-commit`) warns when any staged file exceeds 400 LOC and suggests splitting the file; keep it executable (`chmod +x .git/hooks/pre-commit`) after cloning.
 
 ### Contribution Flow
 
