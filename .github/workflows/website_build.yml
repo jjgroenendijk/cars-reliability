@@ -12,8 +12,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: pipeline-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
 
 jobs:
   build:

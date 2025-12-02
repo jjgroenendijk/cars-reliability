@@ -129,6 +129,7 @@ All data comes from [RDW Open Data](https://opendata.rdw.nl/) via the Socrata AP
 - Branch: Single branch (`main`)
 - Schedule: Weekly (Sunday midnight UTC)
 - Timeout: Must complete within limits
+- Concurrency: Only one pipeline run at a time per branch; new pushes cancel in-progress runs
 
 ### Caching Strategy
 

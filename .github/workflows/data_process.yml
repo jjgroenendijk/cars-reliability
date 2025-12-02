@@ -6,6 +6,10 @@ on:
     types:
       - completed
 
+concurrency:
+  group: pipeline-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
 jobs:
   process:
     runs-on: ubuntu-latest
