@@ -78,15 +78,19 @@ Note: The `gekentekende_voertuigen` dataset is NOT filtered by `INSPECTION_DAYS_
 
 ### Download Script Performance
 
-- `data_download.py` MUST display a progress indicator (percentage-based) during downloads
+- `data_download.py` MUST display a progress indicator during downloads
+- Progress format: `dataset: X% | page Y/Z | rows A/B | C MB`
 - Downloads MUST use multiple threads to minimize wall-clock time
-- Progress output should be clear and concise (e.g., `Downloading voertuigen: 45%`)
+- Parallel fetching within datasets (concurrent page downloads)
+- Parallel dataset downloads via separate GitHub Actions jobs
 
 ### Caching
 
 - GitHub Actions cache MUST be used effectively
+- Per-dataset caching: each dataset has its own cache key
 - Cache keys MUST include version prefix for invalidation
 - Large datasets SHOULD be cached between workflow runs
+- Automatic retry on failure (3 attempts, 30s wait)
 
 ---
 

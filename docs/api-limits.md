@@ -37,6 +37,25 @@ The `data_download.py` script implements adaptive rate limiting:
 - Cooldown: 30s between worker reductions
 - Recovery: slowly restores rate limit count on successful requests
 
+## Parallel Download Strategy
+
+Stage 1 uses parallel fetching at two levels:
+
+1. Dataset level: All 5 datasets download in parallel jobs (GitHub Actions)
+2. Page level: Within each dataset, multiple pages are fetched concurrently
+
+For grouped queries (meldingen, geconstateerde_gebreken), an `$order` clause is required to enable deterministic parallel pagination.
+
+Progress output format: `dataset: X% | page Y/Z | rows A/B | C MB`
+
+## Per-Dataset Caching
+
+Each dataset has its own GitHub Actions cache:
+
+- Cache key format: `dataset-v2-WEEK-days-DAYS-HASH`
+- Enables partial retries (only re-download failed datasets)
+- Automatic retry on failure (3 attempts, 30s wait) via `nick-fields/retry@v3`
+
 ## Environment Variables
 
 App token can be set via (checked in order):
