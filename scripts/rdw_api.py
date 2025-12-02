@@ -121,8 +121,9 @@ def session_create() -> requests.Session:
 def api_get(
     session: requests.Session, url: str, timeout: int = REQUEST_TIMEOUT
 ) -> list[dict[str, Any]]:
-    """Make API request with retry on 429 and dynamic backoff."""
-    for attempt in range(5):
+    """Make API request with retry on errors including connection failures."""
+    max_attempts = 5
+    for attempt in range(max_attempts):
         try:
             r = session.get(url, timeout=timeout)
             if r.status_code == 429:
@@ -133,11 +134,22 @@ def api_get(
             r.raise_for_status()
             RATE_LIMITER.on_success()
             return r.json()
-        except requests.exceptions.Timeout:
-            if attempt == 4:
+        except (
+            requests.exceptions.Timeout,
+            requests.exceptions.ConnectionError,
+            requests.exceptions.ChunkedEncodingError,
+        ) as e:
+            wait = 2 ** (attempt + 1)
+            if attempt < max_attempts - 1:
+                log(
+                    f"Connection error (attempt {attempt + 1}): {e}, retrying in {wait}s"
+                )
+                time.sleep(wait)
+            else:
                 raise
-            time.sleep(2**attempt)
-    raise requests.RequestException(f"Failed after 5 attempts: {url}")
+        except requests.exceptions.RequestException:
+            raise
+    raise requests.RequestException(f"Failed after {max_attempts} attempts: {url}")
 
 
 def row_count_get(
