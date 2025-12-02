@@ -1,5 +1,2 @@
-# Data fetching and processing
+# API queries
 requests>=2.31.0
-pandas>=2.0.0
-sodapy>=2.2.0
-psutil>=5.9.0  # System stats (memory, CPU) for debugging
