@@ -8,6 +8,8 @@
 - [x] Implement pagination with Socrata API limits
 - [x] Add app token support for RDW API
 - [x] Save raw data to `data/raw/`
+- [x] Add progress indicator (percentage-based) to `data_download.py`
+- [x] Implement multi-threaded downloads in `data_download.py` to reduce wall-clock time
 
 ## Stage 2: Data Processing (Python)
 

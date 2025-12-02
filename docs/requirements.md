@@ -29,6 +29,14 @@ Stage 1 (Download) leads to Stage 2 (Process) leads to Stage 3 (Build).
 - Each stage can be re-run independently
 - Stage 2 and Stage 3 MUST only run after their preceding stage completes successfully; if a stage fails, subsequent stages MUST be skipped and the pipeline canceled.
 
+### Stage 1 Trigger Behavior
+
+- Stage 1 runs on every push to `main`
+- Before downloading, Stage 1 checks the GitHub Actions cache for existing data
+- If cached data exists and is less than 7 days old, skip the download and use the cache
+- If cached data is missing or older than 7 days, perform a full download
+- Data refresh interval: 7 days
+
 ---
 
 ## Data Requirements
@@ -53,6 +61,12 @@ All data comes from [RDW Open Data](https://opendata.rdw.nl/) via the Socrata AP
 - The method (full download vs. SoQL aggregation) is flexible
 - Weekly refresh schedule (Sundays at midnight UTC)
 - Preserve original RDW field names throughout the pipeline; do not rename them in code. Keep `docs/data_mapping.md` current as the source for field definitions.
+
+### Download Script Performance
+
+- `data_download.py` MUST display a progress indicator (percentage-based) during downloads
+- Downloads MUST use multiple threads to minimize wall-clock time
+- Progress output should be clear and concise (e.g., `Downloading voertuigen: 45%`)
 
 ### Caching
 
