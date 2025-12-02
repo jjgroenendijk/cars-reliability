@@ -10,6 +10,8 @@
 - [x] Save raw data to `data/raw/`
 - [x] Add progress indicator (percentage-based) to `data_download.py`
 - [x] Implement multi-threaded downloads in `data_download.py` to reduce wall-clock time
+- [x] Add Brandstof dataset (`8ys7-d773`) to download script
+- [x] Add `--dataset` flag to download individual datasets for per-dataset caching
 
 ## Stage 2: Data Processing (Python)
 
@@ -54,6 +56,7 @@
 - [x] Add gitignore coverage for `data/raw/` and `data/processed/` outputs; remove committed raw JSON
 - [x] Make Stage 1 run on every push with cache-first strategy (download only on cache miss or weekly refresh)
 - [x] Add feature flag `INSPECTION_DAYS_LIMIT` to filter inspections to past N days
+- [x] Implement per-dataset caching in Stage 1 (each dataset has its own GitHub cache, enabling faster retries on partial failures)
 
 ## Development Setup
 

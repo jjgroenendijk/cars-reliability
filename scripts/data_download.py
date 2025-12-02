@@ -99,6 +99,11 @@ def datasets_build() -> dict[str, dict[str, Any]]:
             "page_size": 1000,
             "parallel_pages": False,
         },
+        "brandstof": {
+            "id": "8ys7-d773",
+            "select": "kenteken,brandstof_omschrijving",
+            "parallel_pages": True,
+        },
     }
 
     # Apply date filter to inspection-related datasets
@@ -235,21 +240,51 @@ def dataset_fetch(
 
 
 def main() -> None:
-    """Parallel download of all datasets."""
+    """Parallel download of all datasets, or a single dataset if specified."""
     parser = argparse.ArgumentParser(description="Download RDW datasets")
     parser.add_argument("--verbose", "-v", action="store_true", help="Detailed output")
+    parser.add_argument(
+        "--dataset",
+        "-d",
+        type=str,
+        help="Download only this dataset (e.g., gekentekende_voertuigen)",
+    )
+    parser.add_argument(
+        "--list",
+        action="store_true",
+        help="List available dataset names and exit",
+    )
     args = parser.parse_args()
     verbose_set(args.verbose)
+
+    # Build dataset configs (applies date filter if INSPECTION_DAYS_LIMIT is set)
+    all_datasets = datasets_build()
+
+    # List mode: print dataset names and exit
+    if args.list:
+        for name in all_datasets:
+            print(name)
+        return
 
     env_load()
     session = session_create()
     DIR_RAW.mkdir(parents=True, exist_ok=True)
 
-    # Build dataset configs (applies date filter if INSPECTION_DAYS_LIMIT is set)
-    datasets = datasets_build()
+    # Filter to single dataset if specified
+    if args.dataset:
+        if args.dataset not in all_datasets:
+            log_always(f"Unknown dataset: {args.dataset}")
+            log_always(f"Available: {', '.join(all_datasets.keys())}")
+            sys.exit(1)
+        datasets = {args.dataset: all_datasets[args.dataset]}
+    else:
+        datasets = all_datasets
+
     days_limit = inspection_days_limit_get()
 
     log_always("Stage 1: RDW data download")
+    if args.dataset:
+        log_always(f"Dataset: {args.dataset}")
     if days_limit:
         log_always(f"Filter: inspections from past {days_limit} days only")
     log_always("Fetching dataset sizes...")
