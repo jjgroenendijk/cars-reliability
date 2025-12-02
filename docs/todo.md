@@ -61,7 +61,6 @@
 - [x] Make Stage 1 run on every push with cache-first strategy (download only on cache miss or weekly refresh)
 - [x] Add feature flag `INSPECTION_DAYS_LIMIT` to filter inspections to past N days
 - [x] Implement per-dataset caching in Stage 1 (each dataset has its own GitHub cache, enabling faster retries on partial failures)
-- [x] Add retry logic to Stage 1 with nick-fields/retry@v3 (3 attempts, 30s wait)
 
 ## Development Setup
 

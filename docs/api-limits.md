@@ -54,7 +54,7 @@ Each dataset has its own GitHub Actions cache:
 
 - Cache key format: `dataset-v2-WEEK-days-DAYS-HASH`
 - Enables partial retries (only re-download failed datasets)
-- Automatic retry on failure (3 attempts, 30s wait) via `nick-fields/retry@v3`
+- Job timeout: 60 minutes per dataset
 
 ## Environment Variables
 

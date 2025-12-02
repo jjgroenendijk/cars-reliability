@@ -90,7 +90,7 @@ Note: The `gekentekende_voertuigen` dataset is NOT filtered by `INSPECTION_DAYS_
 - Per-dataset caching: each dataset has its own cache key
 - Cache keys MUST include version prefix for invalidation
 - Large datasets SHOULD be cached between workflow runs
-- Automatic retry on failure (3 attempts, 30s wait)
+- Job timeout: 60 minutes per dataset
 
 ---
 
