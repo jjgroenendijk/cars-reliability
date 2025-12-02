@@ -99,7 +99,7 @@ def datasets_build() -> dict[str, dict[str, Any]]:
         "gebreken": {
             "id": "hx2c-gt7k",
             "page_size": 1000,
-            "parallel_pages": False,
+            "parallel_pages": True,
         },
         "brandstof": {
             "id": "8ys7-d773",
@@ -223,79 +223,6 @@ def dataset_fetch_parallel(
     return name, record_count
 
 
-def dataset_fetch_sequential(
-    name: str,
-    config: dict[str, Any],
-    session: requests.Session,
-    progress: MultiDatasetProgress | None = None,
-) -> tuple[str, int]:
-    """Fetch dataset sequentially (for grouped queries)."""
-    dataset_id = config["id"]
-    page_size = config.get("page_size", PAGE_SIZE)
-    filter_clause = config.get("filter")
-    select_clause = config.get("select")
-    group_clause = config.get("group")
-
-    filepath = DIR_RAW / f"{name}.json"
-    record_count = 0
-    offset = 0
-
-    with open(filepath, "w", encoding="utf-8") as f:
-        f.write("[")
-        first = True
-        while True:
-            page = page_fetch(
-                session,
-                dataset_id,
-                offset,
-                page_size,
-                select_clause,
-                filter_clause,
-                group_clause,
-            )
-            if not page:
-                break
-
-            rows_fetched = len(page)
-            page_bytes = 0
-            for record in page:
-                if not first:
-                    f.write(",")
-                    page_bytes += 1
-                first = False
-                record_str = json.dumps(record, ensure_ascii=False)
-                f.write(record_str)
-                page_bytes += len(record_str.encode("utf-8"))
-                record_count += 1
-
-            if progress:
-                progress.update(
-                    name, pages_done=1, rows_done=rows_fetched, bytes_written=page_bytes
-                )
-
-            if len(page) < page_size:
-                break
-            offset += page_size
-
-        f.write("]")
-
-    if progress:
-        progress.mark_done(name)
-    return name, record_count
-
-
-def dataset_fetch(
-    name: str,
-    config: dict[str, Any],
-    session: requests.Session,
-    progress: MultiDatasetProgress | None = None,
-) -> tuple[str, int]:
-    """Fetch dataset using appropriate strategy."""
-    if config.get("parallel_pages", False):
-        return dataset_fetch_parallel(name, config, session, progress)
-    return dataset_fetch_sequential(name, config, session, progress)
-
-
 def main() -> None:
     """Parallel download of all datasets, or a single dataset if specified."""
     parser = argparse.ArgumentParser(description="Download RDW datasets")
@@ -373,7 +300,7 @@ def main() -> None:
 
     with ThreadPoolExecutor(max_workers=DATASET_WORKERS) as ex:
         futures = {
-            ex.submit(dataset_fetch, name, config, session, progress): name
+            ex.submit(dataset_fetch_parallel, name, config, session, progress): name
             for name, config in datasets.items()
         }
         for future in as_completed(futures):
