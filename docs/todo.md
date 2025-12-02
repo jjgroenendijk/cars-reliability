@@ -14,6 +14,8 @@
 - [x] Add `--dataset` flag to download individual datasets for per-dataset caching
 - [x] Enable parallel fetching for grouped queries (meldingen/gebreken) with $order clause
 - [x] Stream parallel downloads to disk immediately instead of buffering in memory
+- [x] Add detailed progress output (percentage, page, rows, filesize)
+- [ ] Split `scripts/data_download.py` below 400 LOC (currently 405 lines)
 
 ## Stage 2: Data Processing (Python)
 
@@ -59,6 +61,7 @@
 - [x] Make Stage 1 run on every push with cache-first strategy (download only on cache miss or weekly refresh)
 - [x] Add feature flag `INSPECTION_DAYS_LIMIT` to filter inspections to past N days
 - [x] Implement per-dataset caching in Stage 1 (each dataset has its own GitHub cache, enabling faster retries on partial failures)
+- [x] Add retry logic to Stage 1 with nick-fields/retry@v3 (3 attempts, 30s wait)
 
 ## Development Setup
 
