@@ -1,0 +1,58 @@
+name: Experiment - Bulk Data Export
+
+# Separate workflow for downloading full raw datasets via CSV export
+# Does not block the main data pipeline
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: m9d7-ebf2
+            name: gekentekende_voertuigen
+          - id: sgfe-77wx
+            name: meldingen_keuringsinstantie
+          - id: a34c-vvps
+            name: geconstateerde_gebreken
+          - id: hx2c-gt7k
+            name: gebreken
+          - id: 8ys7-d773
+            name: brandstof
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Export ${{ matrix.name }}
+        run: python scripts/data_export.py ${{ matrix.id }} --name ${{ matrix.name }}
+
+      - name: Upload ${{ matrix.name }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: export-${{ matrix.name }}
+          path: data/raw/${{ matrix.name }}.json
+          retention-days: 3

@@ -2,15 +2,18 @@
 
 ## GitHub
 
-- Actions API: ~1,000 requests/hour per user (GitHub default); avoid heavy polling.
-- Artifact sizes: soft cap ~2 GB per artifact; keep stage outputs small.
-- Cache: 10 GB total per repo; cache keys should be versioned for invalidation.
-- Rate errors: 403 with `rate limit exceeded`; back off and retry later.
+- Actions API: ~1,000 requests/hour per user
+- Artifacts: soft cap ~2 GB per artifact
+- Cache: 10 GB total per repo
+- Rate errors: 403 `rate limit exceeded`; back off and retry
 
-## RDW Dataset API (Socrata)
+## RDW Open Data API (Socrata)
 
-- Defaults: 1,000 rows if no `$limit`; use app token (`X-App-Token`) to avoid IP throttling.
-- Page size: v2 max ≈50k rows; v3 “no fixed max” but stick to 10k–50k to stay under timeouts.
-- Response size: treat 250 MB as the ceiling; shrink `$limit` or window if nearing it.
-- Throttling: 429 on excess; use exponential backoff; a few req/s is usually safe with a token.
-- Checklist: token, paging, payload <250 MB, backoff on 429, log size/rate.
+- Request rate: ~1,000 requests/hour with app token (`X-App-Token`)
+- Anonymous use: throttled quickly; shared IP pool
+- Throttle response: HTTP 429 on excess; back off before retry
+- Rows per call: default 1,000 rows if `$limit` omitted
+- Max rows per call: up to 50,000 rows with `$limit`
+- Pagination: use `$offset` + `$limit` to retrieve >50k rows
+- Total data: no hard cap on total rows; paging required for large pulls
+- Payload size: keep responses below ~250 MB by tuning `$limit` and selected columns

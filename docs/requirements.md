@@ -145,6 +145,7 @@ Run `data_download.py` (Stage 1), then `data_process.py` (Stage 2), copy process
 - Python quality: `python -m pytest scripts/` (when present), `python -m mypy scripts/`.
 - TypeScript quality: `npm run lint`, `npx tsc --noEmit`, `npm run build`.
 - Logging: avoid printing date/time stamps in logs; keep output minimal.
+- Script verbosity: all Python scripts MUST support a `--verbose` flag for additional detail; pipelines must run with verbosity disabled by default.
 
 ### Git Hooks
 

@@ -65,10 +65,11 @@
 
 ## Experiments
 
-- [ ] Evaluate bulk CSV export (`scripts/data_download_bulk.py`) as alternative to paginated API
-  - Current finding: 7GB download for gekentekende_voertuigen (all 98 columns)
-  - Server-side SoQL filtering may still be more efficient
-  - Needs further testing with smaller datasets (inspections, defects)
+- [x] Evaluate bulk CSV export (`scripts/data_export.py`) as alternative to paginated API
+  - Created `scripts/data_export.py` with streaming CSV, parallel downloads, verbose flag
+  - Verbose flag shows download speed; disabled in CI for cleaner logs
+  - Uses 3 parallel threads for dataset downloads
+  - ~3 MB/s download speed observed
 
 ## Testing / Verification
 
