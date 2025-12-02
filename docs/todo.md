@@ -50,6 +50,7 @@
 - [x] Configure weekly schedule (Sunday midnight UTC)
 - [x] Enforce stage gating so Stage 2 and 3 only run after the previous stage succeeds (remove direct push/dispatch paths)
 - [x] Add gitignore coverage for `data/raw/` and `data/processed/` outputs; remove committed raw JSON
+- [x] Make Stage 1 run on every push with cache-first strategy (download only on cache miss or weekly refresh)
 
 ## Development Setup
 

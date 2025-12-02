@@ -34,18 +34,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Get current date
-        id: date
-        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+      - name: Calculate cache key (weekly rotation)
+        id: cache-key
+        run: |
+          WEEK=$(date +'%Y-W%V')
+          echo "week=$WEEK" >> $GITHUB_OUTPUT
 
       - name: Restore raw data from cache
         id: cache-restore
         uses: actions/cache/restore@v4
         with:
           path: data/raw
-          key: raw-data-v1-${{ steps.date.outputs.date }}
-          restore-keys: |
-            raw-data-v1-
+          key: raw-data-v2-${{ steps.cache-key.outputs.week }}
 
       - name: Download raw data artifact (fallback)
         if: steps.cache-restore.outputs.cache-hit != 'true'
@@ -63,7 +63,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: data/processed
-          key: processed-data-v1-${{ steps.date.outputs.date }}
+          key: processed-data-v2-${{ steps.cache-key.outputs.week }}
 
       - name: Upload processed data artifact
         uses: actions/upload-artifact@v4

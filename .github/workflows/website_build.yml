@@ -32,18 +32,20 @@ jobs:
           cache: 'npm'
           cache-dependency-path: web/package-lock.json
 
-      - name: Get current date
-        id: date
-        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+      - name: Calculate cache key (weekly rotation)
+        id: cache-key
+        run: |
+          WEEK=$(date +'%Y-W%V')
+          echo "week=$WEEK" >> $GITHUB_OUTPUT
 
       - name: Restore processed data from cache
         id: cache-restore
         uses: actions/cache/restore@v4
         with:
           path: data/processed
-          key: processed-data-v1-${{ steps.date.outputs.date }}
+          key: processed-data-v2-${{ steps.cache-key.outputs.week }}
           restore-keys: |
-            processed-data-v1-
+            processed-data-v2-
 
       - name: Download processed data artifact (fallback)
         if: steps.cache-restore.outputs.cache-hit != 'true' && github.event_name == 'workflow_run'
