@@ -18,78 +18,65 @@ concurrency:
   group: pipeline-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  PYTHON_VERSION: '3.11'
+
 jobs:
-  # Download each dataset as a separate job with individual caching
   download-gekentekende-voertuigen:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    outputs:
-      cache_hit: ${{ steps.cache-check.outputs.cache_hit }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Calculate cache key
         id: cache-key
-        env:
-          INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
         run: |
           WEEK=$(date +'%Y-W%V')
           DAYS="${INSPECTION_DAYS_LIMIT:-all}"
-          echo "key=gekentekende_voertuigen-v1-$WEEK-days-$DAYS" >> $GITHUB_OUTPUT
+          echo "key=gekentekende_voertuigen-v2-$WEEK-days-$DAYS" >> $GITHUB_OUTPUT
+        env:
+          INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
 
-      - name: Restore from cache
-        id: cache-restore
-        if: ${{ github.event.inputs.force_refresh != 'true' && github.event_name != 'schedule' }}
-        uses: actions/cache/restore@v4
+      - name: Cache dataset
+        id: cache
+        if: github.event.inputs.force_refresh != 'true' && github.event_name != 'schedule'
+        uses: actions/cache@v4
         with:
           path: data/raw/gekentekende_voertuigen.json
           key: ${{ steps.cache-key.outputs.key }}
 
-      - name: Check cache status
-        id: cache-check
-        run: |
-          if [ -f "data/raw/gekentekende_voertuigen.json" ]; then
-            echo "Cache hit"
-            echo "cache_hit=true" >> $GITHUB_OUTPUT
-          else
-            echo "Cache miss"
-            echo "cache_hit=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Set up Python 3.11
-        if: steps.cache-check.outputs.cache_hit != 'true'
+      - name: Set up Python
+        if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-
-      - name: Cache pip dependencies
-        if: steps.cache-check.outputs.cache_hit != 'true'
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
 
       - name: Install dependencies
-        if: steps.cache-check.outputs.cache_hit != 'true'
+        if: steps.cache.outputs.cache-hit != 'true'
         run: pip install -r requirements.txt
 
       - name: Download dataset
-        if: steps.cache-check.outputs.cache_hit != 'true'
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: python scripts/data_download.py --dataset gekentekende_voertuigen
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
-        run: python scripts/data_download.py --dataset gekentekende_voertuigen
 
-      - name: Save to cache
-        if: steps.cache-check.outputs.cache_hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: data/raw/gekentekende_voertuigen.json
-          key: ${{ steps.cache-key.outputs.key }}
+      - name: Verify download
+        run: |
+          if [ ! -f "data/raw/gekentekende_voertuigen.json" ]; then
+            echo "ERROR: Download failed - file not found"
+            exit 1
+          fi
+          SIZE=$(stat -c%s "data/raw/gekentekende_voertuigen.json")
+          echo "File size: $((SIZE / 1024 / 1024)) MB"
+          if [ "$SIZE" -lt 1000 ]; then
+            echo "ERROR: File too small, download may have failed"
+            exit 1
+          fi
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: raw-gekentekende_voertuigen
           path: data/raw/gekentekende_voertuigen.json
@@ -98,73 +85,58 @@ jobs:
   download-meldingen-keuringsinstantie:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    outputs:
-      cache_hit: ${{ steps.cache-check.outputs.cache_hit }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Calculate cache key
         id: cache-key
-        env:
-          INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
         run: |
           WEEK=$(date +'%Y-W%V')
           DAYS="${INSPECTION_DAYS_LIMIT:-all}"
-          echo "key=meldingen_keuringsinstantie-v1-$WEEK-days-$DAYS" >> $GITHUB_OUTPUT
+          echo "key=meldingen_keuringsinstantie-v2-$WEEK-days-$DAYS" >> $GITHUB_OUTPUT
+        env:
+          INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
 
-      - name: Restore from cache
-        id: cache-restore
-        if: ${{ github.event.inputs.force_refresh != 'true' && github.event_name != 'schedule' }}
-        uses: actions/cache/restore@v4
+      - name: Cache dataset
+        id: cache
+        if: github.event.inputs.force_refresh != 'true' && github.event_name != 'schedule'
+        uses: actions/cache@v4
         with:
           path: data/raw/meldingen_keuringsinstantie.json
           key: ${{ steps.cache-key.outputs.key }}
 
-      - name: Check cache status
-        id: cache-check
-        run: |
-          if [ -f "data/raw/meldingen_keuringsinstantie.json" ]; then
-            echo "Cache hit"
-            echo "cache_hit=true" >> $GITHUB_OUTPUT
-          else
-            echo "Cache miss"
-            echo "cache_hit=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Set up Python 3.11
-        if: steps.cache-check.outputs.cache_hit != 'true'
+      - name: Set up Python
+        if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-
-      - name: Cache pip dependencies
-        if: steps.cache-check.outputs.cache_hit != 'true'
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
 
       - name: Install dependencies
-        if: steps.cache-check.outputs.cache_hit != 'true'
+        if: steps.cache.outputs.cache-hit != 'true'
         run: pip install -r requirements.txt
 
       - name: Download dataset
-        if: steps.cache-check.outputs.cache_hit != 'true'
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: python scripts/data_download.py --dataset meldingen_keuringsinstantie
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
-        run: python scripts/data_download.py --dataset meldingen_keuringsinstantie
 
-      - name: Save to cache
-        if: steps.cache-check.outputs.cache_hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: data/raw/meldingen_keuringsinstantie.json
-          key: ${{ steps.cache-key.outputs.key }}
+      - name: Verify download
+        run: |
+          if [ ! -f "data/raw/meldingen_keuringsinstantie.json" ]; then
+            echo "ERROR: Download failed - file not found"
+            exit 1
+          fi
+          SIZE=$(stat -c%s "data/raw/meldingen_keuringsinstantie.json")
+          echo "File size: $((SIZE / 1024 / 1024)) MB"
+          if [ "$SIZE" -lt 1000 ]; then
+            echo "ERROR: File too small, download may have failed"
+            exit 1
+          fi
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: raw-meldingen_keuringsinstantie
           path: data/raw/meldingen_keuringsinstantie.json
@@ -173,73 +145,58 @@ jobs:
   download-geconstateerde-gebreken:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    outputs:
-      cache_hit: ${{ steps.cache-check.outputs.cache_hit }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Calculate cache key
         id: cache-key
-        env:
-          INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
         run: |
           WEEK=$(date +'%Y-W%V')
           DAYS="${INSPECTION_DAYS_LIMIT:-all}"
-          echo "key=geconstateerde_gebreken-v1-$WEEK-days-$DAYS" >> $GITHUB_OUTPUT
+          echo "key=geconstateerde_gebreken-v2-$WEEK-days-$DAYS" >> $GITHUB_OUTPUT
+        env:
+          INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
 
-      - name: Restore from cache
-        id: cache-restore
-        if: ${{ github.event.inputs.force_refresh != 'true' && github.event_name != 'schedule' }}
-        uses: actions/cache/restore@v4
+      - name: Cache dataset
+        id: cache
+        if: github.event.inputs.force_refresh != 'true' && github.event_name != 'schedule'
+        uses: actions/cache@v4
         with:
           path: data/raw/geconstateerde_gebreken.json
           key: ${{ steps.cache-key.outputs.key }}
 
-      - name: Check cache status
-        id: cache-check
-        run: |
-          if [ -f "data/raw/geconstateerde_gebreken.json" ]; then
-            echo "Cache hit"
-            echo "cache_hit=true" >> $GITHUB_OUTPUT
-          else
-            echo "Cache miss"
-            echo "cache_hit=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Set up Python 3.11
-        if: steps.cache-check.outputs.cache_hit != 'true'
+      - name: Set up Python
+        if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-
-      - name: Cache pip dependencies
-        if: steps.cache-check.outputs.cache_hit != 'true'
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
 
       - name: Install dependencies
-        if: steps.cache-check.outputs.cache_hit != 'true'
+        if: steps.cache.outputs.cache-hit != 'true'
         run: pip install -r requirements.txt
 
       - name: Download dataset
-        if: steps.cache-check.outputs.cache_hit != 'true'
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: python scripts/data_download.py --dataset geconstateerde_gebreken
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
-        run: python scripts/data_download.py --dataset geconstateerde_gebreken
 
-      - name: Save to cache
-        if: steps.cache-check.outputs.cache_hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: data/raw/geconstateerde_gebreken.json
-          key: ${{ steps.cache-key.outputs.key }}
+      - name: Verify download
+        run: |
+          if [ ! -f "data/raw/geconstateerde_gebreken.json" ]; then
+            echo "ERROR: Download failed - file not found"
+            exit 1
+          fi
+          SIZE=$(stat -c%s "data/raw/geconstateerde_gebreken.json")
+          echo "File size: $((SIZE / 1024 / 1024)) MB"
+          if [ "$SIZE" -lt 1000 ]; then
+            echo "ERROR: File too small, download may have failed"
+            exit 1
+          fi
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: raw-geconstateerde_gebreken
           path: data/raw/geconstateerde_gebreken.json
@@ -248,69 +205,54 @@ jobs:
   download-gebreken:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    outputs:
-      cache_hit: ${{ steps.cache-check.outputs.cache_hit }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Calculate cache key
         id: cache-key
         run: |
           WEEK=$(date +'%Y-W%V')
-          echo "key=gebreken-v1-$WEEK" >> $GITHUB_OUTPUT
+          echo "key=gebreken-v2-$WEEK" >> $GITHUB_OUTPUT
 
-      - name: Restore from cache
-        id: cache-restore
-        if: ${{ github.event.inputs.force_refresh != 'true' && github.event_name != 'schedule' }}
-        uses: actions/cache/restore@v4
+      - name: Cache dataset
+        id: cache
+        if: github.event.inputs.force_refresh != 'true' && github.event_name != 'schedule'
+        uses: actions/cache@v4
         with:
           path: data/raw/gebreken.json
           key: ${{ steps.cache-key.outputs.key }}
 
-      - name: Check cache status
-        id: cache-check
-        run: |
-          if [ -f "data/raw/gebreken.json" ]; then
-            echo "Cache hit"
-            echo "cache_hit=true" >> $GITHUB_OUTPUT
-          else
-            echo "Cache miss"
-            echo "cache_hit=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Set up Python 3.11
-        if: steps.cache-check.outputs.cache_hit != 'true'
+      - name: Set up Python
+        if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-
-      - name: Cache pip dependencies
-        if: steps.cache-check.outputs.cache_hit != 'true'
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
 
       - name: Install dependencies
-        if: steps.cache-check.outputs.cache_hit != 'true'
+        if: steps.cache.outputs.cache-hit != 'true'
         run: pip install -r requirements.txt
 
       - name: Download dataset
-        if: steps.cache-check.outputs.cache_hit != 'true'
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: python scripts/data_download.py --dataset gebreken
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
-        run: python scripts/data_download.py --dataset gebreken
 
-      - name: Save to cache
-        if: steps.cache-check.outputs.cache_hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: data/raw/gebreken.json
-          key: ${{ steps.cache-key.outputs.key }}
+      - name: Verify download
+        run: |
+          if [ ! -f "data/raw/gebreken.json" ]; then
+            echo "ERROR: Download failed - file not found"
+            exit 1
+          fi
+          SIZE=$(stat -c%s "data/raw/gebreken.json")
+          echo "File size: $((SIZE / 1024)) KB"
+          if [ "$SIZE" -lt 100 ]; then
+            echo "ERROR: File too small, download may have failed"
+            exit 1
+          fi
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: raw-gebreken
           path: data/raw/gebreken.json
@@ -319,75 +261,59 @@ jobs:
   download-brandstof:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    outputs:
-      cache_hit: ${{ steps.cache-check.outputs.cache_hit }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Calculate cache key
         id: cache-key
         run: |
           WEEK=$(date +'%Y-W%V')
-          echo "key=brandstof-v1-$WEEK" >> $GITHUB_OUTPUT
+          echo "key=brandstof-v2-$WEEK" >> $GITHUB_OUTPUT
 
-      - name: Restore from cache
-        id: cache-restore
-        if: ${{ github.event.inputs.force_refresh != 'true' && github.event_name != 'schedule' }}
-        uses: actions/cache/restore@v4
+      - name: Cache dataset
+        id: cache
+        if: github.event.inputs.force_refresh != 'true' && github.event_name != 'schedule'
+        uses: actions/cache@v4
         with:
           path: data/raw/brandstof.json
           key: ${{ steps.cache-key.outputs.key }}
 
-      - name: Check cache status
-        id: cache-check
-        run: |
-          if [ -f "data/raw/brandstof.json" ]; then
-            echo "Cache hit"
-            echo "cache_hit=true" >> $GITHUB_OUTPUT
-          else
-            echo "Cache miss"
-            echo "cache_hit=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Set up Python 3.11
-        if: steps.cache-check.outputs.cache_hit != 'true'
+      - name: Set up Python
+        if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-
-      - name: Cache pip dependencies
-        if: steps.cache-check.outputs.cache_hit != 'true'
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
 
       - name: Install dependencies
-        if: steps.cache-check.outputs.cache_hit != 'true'
+        if: steps.cache.outputs.cache-hit != 'true'
         run: pip install -r requirements.txt
 
       - name: Download dataset
-        if: steps.cache-check.outputs.cache_hit != 'true'
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: python scripts/data_download.py --dataset brandstof
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
-        run: python scripts/data_download.py --dataset brandstof
 
-      - name: Save to cache
-        if: steps.cache-check.outputs.cache_hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: data/raw/brandstof.json
-          key: ${{ steps.cache-key.outputs.key }}
+      - name: Verify download
+        run: |
+          if [ ! -f "data/raw/brandstof.json" ]; then
+            echo "ERROR: Download failed - file not found"
+            exit 1
+          fi
+          SIZE=$(stat -c%s "data/raw/brandstof.json")
+          echo "File size: $((SIZE / 1024 / 1024)) MB"
+          if [ "$SIZE" -lt 1000 ]; then
+            echo "ERROR: File too small, download may have failed"
+            exit 1
+          fi
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: raw-brandstof
           path: data/raw/brandstof.json
           retention-days: 7
 
-  # Merge all datasets into a single artifact for downstream jobs
   merge-artifacts:
     runs-on: ubuntu-latest
     needs:
@@ -397,27 +323,26 @@ jobs:
       - download-gebreken
       - download-brandstof
     steps:
-      - name: Download all dataset artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: raw-*
           path: data/raw
           merge-multiple: true
 
-      - name: Verify all files present
+      - name: Verify all files
         run: |
           echo "Downloaded files:"
-          ls -la data/raw/
+          ls -lh data/raw/
           for f in gekentekende_voertuigen meldingen_keuringsinstantie geconstateerde_gebreken gebreken brandstof; do
             if [ ! -f "data/raw/${f}.json" ]; then
-              echo "Missing: ${f}.json"
+              echo "ERROR: Missing ${f}.json"
               exit 1
             fi
           done
           echo "All datasets present"
 
-      - name: Upload merged artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: raw-data
           path: data/raw
