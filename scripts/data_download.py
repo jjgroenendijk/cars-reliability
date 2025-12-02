@@ -295,7 +295,12 @@ def main() -> None:
     progress.finish()
     elapsed = time.time() - start
     total = sum(results.values())
-    log_always(f"Complete: {total:,} rows in {elapsed:.0f}s")
+    if days_limit:
+        log_always(
+            f"Complete: {total:,} rows in {elapsed:.0f}s (past {days_limit} days)"
+        )
+    else:
+        log_always(f"Complete: {total:,} rows in {elapsed:.0f}s")
 
     if failed:
         log_always(f"Failed: {', '.join(failed)}")

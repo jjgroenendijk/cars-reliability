@@ -235,6 +235,8 @@ class MultiDatasetProgress:
 
     def _render(self) -> None:
         """Render progress line to terminal."""
+        import sys
+
         parts = []
         for name in self.datasets:
             if name in self.done:
@@ -249,11 +251,15 @@ class MultiDatasetProgress:
                     parts.append(f"{name}: (0/0)")
 
         line = "  ".join(parts)
-        # Clear previous line and write new one
+        # Clear previous line and write new one (use sys.stdout directly)
         clear = " " * self.last_output_len
-        print(f"\r{clear}\r{line}", end="", flush=True)
+        sys.stdout.write(f"\r{clear}\r{line}")
+        sys.stdout.flush()
         self.last_output_len = len(line)
 
     def finish(self) -> None:
         """Print final newline."""
-        print(flush=True)
+        import sys
+
+        sys.stdout.write("\n")
+        sys.stdout.flush()
