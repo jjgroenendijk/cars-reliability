@@ -1,6 +1,6 @@
 # Dutch Car Reliability Analysis
 
-Analyzing car reliability using Dutch APK (MOT) inspection data from RDW Open Data.
+Analyzing car reliability using Dutch APK inspection data from RDW Open Data.
 
 ## Overview
 

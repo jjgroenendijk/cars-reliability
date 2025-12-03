@@ -139,7 +139,7 @@ export default function BrandsPage() {
           Reliability by Brand
         </h1>
         <p className="text-gray-600 dark:text-gray-300">
-          Overview of all car brands sorted by reliability based on MOT inspection data.
+          Overview of all car brands sorted by reliability based on APK inspection data.
           Click a column header to sort. Filter by vehicle age bracket.
         </p>
       </div>
@@ -203,7 +203,7 @@ export default function BrandsPage() {
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600 dark:text-gray-400">
           <div>
             <dt className="inline font-medium">Inspections:</dt>
-            <dd className="inline ml-1">Total number of MOT inspections</dd>
+            <dd className="inline ml-1">Total number of APK inspections</dd>
           </div>
           <div>
             <dt className="inline font-medium">Defect Rate:</dt>

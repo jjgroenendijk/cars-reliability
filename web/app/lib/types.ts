@@ -59,7 +59,7 @@ export interface RankingEntry {
   rank: number;
   merk: string;
   handelsbenaming?: string;
-  avg_defects_per_inspection: number;
+  defects_per_year: number;
   total_inspections: number;
 }
 

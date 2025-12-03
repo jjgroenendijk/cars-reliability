@@ -230,7 +230,7 @@ def ranking_entry_format(item: dict[str, Any], rank: int) -> dict[str, Any]:
     entry = {
         "rank": rank,
         "merk": item.get("merk", ""),
-        "avg_defects_per_inspection": item.get("avg_defects_per_inspection", 0),
+        "defects_per_year": item.get("defects_per_year", 0),
         "total_inspections": item.get("total_inspections", 0),
     }
     if handelsbenaming := item.get("handelsbenaming"):
@@ -241,25 +241,18 @@ def ranking_entry_format(item: dict[str, Any], rank: int) -> dict[str, Any]:
 def rankings_generate(
     brand_stats: list[dict[str, Any]], model_stats: list[dict[str, Any]]
 ) -> dict[str, Any]:
-    """Generate reliability rankings."""
+    """Generate reliability rankings sorted by defects_per_year."""
 
     def sort_key(item: dict[str, Any], ascending: bool = True) -> tuple:
-        avg_def = item.get("avg_defects_per_inspection")
-        if avg_def is None:
-            return (float("inf") if ascending else float("-inf"), 0, 0)
+        d_year = item.get("defects_per_year")
+        if d_year is None:
+            return (float("inf") if ascending else float("-inf"), 0)
         v_count = item.get("vehicle_count", 0)
-        d_year = item.get("defects_per_year") or (
-            float("inf") if ascending else float("-inf")
-        )
         mult = 1 if ascending else -1
-        return (mult * avg_def, -v_count, mult * d_year)
+        return (mult * d_year, -v_count)
 
-    valid_brands = [
-        b for b in brand_stats if b.get("avg_defects_per_inspection") is not None
-    ]
-    valid_models = [
-        m for m in model_stats if m.get("avg_defects_per_inspection") is not None
-    ]
+    valid_brands = [b for b in brand_stats if b.get("defects_per_year") is not None]
+    valid_models = [m for m in model_stats if m.get("defects_per_year") is not None]
 
     top_brands = sorted(valid_brands, key=lambda x: sort_key(x, True))[:10]
     bottom_brands = sorted(valid_brands, key=lambda x: sort_key(x, False))[:10]

@@ -30,10 +30,10 @@ export function InspectionsCard({
     return (
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-          MOT History
+          APK History
         </h2>
         <p className="text-gray-500 dark:text-gray-400">
-          No MOT inspection data available
+          No APK inspection data available
         </p>
       </div>
     );
@@ -43,7 +43,7 @@ export function InspectionsCard({
     <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
       <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          MOT History
+          APK History
         </h2>
         <p className="text-sm text-gray-600 dark:text-gray-400">
           {inspections.length} inspection{inspections.length !== 1 ? "s" : ""} found

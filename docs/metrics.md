@@ -1,45 +1,18 @@
 # Reliability Metrics
 
-> **Last Updated:** 2025-12-02
+> **Last Updated:** 2025-12-03
 
 ## Overview
 
-This document describes how reliability metrics are calculated from RDW inspection data.
+This document describes how reliability metrics are calculated from RDW APK inspection data.
 
 ---
 
 ## Primary Metrics
 
-### Average Defects per Inspection
+### Defects per Year (Age-Normalized) - Primary Ranking Metric
 
-The main reliability indicator.
-
-**Formula:**
-
-```text
-avg_defects_per_inspection = total_defects / total_inspections
-```
-
-**Interpretation:**
-
-- Lower values = more reliable
-- Range: typically 0.1 to 1.5
-- A value of 0.30 means an average of 0.3 defects per inspection
-
-**Example:**
-
-| Brand | Total Defects | Total Inspections | Avg Defects/Inspection |
-|-------|---------------|-------------------|------------------------|
-| Toyota | 15,000 | 75,000 | 0.20 |
-| BMW | 30,000 | 75,000 | 0.40 |
-
-Toyota has better reliability in this example.
-
----
-
-### Defects per Year (Age-Normalized)
-
-Accounts for vehicle age - older cars naturally have more defects.
+The main reliability indicator used for rankings. This metric accounts for vehicle age, ensuring fair comparison between brands with different age profiles.
 
 **Formula:**
 
@@ -51,7 +24,8 @@ defects_per_year = avg_defects_per_inspection / avg_age_years
 
 - Lower values = better age-adjusted reliability
 - Allows fair comparison between brands with different age profiles
-- A brand with mostly new cars may appear reliable but age poorly
+- A brand with mostly new cars may appear reliable but actually age poorly
+- This is the primary metric used for ranking brands and models
 
 **Example:**
 
@@ -60,7 +34,33 @@ defects_per_year = avg_defects_per_inspection / avg_age_years
 | Toyota | 0.30 | 12 years | 0.025 |
 | Tesla | 0.15 | 3 years | 0.050 |
 
-Despite lower absolute defects, Tesla ages worse in this example.
+Despite lower absolute defects, Tesla ages worse in this example. Using defects per year as the ranking metric prevents luxury brands with younger fleets from appearing artificially reliable.
+
+---
+
+### Average Defects per Inspection
+
+A secondary metric that shows the raw defect rate without age normalization.
+
+**Formula:**
+
+```text
+avg_defects_per_inspection = total_defects / total_inspections
+```
+
+**Interpretation:**
+
+- Lower values = fewer defects found
+- Range: typically 0.1 to 1.5
+- A value of 0.30 means an average of 0.3 defects per inspection
+- Does not account for vehicle age
+
+**Example:**
+
+| Brand | Total Defects | Total Inspections | Avg Defects/Inspection |
+|-------|---------------|-------------------|------------------------|
+| Toyota | 15,000 | 75,000 | 0.20 |
+| BMW | 30,000 | 75,000 | 0.40 |
 
 ---
 
@@ -133,18 +133,17 @@ Records below these thresholds are excluded from rankings and tables.
 
 ### Top 10 Most Reliable
 
-Sorted by `avg_defects_per_inspection` ascending (lowest = best).
+Sorted by `defects_per_year` ascending (lowest = best).
 
 ### Top 10 Least Reliable  
 
-Sorted by `avg_defects_per_inspection` descending (highest = worst).
+Sorted by `defects_per_year` descending (highest = worst).
 
 ### Tie-Breaking
 
-When two brands/models have identical `avg_defects_per_inspection`:
+When two brands/models have identical `defects_per_year`:
 
 1. Higher `vehicle_count` ranks first (more confident data)
-2. Lower `defects_per_year` ranks first (better aging)
 
 ---
 

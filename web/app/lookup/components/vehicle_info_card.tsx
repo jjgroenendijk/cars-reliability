@@ -46,7 +46,7 @@ export function VehicleInfoCard({ vehicle }: VehicleInfoCardProps) {
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <InfoRow label="First registration" value={date_format(vehicle.datum_eerste_toelating)} />
           <InfoRow label="Registration date" value={date_format(vehicle.datum_tenaamstelling)} />
-          <InfoRow label="MOT expiry date" value={date_format(vehicle.vervaldatum_apk)} />
+          <InfoRow label="APK expiry date" value={date_format(vehicle.vervaldatum_apk)} />
           <InfoRow label="Color" value={vehicle.eerste_kleur} />
           <InfoRow label="Number of doors" value={vehicle.aantal_deuren} />
           <InfoRow label="Number of seats" value={vehicle.aantal_zitplaatsen} />

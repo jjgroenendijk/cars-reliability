@@ -20,7 +20,7 @@ export default function AboutPage() {
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mb-4">
           Dutch Car Reliability is an independent project that analyzes the reliability of
-          car brands and models in the Netherlands based on public MOT inspection data.
+          car brands and models in the Netherlands based on public APK inspection data.
           The goal is to help consumers make informed choices when purchasing a car.
         </p>
       </section>
@@ -49,10 +49,10 @@ export default function AboutPage() {
             <strong>Gekentekende Voertuigen</strong> - Basic information about registered vehicles
           </li>
           <li>
-            <strong>Meldingen Keuringsinstantie</strong> - MOT inspection results
+            <strong>Meldingen Keuringsinstantie</strong> - APK inspection results
           </li>
           <li>
-            <strong>Geconstateerde Gebreken</strong> - Defects found during MOT inspections
+            <strong>Geconstateerde Gebreken</strong> - Defects found during APK inspections
           </li>
           <li>
             <strong>Gebreken</strong> - Descriptions of defect types
@@ -85,7 +85,7 @@ export default function AboutPage() {
               Average Defects per Inspection
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              This number indicates how many defects are found on average per MOT inspection.
+              This number indicates how many defects are found on average per APK inspection.
               A lower number points to better build quality or maintenance.
             </p>
           </div>
