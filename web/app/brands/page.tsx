@@ -174,7 +174,7 @@ export default function BrandsPage() {
           <ReliabilityTable
             data={brand_stats}
             columns={BRAND_COLUMNS_FULL}
-            defaultSortKey="avg_defects_per_inspection"
+            defaultSortKey="defects_per_year"
             defaultSortDirection="asc"
             filterKey="merk"
             filterPlaceholder="Search brand..."

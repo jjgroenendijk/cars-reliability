@@ -207,7 +207,7 @@ export default function ModelsPage() {
           <ReliabilityTable
             data={filtered_data as ModelStats[]}
             columns={MODEL_COLUMNS_FULL}
-            defaultSortKey="avg_defects_per_inspection"
+            defaultSortKey="defects_per_year"
             defaultSortDirection="asc"
             filterKey="handelsbenaming"
             filterPlaceholder="Search model..."
