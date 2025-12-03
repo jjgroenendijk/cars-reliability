@@ -92,8 +92,8 @@ export default function HomePage() {
           title="Most Reliable Brands"
           subtitle="Top 10 - Lowest defects per year"
           entries={rankings.most_reliable_brands.slice(0, 10)}
-          link_href="/rankings"
-          link_text="View all rankings"
+          link_href="/brands"
+          link_text="View all brands"
           highlight_color="green"
         />
 
@@ -102,8 +102,8 @@ export default function HomePage() {
           title="Least Reliable Brands"
           subtitle="Top 10 - Highest defects per year"
           entries={rankings.least_reliable_brands.slice(0, 10)}
-          link_href="/rankings"
-          link_text="View all rankings"
+          link_href="/brands"
+          link_text="View all brands"
           highlight_color="red"
         />
 
@@ -112,8 +112,8 @@ export default function HomePage() {
           title="Most Reliable Models"
           subtitle="Top 10 - Lowest defects per year"
           entries={rankings.most_reliable_models.slice(0, 10)}
-          link_href="/rankings"
-          link_text="View all rankings"
+          link_href="/models"
+          link_text="View all models"
           highlight_color="green"
           show_model
         />
@@ -123,8 +123,8 @@ export default function HomePage() {
           title="Least Reliable Models"
           subtitle="Top 10 - Highest defects per year"
           entries={rankings.least_reliable_models.slice(0, 10)}
-          link_href="/rankings"
-          link_text="View all rankings"
+          link_href="/models"
+          link_text="View all models"
           highlight_color="red"
           show_model
         />

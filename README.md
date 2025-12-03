@@ -1,5 +1,9 @@
 # Dutch Car Reliability Analysis
 
+[![Website Build & Deploy](https://github.com/jjgroenendijk/cars-reliability/actions/workflows/website_build.yml/badge.svg)](https://github.com/jjgroenendijk/cars-reliability/actions/workflows/website_build.yml)
+
+Live site: [https://jjgroenendijk.github.io/cars-reliability/](https://jjgroenendijk.github.io/cars-reliability/)
+
 Analyzing car reliability using Dutch APK inspection data from RDW Open Data.
 
 ## Overview

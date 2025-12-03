@@ -34,7 +34,7 @@
 - [x] Create homepage with reliability overview
 - [x] Create brand reliability table (sortable, filterable)
 - [x] Create model reliability table (sortable, filterable)
-- [x] Create top 10 / bottom 10 page for brands and models (/rankings route)
+- [x] Create top 10 / bottom 10 rankings on home page
 - [x] Create age-filtered views (age bracket filters on brands and models pages)
 - [x] Create license plate lookup (live RDW query)
 - [x] Add inspection history view (live RDW query)
