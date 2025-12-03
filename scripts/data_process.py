@@ -227,10 +227,11 @@ def stats_filter_models(model_data: dict[str, dict[str, Any]]) -> list[dict[str,
 
 def ranking_entry_format(item: dict[str, Any], rank: int) -> dict[str, Any]:
     """Format a stats item as a ranking entry for the website."""
+    defects_per_year = item.get("defects_per_year")
     entry = {
         "rank": rank,
         "merk": item.get("merk", ""),
-        "defects_per_year": item.get("defects_per_year", 0),
+        "defects_per_year": defects_per_year if defects_per_year is not None else 0,
         "total_inspections": item.get("total_inspections", 0),
     }
     if handelsbenaming := item.get("handelsbenaming"):
