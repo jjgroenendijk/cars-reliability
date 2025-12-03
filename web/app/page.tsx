@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { Rankings, RankingEntry } from "@/app/lib/types";
-import { timestamp_format, number_format } from "@/app/lib/data_load";
+import { timestamp_format } from "@/app/lib/data_load";
 
 export default function HomePage() {
   const [rankings, setRankings] = useState<Rankings | null>(null);
@@ -46,7 +46,7 @@ export default function HomePage() {
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
             Discover the most and least reliable car brands and models in the Netherlands,
-            based on MOT inspection data from the RDW.
+            based on APK inspection data from the RDW.
           </p>
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
             <p className="text-yellow-800 dark:text-yellow-200">
@@ -67,7 +67,7 @@ export default function HomePage() {
         </h1>
         <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
           Discover the most and least reliable car brands and models in the Netherlands,
-          based on MOT inspection data from the RDW.
+          based on APK inspection data from the RDW.
         </p>
         <div className="flex flex-wrap gap-4">
           <Link
@@ -85,35 +85,35 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Top 5 Rankings Grid */}
+      {/* Top 10 Rankings Grid */}
       <div className="grid gap-8 md:grid-cols-2 mb-12">
         {/* Most Reliable Brands */}
         <RankingCard
           title="Most Reliable Brands"
-          subtitle="Top 5"
-          entries={rankings.most_reliable_brands.slice(0, 5)}
+          subtitle="Top 10 - Lowest defects per year"
+          entries={rankings.most_reliable_brands.slice(0, 10)}
           link_href="/rankings"
-          link_text="View Full Top 10"
+          link_text="View all rankings"
           highlight_color="green"
         />
 
         {/* Least Reliable Brands */}
         <RankingCard
           title="Least Reliable Brands"
-          subtitle="Top 5"
-          entries={rankings.least_reliable_brands.slice(0, 5)}
+          subtitle="Top 10 - Highest defects per year"
+          entries={rankings.least_reliable_brands.slice(0, 10)}
           link_href="/rankings"
-          link_text="View Full Top 10"
+          link_text="View all rankings"
           highlight_color="red"
         />
 
         {/* Most Reliable Models */}
         <RankingCard
           title="Most Reliable Models"
-          subtitle="Top 5"
-          entries={rankings.most_reliable_models.slice(0, 5)}
+          subtitle="Top 10 - Lowest defects per year"
+          entries={rankings.most_reliable_models.slice(0, 10)}
           link_href="/rankings"
-          link_text="View Full Top 10"
+          link_text="View all rankings"
           highlight_color="green"
           show_model
         />
@@ -121,10 +121,10 @@ export default function HomePage() {
         {/* Least Reliable Models */}
         <RankingCard
           title="Least Reliable Models"
-          subtitle="Top 5"
-          entries={rankings.least_reliable_models.slice(0, 5)}
+          subtitle="Top 10 - Highest defects per year"
+          entries={rankings.least_reliable_models.slice(0, 10)}
           link_href="/rankings"
-          link_text="View Full Top 10"
+          link_text="View all rankings"
           highlight_color="red"
           show_model
         />
@@ -136,8 +136,8 @@ export default function HomePage() {
           About this data
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mb-4">
-          These statistics are calculated based on MOT inspection data from the RDW.
-          The reliability score is based on the average number of defects per inspection.
+          These statistics are calculated based on APK inspection data from the RDW.
+          The reliability score is based on defects found per year of vehicle age.
         </p>
         <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
           <span>
@@ -225,10 +225,10 @@ function RankingCard({
                       : "text-red-600 dark:text-red-400"
                   }`}
                 >
-                  {entry.avg_defects_per_inspection.toFixed(2)}
+                  {entry.defects_per_year.toFixed(4)}
                 </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                  ({number_format(entry.total_inspections)} inspections)
+                <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+                  /year
                 </span>
               </div>
             </div>

@@ -21,7 +21,7 @@ export default function LookupPage() {
           License Plate Lookup
         </h1>
         <p className="text-gray-600 dark:text-gray-300">
-          Search vehicle information and MOT history by license plate.
+          Search vehicle information and APK history by license plate.
           Data is fetched live from the RDW.
         </p>
       </div>

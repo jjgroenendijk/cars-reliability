@@ -147,7 +147,7 @@ export default function ModelsPage() {
           Reliability by Model
         </h1>
         <p className="text-gray-600 dark:text-gray-300">
-          Overview of all car models sorted by reliability based on MOT inspection data.
+          Overview of all car models sorted by reliability based on APK inspection data.
           Filter by brand and age, or click a column header to sort.
         </p>
       </div>
@@ -207,7 +207,7 @@ export default function ModelsPage() {
           <ReliabilityTable
             data={filtered_data as ModelStats[]}
             columns={MODEL_COLUMNS_FULL}
-            defaultSortKey="avg_defects_per_inspection"
+            defaultSortKey="defects_per_year"
             defaultSortDirection="asc"
             filterKey="handelsbenaming"
             filterPlaceholder="Search model..."
@@ -236,7 +236,7 @@ export default function ModelsPage() {
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600 dark:text-gray-400">
           <div>
             <dt className="inline font-medium">Inspections:</dt>
-            <dd className="inline ml-1">Total number of MOT inspections</dd>
+            <dd className="inline ml-1">Total number of APK inspections</dd>
           </div>
           <div>
             <dt className="inline font-medium">Defect Rate:</dt>

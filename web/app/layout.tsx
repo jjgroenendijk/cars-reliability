@@ -19,10 +19,10 @@ export const metadata: Metadata = {
     template: "%s | Dutch Car Reliability",
   },
   description:
-    "Analysis of MOT inspection data from RDW Open Data to determine the reliability of car brands and models in the Netherlands.",
+    "Analysis of APK inspection data from RDW Open Data to determine the reliability of car brands and models in the Netherlands.",
   keywords: [
     "car reliability",
-    "MOT inspection",
+    "APK inspection",
     "RDW",
     "Dutch cars",
     "car statistics",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Dutch Car Reliability",
     description:
-      "Discover the most and least reliable car brands and models in the Netherlands based on MOT inspection data.",
+      "Discover the most and least reliable car brands and models in the Netherlands based on APK inspection data.",
     type: "website",
     locale: "en_US",
   },

@@ -60,7 +60,7 @@ export default function RankingsPage() {
         </h1>
         <p className="text-gray-600 dark:text-gray-300">
           Complete top 10 and bottom 10 rankings for brands and models based on
-          average defects per MOT inspection.
+          defects per year of vehicle age (age-normalized metric).
         </p>
       </div>
 
@@ -126,7 +126,7 @@ export default function RankingsPage() {
           Data: RDW Open Data | Updated: {timestamp_format(rankings.generated_at)}
         </p>
         <p className="mt-2">
-          Rankings are based on average defects per MOT inspection. Only brands/models
+          Rankings are based on defects per year (age-normalized). Only brands/models
           with at least 100 inspections are included.
         </p>
       </div>
@@ -175,7 +175,7 @@ function RankingTable({
               <th className="px-4 py-3 font-medium">
                 {show_model ? "Brand / Model" : "Brand"}
               </th>
-              <th className="px-4 py-3 font-medium text-right">Avg. Defects</th>
+              <th className="px-4 py-3 font-medium text-right">Defects/Year</th>
               <th className="px-4 py-3 font-medium text-right">Inspections</th>
             </tr>
           </thead>
@@ -216,7 +216,7 @@ function RankingTable({
                           : "text-red-600 dark:text-red-400"
                       }`}
                     >
-                      {entry.avg_defects_per_inspection.toFixed(2)}
+                      {entry.defects_per_year.toFixed(4)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">

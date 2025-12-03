@@ -116,7 +116,7 @@ The lookup page queries RDW APIs directly from the browser. The following fields
 | `handelsbenaming` | string | Model | Vehicle model name |
 | `datum_eerste_toelating` | string | First Registration | First registration date (YYYYMMDD) |
 | `datum_tenaamstelling` | string | Registration Date | Current owner registration date (YYYYMMDD) |
-| `vervaldatum_apk` | string | MOT Expiry Date | APK expiry date (YYYYMMDD) |
+| `vervaldatum_apk` | string | APK Expiry Date | APK expiry date (YYYYMMDD) |
 | `eerste_kleur` | string | Color | Primary vehicle color |
 | `aantal_deuren` | string | Number of Doors | Door count |
 | `aantal_zitplaatsen` | string | Number of Seats | Seat count |
