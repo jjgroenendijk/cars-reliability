@@ -216,7 +216,7 @@ function RankingTable({
                           : "text-red-600 dark:text-red-400"
                       }`}
                     >
-                      {entry.defects_per_year.toFixed(4)}
+                      {entry.defects_per_year != null ? entry.defects_per_year.toFixed(4) : "-"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">

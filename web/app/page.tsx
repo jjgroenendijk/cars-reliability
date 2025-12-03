@@ -225,7 +225,7 @@ function RankingCard({
                       : "text-red-600 dark:text-red-400"
                   }`}
                 >
-                  {entry.defects_per_year.toFixed(4)}
+                  {entry.defects_per_year != null ? entry.defects_per_year.toFixed(4) : "-"}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
                   /year
