@@ -1,121 +1,216 @@
 # Reliability Metrics
 
-## Current Metrics (MVP)
+> **Last Updated:** 2025-12-03
 
-### Average Defects per Vehicle
+## Overview
+
+This document describes how reliability metrics are calculated from RDW APK inspection data.
+
+---
+
+## Primary Metrics
+
+### Defects per Year (Age-Normalized) - Primary Ranking Metric
+
+The main reliability indicator used for rankings. This metric accounts for vehicle age, ensuring fair comparison between brands with different age profiles.
 
 **Formula:**
-```
-avg_defects_per_vehicle = total_defects / unique_vehicles
+
+```text
+defects_per_year = avg_defects_per_inspection / avg_age_years
 ```
 
 **Interpretation:**
-- Lower values indicate more reliable vehicles
-- Measures the average number of defects found across all inspections for a vehicle
 
-**Limitations:**
-- Doesn't account for vehicle age (older cars have more inspections)
-- Doesn't distinguish between major and minor defects
-- Sample bias: only includes vehicles that had defects recorded
+- Lower values = better age-adjusted reliability
+- Allows fair comparison between brands with different age profiles
+- A brand with mostly new cars may appear reliable but actually age poorly
+- This is the primary metric used for ranking brands and models
+
+**Example:**
+
+| Brand | Avg Defects/Insp | Avg Age | Defects/Year |
+|-------|------------------|---------|--------------|
+| Toyota | 0.30 | 12 years | 0.025 |
+| Tesla | 0.15 | 3 years | 0.050 |
+
+Despite lower absolute defects, Tesla ages worse in this example. Using defects per year as the ranking metric prevents luxury brands with younger fleets from appearing artificially reliable.
+
+---
 
 ### Average Defects per Inspection
 
+A secondary metric that shows the raw defect rate without age normalization.
+
 **Formula:**
-```
+
+```text
 avg_defects_per_inspection = total_defects / total_inspections
 ```
 
 **Interpretation:**
-- Normalizes for number of inspections
-- Useful for comparing vehicles with different inspection histories
 
-## Planned Metrics
+- Lower values = fewer defects found
+- Range: typically 0.1 to 1.5
+- A value of 0.30 means an average of 0.3 defects per inspection
+- Does not account for vehicle age
 
-### APK Failure Rate
+**Example:**
 
+| Brand | Total Defects | Total Inspections | Avg Defects/Inspection |
+|-------|---------------|-------------------|------------------------|
+| Toyota | 15,000 | 75,000 | 0.20 |
+| BMW | 30,000 | 75,000 | 0.40 |
+
+---
+
+## Age-Bracket Analysis
+
+Users can filter by vehicle age to compare reliability within similar age groups.
+
+### Default Age Brackets
+
+| Bracket ID | Age Range | Description |
+|------------|-----------|-------------|
+| `4_7` | 4-7 years | First APK cycles |
+| `8_12` | 8-12 years | Common used car age |
+| `13_20` | 13-20 years | Older vehicles |
+| `5_15` | 5-15 years | User-requested focus range |
+
+### Why 5-15 Years?
+
+This range is particularly useful because:
+
+- Most cars in this range have had multiple APK inspections
+- Represents the typical "second-hand car buyer" market
+- Excludes very new cars (insufficient data) and very old cars (survivorship bias)
+- Shows how cars perform during their working lifetime
+
+### Calculation per Bracket
+
+For each age bracket, calculate:
+
+```text
+bracket_avg_defects = sum(defects for vehicles in bracket) / sum(inspections for vehicles in bracket)
 ```
-failure_rate = failed_inspections / total_inspections
-```
 
-Would require the "Keuringsresultaten" dataset which contains pass/fail outcomes.
+Only include brackets with at least 30 vehicles.
 
-### Age-Normalized Defect Rate
+---
 
-```
-normalized_rate = defects / (vehicle_age_in_years * inspections)
-```
+## Sample Size Thresholds
 
-Controls for the fact that older vehicles naturally accumulate more defects.
+To ensure statistical significance:
 
-### Defect Severity Score
+| Level | Minimum Vehicles | Rationale |
+|-------|------------------|-----------|
+| Brand | 100 | Brand-level claims need larger samples |
+| Model | 50 | Balance granularity vs. confidence |
+| Age Bracket | 30 | Per-bracket minimum |
 
-Weight defects by severity category:
-- Critical defects: weight 3
-- Major defects: weight 2  
-- Minor defects: weight 1
+Records below these thresholds are excluded from rankings and tables.
 
-```
-severity_score = (critical * 3 + major * 2 + minor * 1) / total_inspections
-```
-
-### First-APK Failure Rate
-
-```
-first_apk_failure = vehicles_failing_first_apk / vehicles_with_first_apk
-```
-
-Measures reliability when the car is 4 years old (when first APK is required in NL).
+---
 
 ## Data Filters
 
-### Current Filters
+### Applied Filters
 
-- **Vehicle type**: Personenauto (passenger cars) only
-- **Minimum sample**: 100+ vehicles for brand stats, 50+ for model stats
+| Filter | Value | Reason |
+|--------|-------|--------|
+| Vehicle type | `voertuigsoort='Personenauto'` | Exclude trucks, motorcycles, trailers |
 
-### Suggested Additional Filters
+### Excluded Data
 
-- **Age range**: Compare cars of similar age cohorts
-- **Mileage bands**: If mileage data becomes available
-- **Time period**: Focus on recent years for relevance
+- Vehicles without registration date (cannot calculate age)
+- Vehicles with no inspection records
+- Records with missing required fields
+- Brands/models below sample size thresholds
 
-## Methodology Notes
+---
 
-### Join Strategy
+## Ranking Methodology
 
-We start from the defects dataset and join to vehicles:
+### Top 10 Most Reliable
 
+Sorted by `defects_per_year` ascending (lowest = best).
+
+### Top 10 Least Reliable  
+
+Sorted by `defects_per_year` descending (highest = worst).
+
+### Tie-Breaking
+
+When two brands/models have identical `defects_per_year`:
+
+1. Higher `vehicle_count` ranks first (more confident data)
+
+---
+
+## Data Quality Considerations
+
+### Survivorship Bias
+
+Older vehicle statistics may be biased:
+
+- Only vehicles that survived to old age are measured
+- Unreliable vehicles may have been scrapped earlier
+- This makes old vehicles appear more reliable than they were when new
+
+### Registration Date Accuracy
+
+Vehicle age is calculated from `datum_eerste_toelating` (first registration date):
+
+- May not reflect actual manufacturing date
+- Import vehicles may show Dutch registration date, not original
+- Some dates may be missing or malformed
+
+### Inspection Frequency
+
+Vehicles have different inspection frequencies:
+
+- First APK at 4 years old
+- Every 2 years until 8 years old
+- Annually after 8 years old
+
+This means older vehicles contribute more inspection data points.
+
+---
+
+## Future Metrics (Backlog)
+
+### Pass Rate
+
+Percentage of inspections passed without defects:
+
+```text
+pass_rate = (inspections_without_defects / total_inspections) * 100
 ```
-defects (kenteken) → vehicles (kenteken, merk, handelsbenaming)
+
+**Status:** Requires inspection result data (pass/fail), not just defect counts.
+
+### Common Defect Types
+
+Most frequent defect codes by brand/model:
+
+```text
+Top defects for VOLKSWAGEN GOLF:
+1. Brake disc wear (15%)
+2. Light malfunction (12%)
+3. Tire condition (10%)
 ```
 
-This means:
-- ✅ All analyzed vehicles have at least one defect record
-- ❌ Vehicles with zero defects are not in our dataset
+**Status:** Requires per-defect-code data, not just counts.
 
-### Aggregation
+### Trend Analysis
 
-1. Count defects per vehicle (kenteken)
-2. Join with vehicle metadata (brand, model)
-3. Aggregate by brand/model
-4. Calculate averages
+Year-over-year reliability changes:
 
-### Statistical Considerations
+```text
+TOYOTA reliability trend:
+2020: 0.25 defects/inspection
+2021: 0.23 defects/inspection
+2022: 0.22 defects/inspection
+```
 
-- **Sample size matters**: We require minimum vehicle counts to avoid misleading results from small samples
-- **Confidence intervals**: Not yet calculated (TODO)
-- **Outliers**: Not currently handled; extreme values could skew averages
-
-## Comparison to Other Studies
-
-### ANWB Betrouwbaarheidsonderzoek
-The Dutch auto club ANWB publishes reliability studies based on member surveys. Our approach differs:
-- We use objective inspection data, not subjective reports
-- We measure defects found, not breakdowns experienced
-- We have access to all registered vehicles, not just ANWB members
-
-### TÜV Report (Germany)
-Similar methodology using inspection data. Differences:
-- TÜV has access to more detailed defect categorization
-- They normalize by age cohorts
-- Larger sample sizes (all of Germany)
+**Status:** Requires historical data storage.

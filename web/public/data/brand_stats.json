@@ -1,0 +1,5550 @@
+[
+  {
+    "vehicle_count": 155,
+    "total_inspections": 197,
+    "total_defects": 31,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 149,
+        "total_inspections": 188,
+        "total_defects": 28,
+        "avg_defects_per_inspection": 0.1489
+      },
+      "8_12": null,
+      "13_20": null,
+      "5_15": {
+        "vehicle_count": 126,
+        "total_inspections": 168,
+        "total_defects": 27,
+        "avg_defects_per_inspection": 0.1607
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 155,
+      "Diesel": 0,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.1574,
+    "avg_age_years": 5.72,
+    "defects_per_year": 0.027517,
+    "merk": "AUTOMOBILI LAMBORGHINI S."
+  },
+  {
+    "vehicle_count": 164,
+    "total_inspections": 230,
+    "total_defects": 62,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 156,
+        "total_inspections": 219,
+        "total_defects": 51,
+        "avg_defects_per_inspection": 0.2329
+      },
+      "8_12": null,
+      "13_20": null,
+      "5_15": {
+        "vehicle_count": 137,
+        "total_inspections": 200,
+        "total_defects": 46,
+        "avg_defects_per_inspection": 0.23
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 164,
+      "Diesel": 0,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.2696,
+    "avg_age_years": 7.22,
+    "defects_per_year": 0.037341,
+    "merk": "ALPINE"
+  },
+  {
+    "vehicle_count": 176,
+    "total_inspections": 309,
+    "total_defects": 84,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 92,
+        "total_inspections": 125,
+        "total_defects": 27,
+        "avg_defects_per_inspection": 0.216
+      },
+      "8_12": {
+        "vehicle_count": 69,
+        "total_inspections": 144,
+        "total_defects": 37,
+        "avg_defects_per_inspection": 0.2569
+      },
+      "13_20": null,
+      "5_15": {
+        "vehicle_count": 159,
+        "total_inspections": 292,
+        "total_defects": 80,
+        "avg_defects_per_inspection": 0.274
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 176,
+      "Diesel": 0,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.2718,
+    "avg_age_years": 7.83,
+    "defects_per_year": 0.034713,
+    "merk": "MC LAREN"
+  },
+  {
+    "vehicle_count": 396,
+    "total_inspections": 764,
+    "total_defects": 218,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 115,
+        "total_inspections": 156,
+        "total_defects": 23,
+        "avg_defects_per_inspection": 0.1474
+      },
+      "8_12": {
+        "vehicle_count": 114,
+        "total_inspections": 244,
+        "total_defects": 45,
+        "avg_defects_per_inspection": 0.1844
+      },
+      "13_20": {
+        "vehicle_count": 101,
+        "total_inspections": 256,
+        "total_defects": 86,
+        "avg_defects_per_inspection": 0.3359
+      },
+      "5_15": {
+        "vehicle_count": 223,
+        "total_inspections": 425,
+        "total_defects": 84,
+        "avg_defects_per_inspection": 0.1976
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 395,
+      "Diesel": 0,
+      "Elektriciteit": 1,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.2853,
+    "avg_age_years": 13.86,
+    "defects_per_year": 0.020584,
+    "merk": "LAMBORGHINI"
+  },
+  {
+    "vehicle_count": 4464,
+    "total_inspections": 4537,
+    "total_defects": 1307,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 3201,
+        "total_inspections": 3259,
+        "total_defects": 1010,
+        "avg_defects_per_inspection": 0.3099
+      },
+      "8_12": null,
+      "13_20": null,
+      "5_15": {
+        "vehicle_count": 33,
+        "total_inspections": 34,
+        "total_defects": 10,
+        "avg_defects_per_inspection": 0.2941
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 3683,
+      "Diesel": 4,
+      "Elektriciteit": 3940,
+      "LPG": 1,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.2881,
+    "avg_age_years": 3.72,
+    "defects_per_year": 0.077446,
+    "merk": "CUPRA"
+  },
+  {
+    "vehicle_count": 4343,
+    "total_inspections": 4393,
+    "total_defects": 1301,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 3048,
+        "total_inspections": 3086,
+        "total_defects": 1005,
+        "avg_defects_per_inspection": 0.3257
+      },
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 4332,
+      "Diesel": 0,
+      "Elektriciteit": 4333,
+      "LPG": 2,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.2962,
+    "avg_age_years": 3.67,
+    "defects_per_year": 0.080708,
+    "merk": "LYNK&CO"
+  },
+  {
+    "vehicle_count": 2756,
+    "total_inspections": 5534,
+    "total_defects": 1812,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 446,
+        "total_inspections": 557,
+        "total_defects": 44,
+        "avg_defects_per_inspection": 0.079
+      },
+      "8_12": {
+        "vehicle_count": 477,
+        "total_inspections": 1130,
+        "total_defects": 166,
+        "avg_defects_per_inspection": 0.1469
+      },
+      "13_20": {
+        "vehicle_count": 741,
+        "total_inspections": 1875,
+        "total_defects": 714,
+        "avg_defects_per_inspection": 0.3808
+      },
+      "5_15": {
+        "vehicle_count": 1129,
+        "total_inspections": 2385,
+        "total_defects": 436,
+        "avg_defects_per_inspection": 0.1828
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 2750,
+      "Diesel": 0,
+      "Elektriciteit": 23,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.3274,
+    "avg_age_years": 20.0,
+    "defects_per_year": 0.01637,
+    "merk": "FERRARI"
+  },
+  {
+    "vehicle_count": 300,
+    "total_inspections": 803,
+    "total_defects": 274,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 151,
+        "total_inspections": 380,
+        "total_defects": 119,
+        "avg_defects_per_inspection": 0.3132
+      },
+      "8_12": {
+        "vehicle_count": 135,
+        "total_inspections": 402,
+        "total_defects": 152,
+        "avg_defects_per_inspection": 0.3781
+      },
+      "13_20": null,
+      "5_15": {
+        "vehicle_count": 252,
+        "total_inspections": 715,
+        "total_defects": 251,
+        "avg_defects_per_inspection": 0.351
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 299,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.3412,
+    "avg_age_years": 6.91,
+    "defects_per_year": 0.049378,
+    "merk": "TOTH ES FIAI"
+  },
+  {
+    "vehicle_count": 5128,
+    "total_inspections": 5319,
+    "total_defects": 1848,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 4458,
+        "total_inspections": 4615,
+        "total_defects": 1629,
+        "avg_defects_per_inspection": 0.353
+      },
+      "8_12": null,
+      "13_20": null,
+      "5_15": {
+        "vehicle_count": 1659,
+        "total_inspections": 1763,
+        "total_defects": 643,
+        "avg_defects_per_inspection": 0.3647
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 10,
+      "Diesel": 0,
+      "Elektriciteit": 5101,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.3474,
+    "avg_age_years": 4.19,
+    "defects_per_year": 0.082912,
+    "merk": "POLESTAR"
+  },
+  {
+    "vehicle_count": 112,
+    "total_inspections": 204,
+    "total_defects": 74,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 78,
+        "total_inspections": 166,
+        "total_defects": 58,
+        "avg_defects_per_inspection": 0.3494
+      },
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 111,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.3627,
+    "avg_age_years": 3.91,
+    "defects_per_year": 0.092762,
+    "merk": "ETRUSCO"
+  },
+  {
+    "vehicle_count": 590,
+    "total_inspections": 1082,
+    "total_defects": 394,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 293,
+        "total_inspections": 575,
+        "total_defects": 156,
+        "avg_defects_per_inspection": 0.2713
+      },
+      "8_12": {
+        "vehicle_count": 93,
+        "total_inspections": 230,
+        "total_defects": 132,
+        "avg_defects_per_inspection": 0.5739
+      },
+      "13_20": {
+        "vehicle_count": 31,
+        "total_inspections": 76,
+        "total_defects": 50,
+        "avg_defects_per_inspection": 0.6579
+      },
+      "5_15": {
+        "vehicle_count": 258,
+        "total_inspections": 591,
+        "total_defects": 237,
+        "avg_defects_per_inspection": 0.401
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 588,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.3641,
+    "avg_age_years": 5.81,
+    "defects_per_year": 0.062668,
+    "merk": "BURSTNER GMBH"
+  },
+  {
+    "vehicle_count": 2840,
+    "total_inspections": 6045,
+    "total_defects": 2338,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 662,
+        "total_inspections": 939,
+        "total_defects": 240,
+        "avg_defects_per_inspection": 0.2556
+      },
+      "8_12": {
+        "vehicle_count": 1716,
+        "total_inspections": 3919,
+        "total_defects": 1555,
+        "avg_defects_per_inspection": 0.3968
+      },
+      "13_20": {
+        "vehicle_count": 444,
+        "total_inspections": 1150,
+        "total_defects": 514,
+        "avg_defects_per_inspection": 0.447
+      },
+      "5_15": {
+        "vehicle_count": 2613,
+        "total_inspections": 5542,
+        "total_defects": 2013,
+        "avg_defects_per_inspection": 0.3632
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 2831,
+      "Diesel": 1,
+      "Elektriciteit": 121,
+      "LPG": 4,
+      "other": 1
+    },
+    "avg_defects_per_inspection": 0.3868,
+    "avg_age_years": 9.61,
+    "defects_per_year": 0.04025,
+    "merk": "MERCEDES-AMG"
+  },
+  {
+    "vehicle_count": 1137,
+    "total_inspections": 2905,
+    "total_defects": 1151,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 495,
+        "total_inspections": 1283,
+        "total_defects": 403,
+        "avg_defects_per_inspection": 0.3141
+      },
+      "8_12": {
+        "vehicle_count": 446,
+        "total_inspections": 1334,
+        "total_defects": 610,
+        "avg_defects_per_inspection": 0.4573
+      },
+      "13_20": {
+        "vehicle_count": 32,
+        "total_inspections": 94,
+        "total_defects": 111,
+        "avg_defects_per_inspection": 1.1809
+      },
+      "5_15": {
+        "vehicle_count": 804,
+        "total_inspections": 2347,
+        "total_defects": 956,
+        "avg_defects_per_inspection": 0.4073
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 1127,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.3962,
+    "avg_age_years": 6.83,
+    "defects_per_year": 0.058009,
+    "merk": "WESTFALIA"
+  },
+  {
+    "vehicle_count": 1727,
+    "total_inspections": 3625,
+    "total_defects": 1499,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 463,
+        "total_inspections": 590,
+        "total_defects": 98,
+        "avg_defects_per_inspection": 0.1661
+      },
+      "8_12": {
+        "vehicle_count": 335,
+        "total_inspections": 809,
+        "total_defects": 161,
+        "avg_defects_per_inspection": 0.199
+      },
+      "13_20": {
+        "vehicle_count": 613,
+        "total_inspections": 1579,
+        "total_defects": 679,
+        "avg_defects_per_inspection": 0.43
+      },
+      "5_15": {
+        "vehicle_count": 771,
+        "total_inspections": 1562,
+        "total_defects": 344,
+        "avg_defects_per_inspection": 0.2202
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 1699,
+      "Diesel": 20,
+      "Elektriciteit": 22,
+      "LPG": 3,
+      "other": 52
+    },
+    "avg_defects_per_inspection": 0.4135,
+    "avg_age_years": 14.3,
+    "defects_per_year": 0.028916,
+    "merk": "BENTLEY"
+  },
+  {
+    "vehicle_count": 8442,
+    "total_inspections": 14364,
+    "total_defects": 5957,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 5796,
+        "total_inspections": 8181,
+        "total_defects": 3093,
+        "avg_defects_per_inspection": 0.3781
+      },
+      "8_12": {
+        "vehicle_count": 2514,
+        "total_inspections": 6050,
+        "total_defects": 2830,
+        "avg_defects_per_inspection": 0.4678
+      },
+      "13_20": null,
+      "5_15": {
+        "vehicle_count": 7475,
+        "total_inspections": 13373,
+        "total_defects": 5607,
+        "avg_defects_per_inspection": 0.4193
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 906,
+      "Diesel": 0,
+      "Elektriciteit": 8425,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.4147,
+    "avg_age_years": 6.74,
+    "defects_per_year": 0.061528,
+    "merk": "BMW I"
+  },
+  {
+    "vehicle_count": 1923,
+    "total_inspections": 4901,
+    "total_defects": 2047,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 1065,
+        "total_inspections": 2791,
+        "total_defects": 983,
+        "avg_defects_per_inspection": 0.3522
+      },
+      "8_12": {
+        "vehicle_count": 442,
+        "total_inspections": 1275,
+        "total_defects": 518,
+        "avg_defects_per_inspection": 0.4063
+      },
+      "13_20": {
+        "vehicle_count": 202,
+        "total_inspections": 599,
+        "total_defects": 471,
+        "avg_defects_per_inspection": 0.7863
+      },
+      "5_15": {
+        "vehicle_count": 1367,
+        "total_inspections": 3890,
+        "total_defects": 1566,
+        "avg_defects_per_inspection": 0.4026
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 1917,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.4177,
+    "avg_age_years": 7.11,
+    "defects_per_year": 0.058748,
+    "merk": "WEINSBERG"
+  },
+  {
+    "vehicle_count": 1423,
+    "total_inspections": 3262,
+    "total_defects": 1386,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 235,
+        "total_inspections": 304,
+        "total_defects": 74,
+        "avg_defects_per_inspection": 0.2434
+      },
+      "8_12": {
+        "vehicle_count": 225,
+        "total_inspections": 533,
+        "total_defects": 139,
+        "avg_defects_per_inspection": 0.2608
+      },
+      "13_20": {
+        "vehicle_count": 755,
+        "total_inspections": 1980,
+        "total_defects": 866,
+        "avg_defects_per_inspection": 0.4374
+      },
+      "5_15": {
+        "vehicle_count": 585,
+        "total_inspections": 1261,
+        "total_defects": 390,
+        "avg_defects_per_inspection": 0.3093
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 1417,
+      "Diesel": 0,
+      "Elektriciteit": 0,
+      "LPG": 1,
+      "other": 1
+    },
+    "avg_defects_per_inspection": 0.4249,
+    "avg_age_years": 15.53,
+    "defects_per_year": 0.02736,
+    "merk": "ASTON MARTIN"
+  },
+  {
+    "vehicle_count": 230,
+    "total_inspections": 459,
+    "total_defects": 196,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 91,
+        "total_inspections": 191,
+        "total_defects": 52,
+        "avg_defects_per_inspection": 0.2723
+      },
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 36,
+        "total_inspections": 105,
+        "total_defects": 88,
+        "avg_defects_per_inspection": 0.8381
+      },
+      "5_15": {
+        "vehicle_count": 80,
+        "total_inspections": 228,
+        "total_defects": 114,
+        "avg_defects_per_inspection": 0.5
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 230,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.427,
+    "avg_age_years": 6.12,
+    "defects_per_year": 0.069771,
+    "merk": "POSSL"
+  },
+  {
+    "vehicle_count": 796,
+    "total_inspections": 1958,
+    "total_defects": 865,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 32,
+        "total_inspections": 42,
+        "total_defects": 7,
+        "avg_defects_per_inspection": 0.1667
+      },
+      "8_12": {
+        "vehicle_count": 95,
+        "total_inspections": 232,
+        "total_defects": 73,
+        "avg_defects_per_inspection": 0.3147
+      },
+      "13_20": {
+        "vehicle_count": 196,
+        "total_inspections": 545,
+        "total_defects": 168,
+        "avg_defects_per_inspection": 0.3083
+      },
+      "5_15": {
+        "vehicle_count": 180,
+        "total_inspections": 437,
+        "total_defects": 133,
+        "avg_defects_per_inspection": 0.3043
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 792,
+      "Diesel": 0,
+      "Elektriciteit": 2,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.4418,
+    "avg_age_years": 22.1,
+    "defects_per_year": 0.019991,
+    "merk": "LOTUS"
+  },
+  {
+    "vehicle_count": 540,
+    "total_inspections": 1383,
+    "total_defects": 614,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 285,
+        "total_inspections": 741,
+        "total_defects": 290,
+        "avg_defects_per_inspection": 0.3914
+      },
+      "8_12": {
+        "vehicle_count": 160,
+        "total_inspections": 485,
+        "total_defects": 226,
+        "avg_defects_per_inspection": 0.466
+      },
+      "13_20": null,
+      "5_15": {
+        "vehicle_count": 361,
+        "total_inspections": 1072,
+        "total_defects": 479,
+        "avg_defects_per_inspection": 0.4468
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 539,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.444,
+    "avg_age_years": 6.82,
+    "defects_per_year": 0.065103,
+    "merk": "SUN LIVING"
+  },
+  {
+    "vehicle_count": 5928,
+    "total_inspections": 15808,
+    "total_defects": 7205,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 2501,
+        "total_inspections": 6473,
+        "total_defects": 2442,
+        "avg_defects_per_inspection": 0.3773
+      },
+      "8_12": {
+        "vehicle_count": 2424,
+        "total_inspections": 7123,
+        "total_defects": 3446,
+        "avg_defects_per_inspection": 0.4838
+      },
+      "13_20": {
+        "vehicle_count": 579,
+        "total_inspections": 1726,
+        "total_defects": 1089,
+        "avg_defects_per_inspection": 0.6309
+      },
+      "5_15": {
+        "vehicle_count": 4765,
+        "total_inspections": 13838,
+        "total_defects": 6422,
+        "avg_defects_per_inspection": 0.4641
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 5911,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.4558,
+    "avg_age_years": 7.84,
+    "defects_per_year": 0.058138,
+    "merk": "ADRIA"
+  },
+  {
+    "vehicle_count": 3247,
+    "total_inspections": 5492,
+    "total_defects": 2561,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 2270,
+        "total_inspections": 3285,
+        "total_defects": 1249,
+        "avg_defects_per_inspection": 0.3802
+      },
+      "8_12": {
+        "vehicle_count": 686,
+        "total_inspections": 1472,
+        "total_defects": 722,
+        "avg_defects_per_inspection": 0.4905
+      },
+      "13_20": {
+        "vehicle_count": 238,
+        "total_inspections": 672,
+        "total_defects": 556,
+        "avg_defects_per_inspection": 0.8274
+      },
+      "5_15": {
+        "vehicle_count": 2851,
+        "total_inspections": 5035,
+        "total_defects": 2369,
+        "avg_defects_per_inspection": 0.4705
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 2829,
+      "Diesel": 320,
+      "Elektriciteit": 283,
+      "LPG": 2,
+      "other": 4
+    },
+    "avg_defects_per_inspection": 0.4663,
+    "avg_age_years": 7.15,
+    "defects_per_year": 0.065217,
+    "merk": "VW"
+  },
+  {
+    "vehicle_count": 279,
+    "total_inspections": 582,
+    "total_defects": 274,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 37,
+        "total_inspections": 47,
+        "total_defects": 8,
+        "avg_defects_per_inspection": 0.1702
+      },
+      "8_12": null,
+      "13_20": null,
+      "5_15": {
+        "vehicle_count": 56,
+        "total_inspections": 99,
+        "total_defects": 16,
+        "avg_defects_per_inspection": 0.1616
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 277,
+      "Diesel": 0,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.4708,
+    "avg_age_years": 24.57,
+    "defects_per_year": 0.019162,
+    "merk": "DONKERVOORT"
+  },
+  {
+    "vehicle_count": 39029,
+    "total_inspections": 82131,
+    "total_defects": 38703,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 10236,
+        "total_inspections": 13211,
+        "total_defects": 3025,
+        "avg_defects_per_inspection": 0.229
+      },
+      "8_12": {
+        "vehicle_count": 9064,
+        "total_inspections": 22511,
+        "total_defects": 8048,
+        "avg_defects_per_inspection": 0.3575
+      },
+      "13_20": {
+        "vehicle_count": 8209,
+        "total_inspections": 22593,
+        "total_defects": 11884,
+        "avg_defects_per_inspection": 0.526
+      },
+      "5_15": {
+        "vehicle_count": 19459,
+        "total_inspections": 40845,
+        "total_defects": 14372,
+        "avg_defects_per_inspection": 0.3519
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 36092,
+      "Diesel": 1563,
+      "Elektriciteit": 6112,
+      "LPG": 52,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.4712,
+    "avg_age_years": 16.36,
+    "defects_per_year": 0.028802,
+    "merk": "PORSCHE"
+  },
+  {
+    "vehicle_count": 4984,
+    "total_inspections": 12957,
+    "total_defects": 6286,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 2302,
+        "total_inspections": 5894,
+        "total_defects": 2351,
+        "avg_defects_per_inspection": 0.3989
+      },
+      "8_12": {
+        "vehicle_count": 1528,
+        "total_inspections": 4444,
+        "total_defects": 2273,
+        "avg_defects_per_inspection": 0.5115
+      },
+      "13_20": {
+        "vehicle_count": 723,
+        "total_inspections": 2129,
+        "total_defects": 1500,
+        "avg_defects_per_inspection": 0.7046
+      },
+      "5_15": {
+        "vehicle_count": 3616,
+        "total_inspections": 10335,
+        "total_defects": 4986,
+        "avg_defects_per_inspection": 0.4824
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 4968,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.4851,
+    "avg_age_years": 7.86,
+    "defects_per_year": 0.061718,
+    "merk": "CAPRON"
+  },
+  {
+    "vehicle_count": 3066,
+    "total_inspections": 8103,
+    "total_defects": 3939,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 1339,
+        "total_inspections": 3516,
+        "total_defects": 1434,
+        "avg_defects_per_inspection": 0.4078
+      },
+      "8_12": {
+        "vehicle_count": 1026,
+        "total_inspections": 2944,
+        "total_defects": 1434,
+        "avg_defects_per_inspection": 0.4871
+      },
+      "13_20": {
+        "vehicle_count": 444,
+        "total_inspections": 1282,
+        "total_defects": 922,
+        "avg_defects_per_inspection": 0.7192
+      },
+      "5_15": {
+        "vehicle_count": 2346,
+        "total_inspections": 6697,
+        "total_defects": 3195,
+        "avg_defects_per_inspection": 0.4771
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 3054,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.4861,
+    "avg_age_years": 7.9,
+    "defects_per_year": 0.061532,
+    "merk": "CARTHAGO"
+  },
+  {
+    "vehicle_count": 23623,
+    "total_inspections": 57661,
+    "total_defects": 28669,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 5465,
+        "total_inspections": 7625,
+        "total_defects": 1360,
+        "avg_defects_per_inspection": 0.1784
+      },
+      "8_12": {
+        "vehicle_count": 8166,
+        "total_inspections": 21469,
+        "total_defects": 7387,
+        "avg_defects_per_inspection": 0.3441
+      },
+      "13_20": {
+        "vehicle_count": 8252,
+        "total_inspections": 24014,
+        "total_defects": 14843,
+        "avg_defects_per_inspection": 0.6181
+      },
+      "5_15": {
+        "vehicle_count": 17309,
+        "total_inspections": 41725,
+        "total_defects": 15689,
+        "avg_defects_per_inspection": 0.376
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 23300,
+      "Diesel": 58,
+      "Elektriciteit": 19060,
+      "LPG": 136,
+      "other": 2
+    },
+    "avg_defects_per_inspection": 0.4972,
+    "avg_age_years": 11.86,
+    "defects_per_year": 0.041922,
+    "merk": "LEXUS"
+  },
+  {
+    "vehicle_count": 4138,
+    "total_inspections": 11440,
+    "total_defects": 5724,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 1515,
+        "total_inspections": 3949,
+        "total_defects": 1455,
+        "avg_defects_per_inspection": 0.3684
+      },
+      "8_12": {
+        "vehicle_count": 1574,
+        "total_inspections": 4616,
+        "total_defects": 2349,
+        "avg_defects_per_inspection": 0.5089
+      },
+      "13_20": {
+        "vehicle_count": 897,
+        "total_inspections": 2702,
+        "total_defects": 1854,
+        "avg_defects_per_inspection": 0.6862
+      },
+      "5_15": {
+        "vehicle_count": 3379,
+        "total_inspections": 9768,
+        "total_defects": 4806,
+        "avg_defects_per_inspection": 0.492
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 4128,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5003,
+    "avg_age_years": 9.11,
+    "defects_per_year": 0.054918,
+    "merk": "POESSL"
+  },
+  {
+    "vehicle_count": 159,
+    "total_inspections": 421,
+    "total_defects": 211,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 43,
+        "total_inspections": 106,
+        "total_defects": 35,
+        "avg_defects_per_inspection": 0.3302
+      },
+      "8_12": {
+        "vehicle_count": 94,
+        "total_inspections": 250,
+        "total_defects": 125,
+        "avg_defects_per_inspection": 0.5
+      },
+      "13_20": null,
+      "5_15": {
+        "vehicle_count": 145,
+        "total_inspections": 388,
+        "total_defects": 189,
+        "avg_defects_per_inspection": 0.4871
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 159,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5012,
+    "avg_age_years": 9.28,
+    "defects_per_year": 0.054009,
+    "merk": "CI"
+  },
+  {
+    "vehicle_count": 942,
+    "total_inspections": 2437,
+    "total_defects": 1252,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 377,
+        "total_inspections": 958,
+        "total_defects": 344,
+        "avg_defects_per_inspection": 0.3591
+      },
+      "8_12": {
+        "vehicle_count": 311,
+        "total_inspections": 857,
+        "total_defects": 434,
+        "avg_defects_per_inspection": 0.5064
+      },
+      "13_20": {
+        "vehicle_count": 147,
+        "total_inspections": 416,
+        "total_defects": 275,
+        "avg_defects_per_inspection": 0.6611
+      },
+      "5_15": {
+        "vehicle_count": 677,
+        "total_inspections": 1859,
+        "total_defects": 841,
+        "avg_defects_per_inspection": 0.4524
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 939,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5137,
+    "avg_age_years": 9.22,
+    "defects_per_year": 0.055716,
+    "merk": "BENIMAR"
+  },
+  {
+    "vehicle_count": 562,
+    "total_inspections": 1255,
+    "total_defects": 659,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 109,
+        "total_inspections": 163,
+        "total_defects": 44,
+        "avg_defects_per_inspection": 0.2699
+      },
+      "8_12": {
+        "vehicle_count": 141,
+        "total_inspections": 364,
+        "total_defects": 135,
+        "avg_defects_per_inspection": 0.3709
+      },
+      "13_20": {
+        "vehicle_count": 150,
+        "total_inspections": 382,
+        "total_defects": 193,
+        "avg_defects_per_inspection": 0.5052
+      },
+      "5_15": {
+        "vehicle_count": 279,
+        "total_inspections": 652,
+        "total_defects": 247,
+        "avg_defects_per_inspection": 0.3788
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 464,
+      "Diesel": 97,
+      "Elektriciteit": 1,
+      "LPG": 1,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5251,
+    "avg_age_years": 15.54,
+    "defects_per_year": 0.03379,
+    "merk": "ALPINA"
+  },
+  {
+    "vehicle_count": 702,
+    "total_inspections": 1851,
+    "total_defects": 975,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 214,
+        "total_inspections": 531,
+        "total_defects": 245,
+        "avg_defects_per_inspection": 0.4614
+      },
+      "8_12": {
+        "vehicle_count": 316,
+        "total_inspections": 899,
+        "total_defects": 494,
+        "avg_defects_per_inspection": 0.5495
+      },
+      "13_20": {
+        "vehicle_count": 124,
+        "total_inspections": 360,
+        "total_defects": 198,
+        "avg_defects_per_inspection": 0.55
+      },
+      "5_15": {
+        "vehicle_count": 569,
+        "total_inspections": 1610,
+        "total_defects": 839,
+        "avg_defects_per_inspection": 0.5211
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 701,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5267,
+    "avg_age_years": 8.95,
+    "defects_per_year": 0.058849,
+    "merk": "LAIKA CARAVANS S.P.A."
+  },
+  {
+    "vehicle_count": 503,
+    "total_inspections": 1060,
+    "total_defects": 567,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 30,
+        "total_inspections": 37,
+        "total_defects": 5,
+        "avg_defects_per_inspection": 0.1351
+      },
+      "8_12": {
+        "vehicle_count": 41,
+        "total_inspections": 101,
+        "total_defects": 36,
+        "avg_defects_per_inspection": 0.3564
+      },
+      "13_20": {
+        "vehicle_count": 68,
+        "total_inspections": 188,
+        "total_defects": 60,
+        "avg_defects_per_inspection": 0.3191
+      },
+      "5_15": {
+        "vehicle_count": 84,
+        "total_inspections": 188,
+        "total_defects": 62,
+        "avg_defects_per_inspection": 0.3298
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 503,
+      "Diesel": 0,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5349,
+    "avg_age_years": 28.78,
+    "defects_per_year": 0.018586,
+    "merk": "MORGAN"
+  },
+  {
+    "vehicle_count": 2249,
+    "total_inspections": 5259,
+    "total_defects": 2829,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 235,
+        "total_inspections": 363,
+        "total_defects": 108,
+        "avg_defects_per_inspection": 0.2975
+      },
+      "8_12": {
+        "vehicle_count": 629,
+        "total_inspections": 1554,
+        "total_defects": 646,
+        "avg_defects_per_inspection": 0.4157
+      },
+      "13_20": {
+        "vehicle_count": 871,
+        "total_inspections": 2279,
+        "total_defects": 1229,
+        "avg_defects_per_inspection": 0.5393
+      },
+      "5_15": {
+        "vehicle_count": 1055,
+        "total_inspections": 2476,
+        "total_defects": 952,
+        "avg_defects_per_inspection": 0.3845
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 2010,
+      "Diesel": 234,
+      "Elektriciteit": 11,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5379,
+    "avg_age_years": 16.54,
+    "defects_per_year": 0.032521,
+    "merk": "MASERATI"
+  },
+  {
+    "vehicle_count": 1603,
+    "total_inspections": 4339,
+    "total_defects": 2390,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 423,
+        "total_inspections": 1061,
+        "total_defects": 421,
+        "avg_defects_per_inspection": 0.3968
+      },
+      "8_12": {
+        "vehicle_count": 520,
+        "total_inspections": 1483,
+        "total_defects": 664,
+        "avg_defects_per_inspection": 0.4477
+      },
+      "13_20": {
+        "vehicle_count": 567,
+        "total_inspections": 1679,
+        "total_defects": 1242,
+        "avg_defects_per_inspection": 0.7397
+      },
+      "5_15": {
+        "vehicle_count": 1021,
+        "total_inspections": 2904,
+        "total_defects": 1392,
+        "avg_defects_per_inspection": 0.4793
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 1602,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5508,
+    "avg_age_years": 10.67,
+    "defects_per_year": 0.051621,
+    "merk": "LMC"
+  },
+  {
+    "vehicle_count": 3534,
+    "total_inspections": 6730,
+    "total_defects": 3723,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 1962,
+        "total_inspections": 2709,
+        "total_defects": 1142,
+        "avg_defects_per_inspection": 0.4216
+      },
+      "8_12": {
+        "vehicle_count": 1229,
+        "total_inspections": 3099,
+        "total_defects": 1758,
+        "avg_defects_per_inspection": 0.5673
+      },
+      "13_20": {
+        "vehicle_count": 309,
+        "total_inspections": 888,
+        "total_defects": 805,
+        "avg_defects_per_inspection": 0.9065
+      },
+      "5_15": {
+        "vehicle_count": 2990,
+        "total_inspections": 6070,
+        "total_defects": 3438,
+        "avg_defects_per_inspection": 0.5664
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 3505,
+      "Diesel": 0,
+      "Elektriciteit": 2821,
+      "LPG": 226,
+      "other": 3
+    },
+    "avg_defects_per_inspection": 0.5532,
+    "avg_age_years": 7.5,
+    "defects_per_year": 0.07376,
+    "merk": "FORD-CNG-TECHNIK"
+  },
+  {
+    "vehicle_count": 5326,
+    "total_inspections": 14367,
+    "total_defects": 8070,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 1764,
+        "total_inspections": 4511,
+        "total_defects": 1510,
+        "avg_defects_per_inspection": 0.3347
+      },
+      "8_12": {
+        "vehicle_count": 1570,
+        "total_inspections": 4565,
+        "total_defects": 1961,
+        "avg_defects_per_inspection": 0.4296
+      },
+      "13_20": {
+        "vehicle_count": 1506,
+        "total_inspections": 4468,
+        "total_defects": 3921,
+        "avg_defects_per_inspection": 0.8776
+      },
+      "5_15": {
+        "vehicle_count": 3358,
+        "total_inspections": 9605,
+        "total_defects": 3989,
+        "avg_defects_per_inspection": 0.4153
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 1,
+      "Diesel": 5311,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5617,
+    "avg_age_years": 10.24,
+    "defects_per_year": 0.054854,
+    "merk": "KNAUS"
+  },
+  {
+    "vehicle_count": 5694,
+    "total_inspections": 10240,
+    "total_defects": 5772,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 2978,
+        "total_inspections": 4115,
+        "total_defects": 1647,
+        "avg_defects_per_inspection": 0.4002
+      },
+      "8_12": {
+        "vehicle_count": 2575,
+        "total_inspections": 5980,
+        "total_defects": 4094,
+        "avg_defects_per_inspection": 0.6846
+      },
+      "13_20": null,
+      "5_15": {
+        "vehicle_count": 4867,
+        "total_inspections": 9386,
+        "total_defects": 5527,
+        "avg_defects_per_inspection": 0.5889
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 4630,
+      "Diesel": 536,
+      "Elektriciteit": 1056,
+      "LPG": 4,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5637,
+    "avg_age_years": 6.95,
+    "defects_per_year": 0.081108,
+    "merk": "DS"
+  },
+  {
+    "vehicle_count": 1642,
+    "total_inspections": 4463,
+    "total_defects": 2523,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 519,
+        "total_inspections": 1333,
+        "total_defects": 537,
+        "avg_defects_per_inspection": 0.4029
+      },
+      "8_12": {
+        "vehicle_count": 554,
+        "total_inspections": 1553,
+        "total_defects": 691,
+        "avg_defects_per_inspection": 0.4449
+      },
+      "13_20": {
+        "vehicle_count": 481,
+        "total_inspections": 1409,
+        "total_defects": 1170,
+        "avg_defects_per_inspection": 0.8304
+      },
+      "5_15": {
+        "vehicle_count": 1164,
+        "total_inspections": 3257,
+        "total_defects": 1560,
+        "avg_defects_per_inspection": 0.479
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 1,
+      "Diesel": 1636,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5653,
+    "avg_age_years": 10.29,
+    "defects_per_year": 0.054937,
+    "merk": "CHALLENGER"
+  },
+  {
+    "vehicle_count": 1275,
+    "total_inspections": 3524,
+    "total_defects": 2016,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 258,
+        "total_inspections": 654,
+        "total_defects": 196,
+        "avg_defects_per_inspection": 0.2997
+      },
+      "8_12": {
+        "vehicle_count": 403,
+        "total_inspections": 1145,
+        "total_defects": 559,
+        "avg_defects_per_inspection": 0.4882
+      },
+      "13_20": {
+        "vehicle_count": 564,
+        "total_inspections": 1660,
+        "total_defects": 1214,
+        "avg_defects_per_inspection": 0.7313
+      },
+      "5_15": {
+        "vehicle_count": 745,
+        "total_inspections": 2119,
+        "total_defects": 1022,
+        "avg_defects_per_inspection": 0.4823
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 1271,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5721,
+    "avg_age_years": 11.79,
+    "defects_per_year": 0.048524,
+    "merk": "HOBBY"
+  },
+  {
+    "vehicle_count": 970,
+    "total_inspections": 2591,
+    "total_defects": 1503,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 250,
+        "total_inspections": 620,
+        "total_defects": 229,
+        "avg_defects_per_inspection": 0.3694
+      },
+      "8_12": {
+        "vehicle_count": 421,
+        "total_inspections": 1173,
+        "total_defects": 639,
+        "avg_defects_per_inspection": 0.5448
+      },
+      "13_20": {
+        "vehicle_count": 259,
+        "total_inspections": 749,
+        "total_defects": 615,
+        "avg_defects_per_inspection": 0.8211
+      },
+      "5_15": {
+        "vehicle_count": 779,
+        "total_inspections": 2160,
+        "total_defects": 1201,
+        "avg_defects_per_inspection": 0.556
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 968,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5801,
+    "avg_age_years": 9.88,
+    "defects_per_year": 0.058715,
+    "merk": "ROLLER TEAM"
+  },
+  {
+    "vehicle_count": 1592,
+    "total_inspections": 4302,
+    "total_defects": 2500,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 374,
+        "total_inspections": 914,
+        "total_defects": 330,
+        "avg_defects_per_inspection": 0.3611
+      },
+      "8_12": {
+        "vehicle_count": 353,
+        "total_inspections": 1007,
+        "total_defects": 457,
+        "avg_defects_per_inspection": 0.4538
+      },
+      "13_20": {
+        "vehicle_count": 714,
+        "total_inspections": 2078,
+        "total_defects": 1471,
+        "avg_defects_per_inspection": 0.7079
+      },
+      "5_15": {
+        "vehicle_count": 896,
+        "total_inspections": 2515,
+        "total_defects": 1173,
+        "avg_defects_per_inspection": 0.4664
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 1,
+      "Diesel": 1586,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5811,
+    "avg_age_years": 11.99,
+    "defects_per_year": 0.048465,
+    "merk": "RAPIDO"
+  },
+  {
+    "vehicle_count": 700,
+    "total_inspections": 1956,
+    "total_defects": 1140,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 138,
+        "total_inspections": 341,
+        "total_defects": 117,
+        "avg_defects_per_inspection": 0.3431
+      },
+      "8_12": {
+        "vehicle_count": 200,
+        "total_inspections": 591,
+        "total_defects": 302,
+        "avg_defects_per_inspection": 0.511
+      },
+      "13_20": {
+        "vehicle_count": 331,
+        "total_inspections": 983,
+        "total_defects": 696,
+        "avg_defects_per_inspection": 0.708
+      },
+      "5_15": {
+        "vehicle_count": 458,
+        "total_inspections": 1332,
+        "total_defects": 714,
+        "avg_defects_per_inspection": 0.536
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 694,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5828,
+    "avg_age_years": 11.78,
+    "defects_per_year": 0.049474,
+    "merk": "KARMANN MOBIL"
+  },
+  {
+    "vehicle_count": 769,
+    "total_inspections": 2137,
+    "total_defects": 1249,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 229,
+        "total_inspections": 609,
+        "total_defects": 289,
+        "avg_defects_per_inspection": 0.4745
+      },
+      "8_12": {
+        "vehicle_count": 277,
+        "total_inspections": 798,
+        "total_defects": 358,
+        "avg_defects_per_inspection": 0.4486
+      },
+      "13_20": {
+        "vehicle_count": 231,
+        "total_inspections": 677,
+        "total_defects": 551,
+        "avg_defects_per_inspection": 0.8139
+      },
+      "5_15": {
+        "vehicle_count": 579,
+        "total_inspections": 1652,
+        "total_defects": 843,
+        "avg_defects_per_inspection": 0.5103
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 767,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5845,
+    "avg_age_years": 10.34,
+    "defects_per_year": 0.056528,
+    "merk": "PILOTE"
+  },
+  {
+    "vehicle_count": 3451,
+    "total_inspections": 9440,
+    "total_defects": 5527,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 948,
+        "total_inspections": 2451,
+        "total_defects": 872,
+        "avg_defects_per_inspection": 0.3558
+      },
+      "8_12": {
+        "vehicle_count": 980,
+        "total_inspections": 2810,
+        "total_defects": 1347,
+        "avg_defects_per_inspection": 0.4794
+      },
+      "13_20": {
+        "vehicle_count": 1251,
+        "total_inspections": 3705,
+        "total_defects": 2919,
+        "avg_defects_per_inspection": 0.7879
+      },
+      "5_15": {
+        "vehicle_count": 2241,
+        "total_inspections": 6394,
+        "total_defects": 3116,
+        "avg_defects_per_inspection": 0.4873
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 1,
+      "Diesel": 3440,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5855,
+    "avg_age_years": 10.89,
+    "defects_per_year": 0.053765,
+    "merk": "CHAUSSON"
+  },
+  {
+    "vehicle_count": 100,
+    "total_inspections": 291,
+    "total_defects": 174,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": {
+        "vehicle_count": 49,
+        "total_inspections": 142,
+        "total_defects": 70,
+        "avg_defects_per_inspection": 0.493
+      },
+      "13_20": {
+        "vehicle_count": 32,
+        "total_inspections": 98,
+        "total_defects": 86,
+        "avg_defects_per_inspection": 0.8776
+      },
+      "5_15": {
+        "vehicle_count": 70,
+        "total_inspections": 201,
+        "total_defects": 94,
+        "avg_defects_per_inspection": 0.4677
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 100,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.5979,
+    "avg_age_years": 12.48,
+    "defects_per_year": 0.047909,
+    "merk": "FLEURETTE"
+  },
+  {
+    "vehicle_count": 6999,
+    "total_inspections": 20132,
+    "total_defects": 12217,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 1445,
+        "total_inspections": 3799,
+        "total_defects": 1268,
+        "avg_defects_per_inspection": 0.3338
+      },
+      "8_12": {
+        "vehicle_count": 2212,
+        "total_inspections": 6509,
+        "total_defects": 3079,
+        "avg_defects_per_inspection": 0.473
+      },
+      "13_20": {
+        "vehicle_count": 2951,
+        "total_inspections": 8719,
+        "total_defects": 6689,
+        "avg_defects_per_inspection": 0.7672
+      },
+      "5_15": {
+        "vehicle_count": 4628,
+        "total_inspections": 13488,
+        "total_defects": 6565,
+        "avg_defects_per_inspection": 0.4867
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 6977,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.6068,
+    "avg_age_years": 12.2,
+    "defects_per_year": 0.049738,
+    "merk": "BUERSTNER"
+  },
+  {
+    "vehicle_count": 1693,
+    "total_inspections": 4544,
+    "total_defects": 2789,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 448,
+        "total_inspections": 1121,
+        "total_defects": 507,
+        "avg_defects_per_inspection": 0.4523
+      },
+      "8_12": {
+        "vehicle_count": 634,
+        "total_inspections": 1763,
+        "total_defects": 928,
+        "avg_defects_per_inspection": 0.5264
+      },
+      "13_20": {
+        "vehicle_count": 541,
+        "total_inspections": 1580,
+        "total_defects": 1309,
+        "avg_defects_per_inspection": 0.8285
+      },
+      "5_15": {
+        "vehicle_count": 1304,
+        "total_inspections": 3634,
+        "total_defects": 2007,
+        "avg_defects_per_inspection": 0.5523
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 1685,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.6138,
+    "avg_age_years": 10.18,
+    "defects_per_year": 0.060295,
+    "merk": "MC LOUIS"
+  },
+  {
+    "vehicle_count": 975,
+    "total_inspections": 2531,
+    "total_defects": 1567,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 808,
+        "total_inspections": 2146,
+        "total_defects": 1215,
+        "avg_defects_per_inspection": 0.5662
+      },
+      "5_15": {
+        "vehicle_count": 297,
+        "total_inspections": 805,
+        "total_defects": 292,
+        "avg_defects_per_inspection": 0.3627
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 949,
+      "Diesel": 24,
+      "Elektriciteit": 0,
+      "LPG": 5,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.6191,
+    "avg_age_years": 17.4,
+    "defects_per_year": 0.03558,
+    "merk": "QUATTRO"
+  },
+  {
+    "vehicle_count": 170,
+    "total_inspections": 381,
+    "total_defects": 241,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 61,
+        "total_inspections": 168,
+        "total_defects": 83,
+        "avg_defects_per_inspection": 0.494
+      },
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 170,
+      "Diesel": 0,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.6325,
+    "avg_age_years": 25.73,
+    "defects_per_year": 0.024582,
+    "merk": "WESTFIELD"
+  },
+  {
+    "vehicle_count": 167,
+    "total_inspections": 481,
+    "total_defects": 305,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 32,
+        "total_inspections": 84,
+        "total_defects": 43,
+        "avg_defects_per_inspection": 0.5119
+      },
+      "8_12": {
+        "vehicle_count": 48,
+        "total_inspections": 146,
+        "total_defects": 70,
+        "avg_defects_per_inspection": 0.4795
+      },
+      "13_20": {
+        "vehicle_count": 75,
+        "total_inspections": 220,
+        "total_defects": 153,
+        "avg_defects_per_inspection": 0.6955
+      },
+      "5_15": {
+        "vehicle_count": 102,
+        "total_inspections": 303,
+        "total_defects": 156,
+        "avg_defects_per_inspection": 0.5149
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 166,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.6341,
+    "avg_age_years": 12.28,
+    "defects_per_year": 0.051637,
+    "merk": "LA STRADA"
+  },
+  {
+    "vehicle_count": 1308,
+    "total_inspections": 3598,
+    "total_defects": 2297,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": {
+        "vehicle_count": 1297,
+        "total_inspections": 3571,
+        "total_defects": 2275,
+        "avg_defects_per_inspection": 0.6371
+      },
+      "13_20": null,
+      "5_15": {
+        "vehicle_count": 1304,
+        "total_inspections": 3590,
+        "total_defects": 2285,
+        "avg_defects_per_inspection": 0.6365
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 421,
+      "Diesel": 881,
+      "Elektriciteit": 3,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.6384,
+    "avg_age_years": 10.89,
+    "defects_per_year": 0.058623,
+    "merk": "JAGUAR LAND ROVER"
+  },
+  {
+    "vehicle_count": 768,
+    "total_inspections": 2097,
+    "total_defects": 1360,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 166,
+        "total_inspections": 415,
+        "total_defects": 174,
+        "avg_defects_per_inspection": 0.4193
+      },
+      "8_12": {
+        "vehicle_count": 215,
+        "total_inspections": 586,
+        "total_defects": 307,
+        "avg_defects_per_inspection": 0.5239
+      },
+      "13_20": {
+        "vehicle_count": 338,
+        "total_inspections": 984,
+        "total_defects": 734,
+        "avg_defects_per_inspection": 0.7459
+      },
+      "5_15": {
+        "vehicle_count": 484,
+        "total_inspections": 1338,
+        "total_defects": 694,
+        "avg_defects_per_inspection": 0.5187
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 766,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.6485,
+    "avg_age_years": 11.99,
+    "defects_per_year": 0.054087,
+    "merk": "EURA MOBIL"
+  },
+  {
+    "vehicle_count": 158,
+    "total_inspections": 410,
+    "total_defects": 270,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 48,
+        "total_inspections": 122,
+        "total_defects": 68,
+        "avg_defects_per_inspection": 0.5574
+      },
+      "8_12": {
+        "vehicle_count": 62,
+        "total_inspections": 173,
+        "total_defects": 105,
+        "avg_defects_per_inspection": 0.6069
+      },
+      "13_20": {
+        "vehicle_count": 38,
+        "total_inspections": 103,
+        "total_defects": 91,
+        "avg_defects_per_inspection": 0.8835
+      },
+      "5_15": {
+        "vehicle_count": 124,
+        "total_inspections": 334,
+        "total_defects": 207,
+        "avg_defects_per_inspection": 0.6198
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 156,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.6585,
+    "avg_age_years": 9.34,
+    "defects_per_year": 0.070503,
+    "merk": "ITINEO"
+  },
+  {
+    "vehicle_count": 458,
+    "total_inspections": 1254,
+    "total_defects": 835,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 92,
+        "total_inspections": 238,
+        "total_defects": 98,
+        "avg_defects_per_inspection": 0.4118
+      },
+      "8_12": {
+        "vehicle_count": 162,
+        "total_inspections": 461,
+        "total_defects": 255,
+        "avg_defects_per_inspection": 0.5531
+      },
+      "13_20": {
+        "vehicle_count": 174,
+        "total_inspections": 488,
+        "total_defects": 441,
+        "avg_defects_per_inspection": 0.9037
+      },
+      "5_15": {
+        "vehicle_count": 329,
+        "total_inspections": 917,
+        "total_defects": 543,
+        "avg_defects_per_inspection": 0.5921
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 456,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.6659,
+    "avg_age_years": 11.14,
+    "defects_per_year": 0.059776,
+    "merk": "NIESMANN-BISCHOFF"
+  },
+  {
+    "vehicle_count": 330,
+    "total_inspections": 353,
+    "total_defects": 237,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 330,
+        "total_inspections": 353,
+        "total_defects": 237,
+        "avg_defects_per_inspection": 0.6714
+      },
+      "8_12": null,
+      "13_20": null,
+      "5_15": {
+        "vehicle_count": 49,
+        "total_inspections": 50,
+        "total_defects": 31,
+        "avg_defects_per_inspection": 0.62
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 0,
+      "Elektriciteit": 327,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.6714,
+    "avg_age_years": 4.15,
+    "defects_per_year": 0.161783,
+    "merk": "AIWAYS"
+  },
+  {
+    "vehicle_count": 10602,
+    "total_inspections": 29481,
+    "total_defects": 19932,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 2639,
+        "total_inspections": 6772,
+        "total_defects": 2754,
+        "avg_defects_per_inspection": 0.4067
+      },
+      "8_12": {
+        "vehicle_count": 2471,
+        "total_inspections": 7202,
+        "total_defects": 3692,
+        "avg_defects_per_inspection": 0.5126
+      },
+      "13_20": {
+        "vehicle_count": 4194,
+        "total_inspections": 12422,
+        "total_defects": 10133,
+        "avg_defects_per_inspection": 0.8157
+      },
+      "5_15": {
+        "vehicle_count": 6065,
+        "total_inspections": 17463,
+        "total_defects": 9206,
+        "avg_defects_per_inspection": 0.5272
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 2,
+      "Diesel": 10576,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.6761,
+    "avg_age_years": 12.13,
+    "defects_per_year": 0.055738,
+    "merk": "HYMER"
+  },
+  {
+    "vehicle_count": 300716,
+    "total_inspections": 683428,
+    "total_defects": 466242,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 95864,
+        "total_inspections": 132266,
+        "total_defects": 41754,
+        "avg_defects_per_inspection": 0.3157
+      },
+      "8_12": {
+        "vehicle_count": 100955,
+        "total_inspections": 260721,
+        "total_defects": 127275,
+        "avg_defects_per_inspection": 0.4882
+      },
+      "13_20": {
+        "vehicle_count": 79948,
+        "total_inspections": 229791,
+        "total_defects": 207430,
+        "avg_defects_per_inspection": 0.9027
+      },
+      "5_15": {
+        "vehicle_count": 213770,
+        "total_inspections": 490744,
+        "total_defects": 250623,
+        "avg_defects_per_inspection": 0.5107
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 243957,
+      "Diesel": 41618,
+      "Elektriciteit": 61729,
+      "LPG": 745,
+      "other": 1743
+    },
+    "avg_defects_per_inspection": 0.6822,
+    "avg_age_years": 10.85,
+    "defects_per_year": 0.062876,
+    "merk": "AUDI"
+  },
+  {
+    "vehicle_count": 203,
+    "total_inspections": 553,
+    "total_defects": 382,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 60,
+        "total_inspections": 156,
+        "total_defects": 70,
+        "avg_defects_per_inspection": 0.4487
+      },
+      "8_12": {
+        "vehicle_count": 56,
+        "total_inspections": 159,
+        "total_defects": 113,
+        "avg_defects_per_inspection": 0.7107
+      },
+      "13_20": {
+        "vehicle_count": 81,
+        "total_inspections": 227,
+        "total_defects": 181,
+        "avg_defects_per_inspection": 0.7974
+      },
+      "5_15": {
+        "vehicle_count": 178,
+        "total_inspections": 492,
+        "total_defects": 319,
+        "avg_defects_per_inspection": 0.6484
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 203,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.6908,
+    "avg_age_years": 10.56,
+    "defects_per_year": 0.065417,
+    "merk": "BAVARIA"
+  },
+  {
+    "vehicle_count": 237,
+    "total_inspections": 598,
+    "total_defects": 416,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 63,
+        "total_inspections": 167,
+        "total_defects": 53,
+        "avg_defects_per_inspection": 0.3174
+      },
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 102,
+        "total_inspections": 293,
+        "total_defects": 265,
+        "avg_defects_per_inspection": 0.9044
+      },
+      "5_15": {
+        "vehicle_count": 81,
+        "total_inspections": 221,
+        "total_defects": 132,
+        "avg_defects_per_inspection": 0.5973
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 236,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.6957,
+    "avg_age_years": 10.68,
+    "defects_per_year": 0.06514,
+    "merk": "FRANKIA"
+  },
+  {
+    "vehicle_count": 373,
+    "total_inspections": 1073,
+    "total_defects": 763,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 44,
+        "total_inspections": 117,
+        "total_defects": 57,
+        "avg_defects_per_inspection": 0.4872
+      },
+      "8_12": {
+        "vehicle_count": 127,
+        "total_inspections": 369,
+        "total_defects": 210,
+        "avg_defects_per_inspection": 0.5691
+      },
+      "13_20": {
+        "vehicle_count": 178,
+        "total_inspections": 520,
+        "total_defects": 434,
+        "avg_defects_per_inspection": 0.8346
+      },
+      "5_15": {
+        "vehicle_count": 223,
+        "total_inspections": 645,
+        "total_defects": 395,
+        "avg_defects_per_inspection": 0.6124
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 373,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.7111,
+    "avg_age_years": 13.31,
+    "defects_per_year": 0.053426,
+    "merk": "MOBILVETTA"
+  },
+  {
+    "vehicle_count": 46089,
+    "total_inspections": 64930,
+    "total_defects": 46218,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 43686,
+        "total_inspections": 61388,
+        "total_defects": 44010,
+        "avg_defects_per_inspection": 0.7169
+      },
+      "8_12": {
+        "vehicle_count": 439,
+        "total_inspections": 829,
+        "total_defects": 720,
+        "avg_defects_per_inspection": 0.8685
+      },
+      "13_20": {
+        "vehicle_count": 85,
+        "total_inspections": 218,
+        "total_defects": 116,
+        "avg_defects_per_inspection": 0.5321
+      },
+      "5_15": {
+        "vehicle_count": 37466,
+        "total_inspections": 55262,
+        "total_defects": 40155,
+        "avg_defects_per_inspection": 0.7266
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 0,
+      "Elektriciteit": 45983,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.7118,
+    "avg_age_years": 5.38,
+    "defects_per_year": 0.132305,
+    "merk": "TESLA"
+  },
+  {
+    "vehicle_count": 5471,
+    "total_inspections": 15345,
+    "total_defects": 10959,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 1059,
+        "total_inspections": 2681,
+        "total_defects": 969,
+        "avg_defects_per_inspection": 0.3614
+      },
+      "8_12": {
+        "vehicle_count": 1037,
+        "total_inspections": 3034,
+        "total_defects": 1539,
+        "avg_defects_per_inspection": 0.5073
+      },
+      "13_20": {
+        "vehicle_count": 2597,
+        "total_inspections": 7726,
+        "total_defects": 6396,
+        "avg_defects_per_inspection": 0.8279
+      },
+      "5_15": {
+        "vehicle_count": 2571,
+        "total_inspections": 7441,
+        "total_defects": 3854,
+        "avg_defects_per_inspection": 0.5179
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 5461,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.7142,
+    "avg_age_years": 13.27,
+    "defects_per_year": 0.053821,
+    "merk": "DETHLEFFS"
+  },
+  {
+    "vehicle_count": 397,
+    "total_inspections": 1161,
+    "total_defects": 840,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": {
+        "vehicle_count": 57,
+        "total_inspections": 163,
+        "total_defects": 104,
+        "avg_defects_per_inspection": 0.638
+      },
+      "13_20": {
+        "vehicle_count": 334,
+        "total_inspections": 981,
+        "total_defects": 714,
+        "avg_defects_per_inspection": 0.7278
+      },
+      "5_15": {
+        "vehicle_count": 202,
+        "total_inspections": 590,
+        "total_defects": 438,
+        "avg_defects_per_inspection": 0.7424
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 394,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.7235,
+    "avg_age_years": 15.41,
+    "defects_per_year": 0.04695,
+    "merk": "TEC"
+  },
+  {
+    "vehicle_count": 196,
+    "total_inspections": 574,
+    "total_defects": 416,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": {
+        "vehicle_count": 32,
+        "total_inspections": 95,
+        "total_defects": 52,
+        "avg_defects_per_inspection": 0.5474
+      },
+      "13_20": {
+        "vehicle_count": 158,
+        "total_inspections": 473,
+        "total_defects": 363,
+        "avg_defects_per_inspection": 0.7674
+      },
+      "5_15": {
+        "vehicle_count": 153,
+        "total_inspections": 462,
+        "total_defects": 299,
+        "avg_defects_per_inspection": 0.6472
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 195,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.7247,
+    "avg_age_years": 13.93,
+    "defects_per_year": 0.052024,
+    "merk": "GIOTTILINE"
+  },
+  {
+    "vehicle_count": 193660,
+    "total_inspections": 413924,
+    "total_defects": 301143,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 81454,
+        "total_inspections": 110691,
+        "total_defects": 40970,
+        "avg_defects_per_inspection": 0.3701
+      },
+      "8_12": {
+        "vehicle_count": 60583,
+        "total_inspections": 157580,
+        "total_defects": 90052,
+        "avg_defects_per_inspection": 0.5715
+      },
+      "13_20": {
+        "vehicle_count": 44412,
+        "total_inspections": 129642,
+        "total_defects": 147719,
+        "avg_defects_per_inspection": 1.1394
+      },
+      "5_15": {
+        "vehicle_count": 145374,
+        "total_inspections": 325945,
+        "total_defects": 204651,
+        "avg_defects_per_inspection": 0.6279
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 160399,
+      "Diesel": 23837,
+      "Elektriciteit": 16224,
+      "LPG": 756,
+      "other": 533
+    },
+    "avg_defects_per_inspection": 0.7275,
+    "avg_age_years": 9.37,
+    "defects_per_year": 0.077641,
+    "merk": "SKODA"
+  },
+  {
+    "vehicle_count": 207,
+    "total_inspections": 574,
+    "total_defects": 428,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": {
+        "vehicle_count": 40,
+        "total_inspections": 112,
+        "total_defects": 55,
+        "avg_defects_per_inspection": 0.4911
+      },
+      "13_20": {
+        "vehicle_count": 126,
+        "total_inspections": 359,
+        "total_defects": 264,
+        "avg_defects_per_inspection": 0.7354
+      },
+      "5_15": {
+        "vehicle_count": 113,
+        "total_inspections": 323,
+        "total_defects": 212,
+        "avg_defects_per_inspection": 0.6563
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 207,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.7456,
+    "avg_age_years": 14.44,
+    "defects_per_year": 0.051634,
+    "merk": "AUTOSTAR"
+  },
+  {
+    "vehicle_count": 105,
+    "total_inspections": 317,
+    "total_defects": 238,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": {
+        "vehicle_count": 67,
+        "total_inspections": 202,
+        "total_defects": 146,
+        "avg_defects_per_inspection": 0.7228
+      },
+      "13_20": {
+        "vehicle_count": 35,
+        "total_inspections": 106,
+        "total_defects": 82,
+        "avg_defects_per_inspection": 0.7736
+      },
+      "5_15": {
+        "vehicle_count": 94,
+        "total_inspections": 284,
+        "total_defects": 200,
+        "avg_defects_per_inspection": 0.7042
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 12,
+      "Diesel": 93,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.7508,
+    "avg_age_years": 12.04,
+    "defects_per_year": 0.062359,
+    "merk": "BINZ"
+  },
+  {
+    "vehicle_count": 342936,
+    "total_inspections": 788429,
+    "total_defects": 592908,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 97806,
+        "total_inspections": 138389,
+        "total_defects": 36538,
+        "avg_defects_per_inspection": 0.264
+      },
+      "8_12": {
+        "vehicle_count": 95888,
+        "total_inspections": 247215,
+        "total_defects": 114932,
+        "avg_defects_per_inspection": 0.4649
+      },
+      "13_20": {
+        "vehicle_count": 100841,
+        "total_inspections": 287007,
+        "total_defects": 272790,
+        "avg_defects_per_inspection": 0.9505
+      },
+      "5_15": {
+        "vehicle_count": 211468,
+        "total_inspections": 481946,
+        "total_defects": 231090,
+        "avg_defects_per_inspection": 0.4795
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 283585,
+      "Diesel": 55462,
+      "Elektriciteit": 32273,
+      "LPG": 1537,
+      "other": 2
+    },
+    "avg_defects_per_inspection": 0.752,
+    "avg_age_years": 12.54,
+    "defects_per_year": 0.059968,
+    "merk": "BMW"
+  },
+  {
+    "vehicle_count": 164,
+    "total_inspections": 232,
+    "total_defects": 177,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 164,
+      "Diesel": 0,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.7629,
+    "avg_age_years": 41.22,
+    "defects_per_year": 0.018508,
+    "merk": "ALPINE-RENAULT"
+  },
+  {
+    "vehicle_count": 249,
+    "total_inspections": 496,
+    "total_defects": 387,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 249,
+      "Diesel": 0,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.7802,
+    "avg_age_years": 32.04,
+    "defects_per_year": 0.024351,
+    "merk": "TVR"
+  },
+  {
+    "vehicle_count": 153465,
+    "total_inspections": 356334,
+    "total_defects": 278387,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 44300,
+        "total_inspections": 61805,
+        "total_defects": 17988,
+        "avg_defects_per_inspection": 0.291
+      },
+      "8_12": {
+        "vehicle_count": 50211,
+        "total_inspections": 126325,
+        "total_defects": 65305,
+        "avg_defects_per_inspection": 0.517
+      },
+      "13_20": {
+        "vehicle_count": 40093,
+        "total_inspections": 119546,
+        "total_defects": 127621,
+        "avg_defects_per_inspection": 1.0675
+      },
+      "5_15": {
+        "vehicle_count": 103204,
+        "total_inspections": 230806,
+        "total_defects": 125792,
+        "avg_defects_per_inspection": 0.545
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 148394,
+      "Diesel": 2826,
+      "Elektriciteit": 12963,
+      "LPG": 2328,
+      "other": 1
+    },
+    "avg_defects_per_inspection": 0.7813,
+    "avg_age_years": 12.05,
+    "defects_per_year": 0.064838,
+    "merk": "MAZDA"
+  },
+  {
+    "vehicle_count": 32010,
+    "total_inspections": 71947,
+    "total_defects": 57469,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 10415,
+        "total_inspections": 17058,
+        "total_defects": 5827,
+        "avg_defects_per_inspection": 0.3416
+      },
+      "8_12": {
+        "vehicle_count": 9366,
+        "total_inspections": 25278,
+        "total_defects": 14189,
+        "avg_defects_per_inspection": 0.5613
+      },
+      "13_20": {
+        "vehicle_count": 7001,
+        "total_inspections": 19106,
+        "total_defects": 20025,
+        "avg_defects_per_inspection": 1.0481
+      },
+      "5_15": {
+        "vehicle_count": 20236,
+        "total_inspections": 48021,
+        "total_defects": 25901,
+        "avg_defects_per_inspection": 0.5394
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 16039,
+      "Diesel": 15855,
+      "Elektriciteit": 6301,
+      "LPG": 359,
+      "other": 2
+    },
+    "avg_defects_per_inspection": 0.7988,
+    "avg_age_years": 13.13,
+    "defects_per_year": 0.060838,
+    "merk": "LAND ROVER"
+  },
+  {
+    "vehicle_count": 335945,
+    "total_inspections": 787742,
+    "total_defects": 629545,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 88585,
+        "total_inspections": 141472,
+        "total_defects": 60081,
+        "avg_defects_per_inspection": 0.4247
+      },
+      "8_12": {
+        "vehicle_count": 96732,
+        "total_inspections": 250499,
+        "total_defects": 141340,
+        "avg_defects_per_inspection": 0.5642
+      },
+      "13_20": {
+        "vehicle_count": 91470,
+        "total_inspections": 264993,
+        "total_defects": 247642,
+        "avg_defects_per_inspection": 0.9345
+      },
+      "5_15": {
+        "vehicle_count": 204651,
+        "total_inspections": 483514,
+        "total_defects": 277432,
+        "avg_defects_per_inspection": 0.5738
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 246474,
+      "Diesel": 82115,
+      "Elektriciteit": 33302,
+      "LPG": 2921,
+      "other": 561
+    },
+    "avg_defects_per_inspection": 0.7992,
+    "avg_age_years": 13.38,
+    "defects_per_year": 0.059731,
+    "merk": "MERCEDES-BENZ"
+  },
+  {
+    "vehicle_count": 317149,
+    "total_inspections": 724208,
+    "total_defects": 594401,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 110983,
+        "total_inspections": 147899,
+        "total_defects": 56256,
+        "avg_defects_per_inspection": 0.3804
+      },
+      "8_12": {
+        "vehicle_count": 100425,
+        "total_inspections": 265305,
+        "total_defects": 176590,
+        "avg_defects_per_inspection": 0.6656
+      },
+      "13_20": {
+        "vehicle_count": 96435,
+        "total_inspections": 293090,
+        "total_defects": 340681,
+        "avg_defects_per_inspection": 1.1624
+      },
+      "5_15": {
+        "vehicle_count": 240151,
+        "total_inspections": 563217,
+        "total_defects": 397922,
+        "avg_defects_per_inspection": 0.7065
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 294211,
+      "Diesel": 3295,
+      "Elektriciteit": 61544,
+      "LPG": 1371,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.8208,
+    "avg_age_years": 10.04,
+    "defects_per_year": 0.081753,
+    "merk": "KIA"
+  },
+  {
+    "vehicle_count": 15400,
+    "total_inspections": 33464,
+    "total_defects": 27471,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 4895,
+        "total_inspections": 7035,
+        "total_defects": 2726,
+        "avg_defects_per_inspection": 0.3875
+      },
+      "8_12": {
+        "vehicle_count": 3053,
+        "total_inspections": 7906,
+        "total_defects": 3958,
+        "avg_defects_per_inspection": 0.5006
+      },
+      "13_20": {
+        "vehicle_count": 2547,
+        "total_inspections": 6977,
+        "total_defects": 6206,
+        "avg_defects_per_inspection": 0.8895
+      },
+      "5_15": {
+        "vehicle_count": 8204,
+        "total_inspections": 16716,
+        "total_defects": 8138,
+        "avg_defects_per_inspection": 0.4868
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 9304,
+      "Diesel": 3067,
+      "Elektriciteit": 3182,
+      "LPG": 166,
+      "other": 1
+    },
+    "avg_defects_per_inspection": 0.8209,
+    "avg_age_years": 15.55,
+    "defects_per_year": 0.052791,
+    "merk": "JAGUAR"
+  },
+  {
+    "vehicle_count": 547,
+    "total_inspections": 977,
+    "total_defects": 808,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": {
+        "vehicle_count": 72,
+        "total_inspections": 178,
+        "total_defects": 24,
+        "avg_defects_per_inspection": 0.1348
+      },
+      "13_20": {
+        "vehicle_count": 65,
+        "total_inspections": 167,
+        "total_defects": 39,
+        "avg_defects_per_inspection": 0.2335
+      },
+      "5_15": {
+        "vehicle_count": 118,
+        "total_inspections": 283,
+        "total_defects": 46,
+        "avg_defects_per_inspection": 0.1625
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 545,
+      "Diesel": 0,
+      "Elektriciteit": 1,
+      "LPG": 28,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.827,
+    "avg_age_years": 32.8,
+    "defects_per_year": 0.025213,
+    "merk": "ROLLS ROYCE"
+  },
+  {
+    "vehicle_count": 273,
+    "total_inspections": 711,
+    "total_defects": 589,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 146,
+        "total_inspections": 429,
+        "total_defects": 302,
+        "avg_defects_per_inspection": 0.704
+      },
+      "5_15": {
+        "vehicle_count": 86,
+        "total_inspections": 259,
+        "total_defects": 137,
+        "avg_defects_per_inspection": 0.529
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 271,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.8284,
+    "avg_age_years": 14.41,
+    "defects_per_year": 0.057488,
+    "merk": "LAIKA"
+  },
+  {
+    "vehicle_count": 3020,
+    "total_inspections": 9003,
+    "total_defects": 7550,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": {
+        "vehicle_count": 33,
+        "total_inspections": 98,
+        "total_defects": 44,
+        "avg_defects_per_inspection": 0.449
+      },
+      "13_20": {
+        "vehicle_count": 2589,
+        "total_inspections": 7719,
+        "total_defects": 6206,
+        "avg_defects_per_inspection": 0.804
+      },
+      "5_15": {
+        "vehicle_count": 755,
+        "total_inspections": 2241,
+        "total_defects": 1371,
+        "avg_defects_per_inspection": 0.6118
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 3014,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 1
+    },
+    "avg_defects_per_inspection": 0.8386,
+    "avg_age_years": 17.48,
+    "defects_per_year": 0.047975,
+    "merk": "ADRIA MOBIL"
+  },
+  {
+    "vehicle_count": 647,
+    "total_inspections": 1814,
+    "total_defects": 1536,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 104,
+        "total_inspections": 281,
+        "total_defects": 159,
+        "avg_defects_per_inspection": 0.5658
+      },
+      "8_12": {
+        "vehicle_count": 98,
+        "total_inspections": 272,
+        "total_defects": 145,
+        "avg_defects_per_inspection": 0.5331
+      },
+      "13_20": {
+        "vehicle_count": 283,
+        "total_inspections": 829,
+        "total_defects": 714,
+        "avg_defects_per_inspection": 0.8613
+      },
+      "5_15": {
+        "vehicle_count": 278,
+        "total_inspections": 803,
+        "total_defects": 487,
+        "avg_defects_per_inspection": 0.6065
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 1,
+      "Diesel": 643,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.8467,
+    "avg_age_years": 14.61,
+    "defects_per_year": 0.057953,
+    "merk": "ELNAGH"
+  },
+  {
+    "vehicle_count": 8415,
+    "total_inspections": 13540,
+    "total_defects": 11501,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 4214,
+        "total_inspections": 4868,
+        "total_defects": 1855,
+        "avg_defects_per_inspection": 0.3811
+      },
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 219,
+        "total_inspections": 595,
+        "total_defects": 641,
+        "avg_defects_per_inspection": 1.0773
+      },
+      "5_15": {
+        "vehicle_count": 2813,
+        "total_inspections": 3439,
+        "total_defects": 1276,
+        "avg_defects_per_inspection": 0.371
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 4299,
+      "Diesel": 16,
+      "Elektriciteit": 4453,
+      "LPG": 14,
+      "other": 1
+    },
+    "avg_defects_per_inspection": 0.8494,
+    "avg_age_years": 18.56,
+    "defects_per_year": 0.045765,
+    "merk": "MG"
+  },
+  {
+    "vehicle_count": 577635,
+    "total_inspections": 1462070,
+    "total_defects": 1246520,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 125196,
+        "total_inspections": 174718,
+        "total_defects": 61063,
+        "avg_defects_per_inspection": 0.3495
+      },
+      "8_12": {
+        "vehicle_count": 139348,
+        "total_inspections": 368178,
+        "total_defects": 211524,
+        "avg_defects_per_inspection": 0.5745
+      },
+      "13_20": {
+        "vehicle_count": 232432,
+        "total_inspections": 701238,
+        "total_defects": 698757,
+        "avg_defects_per_inspection": 0.9965
+      },
+      "5_15": {
+        "vehicle_count": 336104,
+        "total_inspections": 822093,
+        "total_defects": 521830,
+        "avg_defects_per_inspection": 0.6348
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 568442,
+      "Diesel": 6940,
+      "Elektriciteit": 191810,
+      "LPG": 1312,
+      "other": 296
+    },
+    "avg_defects_per_inspection": 0.8526,
+    "avg_age_years": 13.32,
+    "defects_per_year": 0.064009,
+    "merk": "TOYOTA"
+  },
+  {
+    "vehicle_count": 214,
+    "total_inspections": 623,
+    "total_defects": 539,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 204,
+        "total_inspections": 595,
+        "total_defects": 512,
+        "avg_defects_per_inspection": 0.8605
+      },
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 213,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.8652,
+    "avg_age_years": 17.43,
+    "defects_per_year": 0.049639,
+    "merk": "KNAUS TABBERT"
+  },
+  {
+    "vehicle_count": 119371,
+    "total_inspections": 276632,
+    "total_defects": 241382,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 35508,
+        "total_inspections": 47795,
+        "total_defects": 17105,
+        "avg_defects_per_inspection": 0.3579
+      },
+      "8_12": {
+        "vehicle_count": 33945,
+        "total_inspections": 85967,
+        "total_defects": 44461,
+        "avg_defects_per_inspection": 0.5172
+      },
+      "13_20": {
+        "vehicle_count": 36852,
+        "total_inspections": 109400,
+        "total_defects": 118690,
+        "avg_defects_per_inspection": 1.0849
+      },
+      "5_15": {
+        "vehicle_count": 78173,
+        "total_inspections": 175343,
+        "total_defects": 98781,
+        "avg_defects_per_inspection": 0.5634
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 113053,
+      "Diesel": 2492,
+      "Elektriciteit": 7337,
+      "LPG": 48,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.8726,
+    "avg_age_years": 11.92,
+    "defects_per_year": 0.073205,
+    "merk": "MINI"
+  },
+  {
+    "vehicle_count": 609,
+    "total_inspections": 1653,
+    "total_defects": 1453,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 76,
+        "total_inspections": 199,
+        "total_defects": 98,
+        "avg_defects_per_inspection": 0.4925
+      },
+      "8_12": {
+        "vehicle_count": 144,
+        "total_inspections": 382,
+        "total_defects": 251,
+        "avg_defects_per_inspection": 0.6571
+      },
+      "13_20": {
+        "vehicle_count": 314,
+        "total_inspections": 887,
+        "total_defects": 876,
+        "avg_defects_per_inspection": 0.9876
+      },
+      "5_15": {
+        "vehicle_count": 337,
+        "total_inspections": 941,
+        "total_defects": 681,
+        "avg_defects_per_inspection": 0.7237
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 609,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.879,
+    "avg_age_years": 13.81,
+    "defects_per_year": 0.06365,
+    "merk": "RIMOR"
+  },
+  {
+    "vehicle_count": 950882,
+    "total_inspections": 2275946,
+    "total_defects": 2021381,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 252978,
+        "total_inspections": 357909,
+        "total_defects": 142566,
+        "avg_defects_per_inspection": 0.3983
+      },
+      "8_12": {
+        "vehicle_count": 296302,
+        "total_inspections": 778598,
+        "total_defects": 461700,
+        "avg_defects_per_inspection": 0.593
+      },
+      "13_20": {
+        "vehicle_count": 301610,
+        "total_inspections": 890507,
+        "total_defects": 1010608,
+        "avg_defects_per_inspection": 1.1349
+      },
+      "5_15": {
+        "vehicle_count": 656058,
+        "total_inspections": 1567008,
+        "total_defects": 1063219,
+        "avg_defects_per_inspection": 0.6785
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 783210,
+      "Diesel": 128132,
+      "Elektriciteit": 68752,
+      "LPG": 2172,
+      "other": 2896
+    },
+    "avg_defects_per_inspection": 0.8881,
+    "avg_age_years": 12.2,
+    "defects_per_year": 0.072795,
+    "merk": "VOLKSWAGEN"
+  },
+  {
+    "vehicle_count": 383,
+    "total_inspections": 509,
+    "total_defects": 456,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 1,
+      "Diesel": 0,
+      "Elektriciteit": 383,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.8959,
+    "avg_age_years": 1.54,
+    "defects_per_year": 0.581753,
+    "merk": "BYD"
+  },
+  {
+    "vehicle_count": 309670,
+    "total_inspections": 733861,
+    "total_defects": 660859,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 87398,
+        "total_inspections": 123083,
+        "total_defects": 36363,
+        "avg_defects_per_inspection": 0.2954
+      },
+      "8_12": {
+        "vehicle_count": 83276,
+        "total_inspections": 223622,
+        "total_defects": 140087,
+        "avg_defects_per_inspection": 0.6264
+      },
+      "13_20": {
+        "vehicle_count": 87138,
+        "total_inspections": 253369,
+        "total_defects": 266085,
+        "avg_defects_per_inspection": 1.0502
+      },
+      "5_15": {
+        "vehicle_count": 181310,
+        "total_inspections": 423495,
+        "total_defects": 257582,
+        "avg_defects_per_inspection": 0.6082
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 219208,
+      "Diesel": 84907,
+      "Elektriciteit": 60168,
+      "LPG": 7885,
+      "other": 1696
+    },
+    "avg_defects_per_inspection": 0.9005,
+    "avg_age_years": 12.89,
+    "defects_per_year": 0.06986,
+    "merk": "VOLVO"
+  },
+  {
+    "vehicle_count": 5094,
+    "total_inspections": 12269,
+    "total_defects": 11290,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 33,
+        "total_inspections": 46,
+        "total_defects": 51,
+        "avg_defects_per_inspection": 1.1087
+      },
+      "8_12": {
+        "vehicle_count": 5060,
+        "total_inspections": 12222,
+        "total_defects": 11239,
+        "avg_defects_per_inspection": 0.9196
+      },
+      "13_20": null,
+      "5_15": {
+        "vehicle_count": 5092,
+        "total_inspections": 12266,
+        "total_defects": 11285,
+        "avg_defects_per_inspection": 0.92
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 0,
+      "Elektriciteit": 5073,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.9202,
+    "avg_age_years": 9.42,
+    "defects_per_year": 0.097686,
+    "merk": "TESLA MOTORS"
+  },
+  {
+    "vehicle_count": 52977,
+    "total_inspections": 127368,
+    "total_defects": 118582,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 14378,
+        "total_inspections": 24401,
+        "total_defects": 13963,
+        "avg_defects_per_inspection": 0.5722
+      },
+      "8_12": {
+        "vehicle_count": 20803,
+        "total_inspections": 54815,
+        "total_defects": 44285,
+        "avg_defects_per_inspection": 0.8079
+      },
+      "13_20": {
+        "vehicle_count": 15184,
+        "total_inspections": 45267,
+        "total_defects": 59254,
+        "avg_defects_per_inspection": 1.309
+      },
+      "5_15": {
+        "vehicle_count": 40863,
+        "total_inspections": 101907,
+        "total_defects": 89127,
+        "avg_defects_per_inspection": 0.8746
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 51442,
+      "Diesel": 918,
+      "Elektriciteit": 464,
+      "LPG": 8496,
+      "other": 269
+    },
+    "avg_defects_per_inspection": 0.931,
+    "avg_age_years": 9.88,
+    "defects_per_year": 0.094231,
+    "merk": "DACIA"
+  },
+  {
+    "vehicle_count": 183,
+    "total_inspections": 526,
+    "total_defects": 495,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 97,
+        "total_inspections": 277,
+        "total_defects": 274,
+        "avg_defects_per_inspection": 0.9892
+      },
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 183,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.9411,
+    "avg_age_years": 19.92,
+    "defects_per_year": 0.047244,
+    "merk": "MONCAYO"
+  },
+  {
+    "vehicle_count": 830,
+    "total_inspections": 2133,
+    "total_defects": 2012,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 47,
+        "total_inspections": 85,
+        "total_defects": 25,
+        "avg_defects_per_inspection": 0.2941
+      },
+      "8_12": {
+        "vehicle_count": 368,
+        "total_inspections": 884,
+        "total_defects": 473,
+        "avg_defects_per_inspection": 0.5351
+      },
+      "13_20": {
+        "vehicle_count": 364,
+        "total_inspections": 1030,
+        "total_defects": 1309,
+        "avg_defects_per_inspection": 1.2709
+      },
+      "5_15": {
+        "vehicle_count": 547,
+        "total_inspections": 1340,
+        "total_defects": 805,
+        "avg_defects_per_inspection": 0.6007
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 709,
+      "Diesel": 117,
+      "Elektriciteit": 39,
+      "LPG": 25,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.9433,
+    "avg_age_years": 13.01,
+    "defects_per_year": 0.072506,
+    "merk": "INFINITI"
+  },
+  {
+    "vehicle_count": 494548,
+    "total_inspections": 1249140,
+    "total_defects": 1182270,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 108798,
+        "total_inspections": 153945,
+        "total_defects": 63260,
+        "avg_defects_per_inspection": 0.4109
+      },
+      "8_12": {
+        "vehicle_count": 138228,
+        "total_inspections": 365145,
+        "total_defects": 257526,
+        "avg_defects_per_inspection": 0.7053
+      },
+      "13_20": {
+        "vehicle_count": 204668,
+        "total_inspections": 615690,
+        "total_defects": 697145,
+        "avg_defects_per_inspection": 1.1323
+      },
+      "5_15": {
+        "vehicle_count": 326305,
+        "total_inspections": 805116,
+        "total_defects": 625502,
+        "avg_defects_per_inspection": 0.7769
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 455828,
+      "Diesel": 34444,
+      "Elektriciteit": 27043,
+      "LPG": 1155,
+      "other": 916
+    },
+    "avg_defects_per_inspection": 0.9465,
+    "avg_age_years": 12.54,
+    "defects_per_year": 0.075478,
+    "merk": "FORD"
+  },
+  {
+    "vehicle_count": 257,
+    "total_inspections": 748,
+    "total_defects": 711,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 165,
+        "total_inspections": 482,
+        "total_defects": 432,
+        "avg_defects_per_inspection": 0.8963
+      },
+      "5_15": {
+        "vehicle_count": 48,
+        "total_inspections": 144,
+        "total_defects": 93,
+        "avg_defects_per_inspection": 0.6458
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 257,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.9505,
+    "avg_age_years": 18.32,
+    "defects_per_year": 0.051883,
+    "merk": "RIMOR S.P.A."
+  },
+  {
+    "vehicle_count": 14531,
+    "total_inspections": 36482,
+    "total_defects": 34736,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 2470,
+        "total_inspections": 3291,
+        "total_defects": 1753,
+        "avg_defects_per_inspection": 0.5327
+      },
+      "8_12": {
+        "vehicle_count": 4285,
+        "total_inspections": 10409,
+        "total_defects": 7192,
+        "avg_defects_per_inspection": 0.6909
+      },
+      "13_20": {
+        "vehicle_count": 5917,
+        "total_inspections": 17625,
+        "total_defects": 19127,
+        "avg_defects_per_inspection": 1.0852
+      },
+      "5_15": {
+        "vehicle_count": 8137,
+        "total_inspections": 18429,
+        "total_defects": 12894,
+        "avg_defects_per_inspection": 0.6997
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 12490,
+      "Diesel": 189,
+      "Elektriciteit": 1818,
+      "LPG": 8,
+      "other": 2
+    },
+    "avg_defects_per_inspection": 0.9521,
+    "avg_age_years": 13.51,
+    "defects_per_year": 0.070474,
+    "merk": "SMART"
+  },
+  {
+    "vehicle_count": 188789,
+    "total_inspections": 446264,
+    "total_defects": 426557,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 54861,
+        "total_inspections": 75928,
+        "total_defects": 30384,
+        "avg_defects_per_inspection": 0.4002
+      },
+      "8_12": {
+        "vehicle_count": 58326,
+        "total_inspections": 149952,
+        "total_defects": 95041,
+        "avg_defects_per_inspection": 0.6338
+      },
+      "13_20": {
+        "vehicle_count": 62442,
+        "total_inspections": 183324,
+        "total_defects": 236751,
+        "avg_defects_per_inspection": 1.2914
+      },
+      "5_15": {
+        "vehicle_count": 132684,
+        "total_inspections": 307439,
+        "total_defects": 224510,
+        "avg_defects_per_inspection": 0.7303
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 167795,
+      "Diesel": 18408,
+      "Elektriciteit": 6816,
+      "LPG": 906,
+      "other": 323
+    },
+    "avg_defects_per_inspection": 0.9558,
+    "avg_age_years": 11.39,
+    "defects_per_year": 0.083916,
+    "merk": "SEAT"
+  },
+  {
+    "vehicle_count": 212837,
+    "total_inspections": 525489,
+    "total_defects": 505431,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 52184,
+        "total_inspections": 73992,
+        "total_defects": 29452,
+        "avg_defects_per_inspection": 0.398
+      },
+      "8_12": {
+        "vehicle_count": 64568,
+        "total_inspections": 168512,
+        "total_defects": 109420,
+        "avg_defects_per_inspection": 0.6493
+      },
+      "13_20": {
+        "vehicle_count": 76828,
+        "total_inspections": 231331,
+        "total_defects": 290166,
+        "avg_defects_per_inspection": 1.2543
+      },
+      "5_15": {
+        "vehicle_count": 147480,
+        "total_inspections": 351641,
+        "total_defects": 263533,
+        "avg_defects_per_inspection": 0.7494
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 196308,
+      "Diesel": 5518,
+      "Elektriciteit": 12423,
+      "LPG": 589,
+      "other": 4
+    },
+    "avg_defects_per_inspection": 0.9618,
+    "avg_age_years": 12.24,
+    "defects_per_year": 0.078578,
+    "merk": "NISSAN"
+  },
+  {
+    "vehicle_count": 19937,
+    "total_inspections": 52305,
+    "total_defects": 50884,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 2555,
+        "total_inspections": 3531,
+        "total_defects": 1029,
+        "avg_defects_per_inspection": 0.2914
+      },
+      "8_12": {
+        "vehicle_count": 4606,
+        "total_inspections": 12168,
+        "total_defects": 7297,
+        "avg_defects_per_inspection": 0.5997
+      },
+      "13_20": {
+        "vehicle_count": 7893,
+        "total_inspections": 23345,
+        "total_defects": 23780,
+        "avg_defects_per_inspection": 1.0186
+      },
+      "5_15": {
+        "vehicle_count": 9433,
+        "total_inspections": 23314,
+        "total_defects": 14969,
+        "avg_defects_per_inspection": 0.6421
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 19651,
+      "Diesel": 233,
+      "Elektriciteit": 841,
+      "LPG": 1100,
+      "other": 1
+    },
+    "avg_defects_per_inspection": 0.9728,
+    "avg_age_years": 15.58,
+    "defects_per_year": 0.062439,
+    "merk": "SUBARU"
+  },
+  {
+    "vehicle_count": 252095,
+    "total_inspections": 614752,
+    "total_defects": 601193,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 68343,
+        "total_inspections": 90657,
+        "total_defects": 38576,
+        "avg_defects_per_inspection": 0.4255
+      },
+      "8_12": {
+        "vehicle_count": 61223,
+        "total_inspections": 160509,
+        "total_defects": 122078,
+        "avg_defects_per_inspection": 0.7606
+      },
+      "13_20": {
+        "vehicle_count": 107219,
+        "total_inspections": 324337,
+        "total_defects": 383028,
+        "avg_defects_per_inspection": 1.181
+      },
+      "5_15": {
+        "vehicle_count": 167338,
+        "total_inspections": 405745,
+        "total_defects": 331461,
+        "avg_defects_per_inspection": 0.8169
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 227633,
+      "Diesel": 2546,
+      "Elektriciteit": 38210,
+      "LPG": 966,
+      "other": 379
+    },
+    "avg_defects_per_inspection": 0.9779,
+    "avg_age_years": 11.67,
+    "defects_per_year": 0.083796,
+    "merk": "HYUNDAI"
+  },
+  {
+    "vehicle_count": 538735,
+    "total_inspections": 1349518,
+    "total_defects": 1330655,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 118094,
+        "total_inspections": 171109,
+        "total_defects": 69491,
+        "avg_defects_per_inspection": 0.4061
+      },
+      "8_12": {
+        "vehicle_count": 146467,
+        "total_inspections": 372323,
+        "total_defects": 252428,
+        "avg_defects_per_inspection": 0.678
+      },
+      "13_20": {
+        "vehicle_count": 202890,
+        "total_inspections": 607366,
+        "total_defects": 703456,
+        "avg_defects_per_inspection": 1.1582
+      },
+      "5_15": {
+        "vehicle_count": 335568,
+        "total_inspections": 794403,
+        "total_defects": 575867,
+        "avg_defects_per_inspection": 0.7249
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 502794,
+      "Diesel": 26206,
+      "Elektriciteit": 11590,
+      "LPG": 5883,
+      "other": 110
+    },
+    "avg_defects_per_inspection": 0.986,
+    "avg_age_years": 13.07,
+    "defects_per_year": 0.07544,
+    "merk": "OPEL"
+  },
+  {
+    "vehicle_count": 815,
+    "total_inspections": 2378,
+    "total_defects": 2346,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 650,
+        "total_inspections": 1903,
+        "total_defects": 1797,
+        "avg_defects_per_inspection": 0.9443
+      },
+      "5_15": {
+        "vehicle_count": 121,
+        "total_inspections": 362,
+        "total_defects": 257,
+        "avg_defects_per_inspection": 0.7099
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 815,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.9865,
+    "avg_age_years": 18.15,
+    "defects_per_year": 0.054353,
+    "merk": "TRIGANO"
+  },
+  {
+    "vehicle_count": 399,
+    "total_inspections": 1188,
+    "total_defects": 1175,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 295,
+        "total_inspections": 870,
+        "total_defects": 838,
+        "avg_defects_per_inspection": 0.9632
+      },
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 399,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.9891,
+    "avg_age_years": 19.05,
+    "defects_per_year": 0.051921,
+    "merk": "MC LOUIS SPA"
+  },
+  {
+    "vehicle_count": 63078,
+    "total_inspections": 170199,
+    "total_defects": 168695,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 6550,
+        "total_inspections": 9133,
+        "total_defects": 2758,
+        "avg_defects_per_inspection": 0.302
+      },
+      "8_12": {
+        "vehicle_count": 10445,
+        "total_inspections": 27345,
+        "total_defects": 13696,
+        "avg_defects_per_inspection": 0.5009
+      },
+      "13_20": {
+        "vehicle_count": 32128,
+        "total_inspections": 96143,
+        "total_defects": 98835,
+        "avg_defects_per_inspection": 1.028
+      },
+      "5_15": {
+        "vehicle_count": 28597,
+        "total_inspections": 73879,
+        "total_defects": 48233,
+        "avg_defects_per_inspection": 0.6529
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 61347,
+      "Diesel": 1319,
+      "Elektriciteit": 15103,
+      "LPG": 603,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 0.9912,
+    "avg_age_years": 16.09,
+    "defects_per_year": 0.061603,
+    "merk": "HONDA"
+  },
+  {
+    "vehicle_count": 234501,
+    "total_inspections": 618278,
+    "total_defects": 613416,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 41147,
+        "total_inspections": 56301,
+        "total_defects": 19987,
+        "avg_defects_per_inspection": 0.355
+      },
+      "8_12": {
+        "vehicle_count": 55581,
+        "total_inspections": 145882,
+        "total_defects": 93519,
+        "avg_defects_per_inspection": 0.6411
+      },
+      "13_20": {
+        "vehicle_count": 108692,
+        "total_inspections": 332705,
+        "total_defects": 377476,
+        "avg_defects_per_inspection": 1.1346
+      },
+      "5_15": {
+        "vehicle_count": 136054,
+        "total_inspections": 341248,
+        "total_defects": 257344,
+        "avg_defects_per_inspection": 0.7541
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 233432,
+      "Diesel": 562,
+      "Elektriciteit": 18703,
+      "LPG": 600,
+      "other": 4
+    },
+    "avg_defects_per_inspection": 0.9921,
+    "avg_age_years": 13.64,
+    "defects_per_year": 0.072735,
+    "merk": "SUZUKI"
+  },
+  {
+    "vehicle_count": 111375,
+    "total_inspections": 285583,
+    "total_defects": 285320,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 22396,
+        "total_inspections": 31519,
+        "total_defects": 12962,
+        "avg_defects_per_inspection": 0.4112
+      },
+      "8_12": {
+        "vehicle_count": 40333,
+        "total_inspections": 110285,
+        "total_defects": 81236,
+        "avg_defects_per_inspection": 0.7366
+      },
+      "13_20": {
+        "vehicle_count": 38025,
+        "total_inspections": 114995,
+        "total_defects": 144352,
+        "avg_defects_per_inspection": 1.2553
+      },
+      "5_15": {
+        "vehicle_count": 73141,
+        "total_inspections": 181239,
+        "total_defects": 133587,
+        "avg_defects_per_inspection": 0.7371
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 110075,
+      "Diesel": 922,
+      "Elektriciteit": 22853,
+      "LPG": 1560,
+      "other": 1
+    },
+    "avg_defects_per_inspection": 0.9991,
+    "avg_age_years": 12.68,
+    "defects_per_year": 0.078793,
+    "merk": "MITSUBISHI"
+  },
+  {
+    "vehicle_count": 143,
+    "total_inspections": 203,
+    "total_defects": 206,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 141,
+      "Diesel": 0,
+      "Elektriciteit": 1,
+      "LPG": 2,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.0148,
+    "avg_age_years": 43.16,
+    "defects_per_year": 0.023513,
+    "merk": "MATRA"
+  },
+  {
+    "vehicle_count": 506657,
+    "total_inspections": 1237454,
+    "total_defects": 1272764,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 127350,
+        "total_inspections": 185406,
+        "total_defects": 84646,
+        "avg_defects_per_inspection": 0.4565
+      },
+      "8_12": {
+        "vehicle_count": 177473,
+        "total_inspections": 461618,
+        "total_defects": 350893,
+        "avg_defects_per_inspection": 0.7601
+      },
+      "13_20": {
+        "vehicle_count": 162617,
+        "total_inspections": 484016,
+        "total_defects": 650669,
+        "avg_defects_per_inspection": 1.3443
+      },
+      "5_15": {
+        "vehicle_count": 364953,
+        "total_inspections": 867622,
+        "total_defects": 720857,
+        "avg_defects_per_inspection": 0.8308
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 439782,
+      "Diesel": 51707,
+      "Elektriciteit": 24449,
+      "LPG": 5060,
+      "other": 652
+    },
+    "avg_defects_per_inspection": 1.0285,
+    "avg_age_years": 11.71,
+    "defects_per_year": 0.087831,
+    "merk": "RENAULT"
+  },
+  {
+    "vehicle_count": 209,
+    "total_inspections": 549,
+    "total_defects": 566,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 30,
+        "total_inspections": 75,
+        "total_defects": 43,
+        "avg_defects_per_inspection": 0.5733
+      },
+      "8_12": {
+        "vehicle_count": 59,
+        "total_inspections": 167,
+        "total_defects": 114,
+        "avg_defects_per_inspection": 0.6826
+      },
+      "13_20": {
+        "vehicle_count": 97,
+        "total_inspections": 265,
+        "total_defects": 376,
+        "avg_defects_per_inspection": 1.4189
+      },
+      "5_15": {
+        "vehicle_count": 135,
+        "total_inspections": 369,
+        "total_defects": 343,
+        "avg_defects_per_inspection": 0.9295
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 209,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.031,
+    "avg_age_years": 11.12,
+    "defects_per_year": 0.092716,
+    "merk": "CONCORDE"
+  },
+  {
+    "vehicle_count": 35237,
+    "total_inspections": 88811,
+    "total_defects": 94715,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 4075,
+        "total_inspections": 6106,
+        "total_defects": 2549,
+        "avg_defects_per_inspection": 0.4175
+      },
+      "8_12": {
+        "vehicle_count": 8212,
+        "total_inspections": 21456,
+        "total_defects": 14422,
+        "avg_defects_per_inspection": 0.6722
+      },
+      "13_20": {
+        "vehicle_count": 16498,
+        "total_inspections": 47847,
+        "total_defects": 57436,
+        "avg_defects_per_inspection": 1.2004
+      },
+      "5_15": {
+        "vehicle_count": 21459,
+        "total_inspections": 54931,
+        "total_defects": 43764,
+        "avg_defects_per_inspection": 0.7967
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 30759,
+      "Diesel": 4386,
+      "Elektriciteit": 10,
+      "LPG": 230,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.0665,
+    "avg_age_years": 16.12,
+    "defects_per_year": 0.06616,
+    "merk": "ALFA ROMEO"
+  },
+  {
+    "vehicle_count": 518158,
+    "total_inspections": 1292121,
+    "total_defects": 1384075,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 118850,
+        "total_inspections": 165817,
+        "total_defects": 82398,
+        "avg_defects_per_inspection": 0.4969
+      },
+      "8_12": {
+        "vehicle_count": 142660,
+        "total_inspections": 372353,
+        "total_defects": 272795,
+        "avg_defects_per_inspection": 0.7326
+      },
+      "13_20": {
+        "vehicle_count": 201769,
+        "total_inspections": 605581,
+        "total_defects": 765154,
+        "avg_defects_per_inspection": 1.2635
+      },
+      "5_15": {
+        "vehicle_count": 332025,
+        "total_inspections": 802787,
+        "total_defects": 648249,
+        "avg_defects_per_inspection": 0.8075
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 475943,
+      "Diesel": 31496,
+      "Elektriciteit": 13116,
+      "LPG": 1838,
+      "other": 2
+    },
+    "avg_defects_per_inspection": 1.0712,
+    "avg_age_years": 12.61,
+    "defects_per_year": 0.084948,
+    "merk": "PEUGEOT"
+  },
+  {
+    "vehicle_count": 227,
+    "total_inspections": 673,
+    "total_defects": 734,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 209,
+        "total_inspections": 619,
+        "total_defects": 671,
+        "avg_defects_per_inspection": 1.084
+      },
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 227,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.0906,
+    "avg_age_years": 18.31,
+    "defects_per_year": 0.059563,
+    "merk": "JOINT"
+  },
+  {
+    "vehicle_count": 311409,
+    "total_inspections": 800857,
+    "total_defects": 874326,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 55243,
+        "total_inspections": 78233,
+        "total_defects": 37876,
+        "avg_defects_per_inspection": 0.4841
+      },
+      "8_12": {
+        "vehicle_count": 83450,
+        "total_inspections": 222970,
+        "total_defects": 176709,
+        "avg_defects_per_inspection": 0.7925
+      },
+      "13_20": {
+        "vehicle_count": 138240,
+        "total_inspections": 416015,
+        "total_defects": 529627,
+        "avg_defects_per_inspection": 1.2731
+      },
+      "5_15": {
+        "vehicle_count": 194981,
+        "total_inspections": 490559,
+        "total_defects": 431330,
+        "avg_defects_per_inspection": 0.8793
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 287423,
+      "Diesel": 20332,
+      "Elektriciteit": 4617,
+      "LPG": 2638,
+      "other": 43
+    },
+    "avg_defects_per_inspection": 1.0917,
+    "avg_age_years": 13.67,
+    "defects_per_year": 0.079861,
+    "merk": "CITROEN"
+  },
+  {
+    "vehicle_count": 258000,
+    "total_inspections": 697267,
+    "total_defects": 769717,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 29462,
+        "total_inspections": 39717,
+        "total_defects": 18689,
+        "avg_defects_per_inspection": 0.4706
+      },
+      "8_12": {
+        "vehicle_count": 71427,
+        "total_inspections": 191185,
+        "total_defects": 146878,
+        "avg_defects_per_inspection": 0.7683
+      },
+      "13_20": {
+        "vehicle_count": 131393,
+        "total_inspections": 397832,
+        "total_defects": 495290,
+        "avg_defects_per_inspection": 1.245
+      },
+      "5_15": {
+        "vehicle_count": 159864,
+        "total_inspections": 420831,
+        "total_defects": 380109,
+        "avg_defects_per_inspection": 0.9032
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 234649,
+      "Diesel": 18336,
+      "Elektriciteit": 10854,
+      "LPG": 690,
+      "other": 693
+    },
+    "avg_defects_per_inspection": 1.1039,
+    "avg_age_years": 13.95,
+    "defects_per_year": 0.079133,
+    "merk": "FIAT"
+  },
+  {
+    "vehicle_count": 17497,
+    "total_inspections": 36382,
+    "total_defects": 40178,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 6073,
+        "total_inspections": 8203,
+        "total_defects": 3417,
+        "avg_defects_per_inspection": 0.4166
+      },
+      "8_12": {
+        "vehicle_count": 3725,
+        "total_inspections": 9197,
+        "total_defects": 6446,
+        "avg_defects_per_inspection": 0.7009
+      },
+      "13_20": {
+        "vehicle_count": 3212,
+        "total_inspections": 9187,
+        "total_defects": 13525,
+        "avg_defects_per_inspection": 1.4722
+      },
+      "5_15": {
+        "vehicle_count": 9194,
+        "total_inspections": 19039,
+        "total_defects": 13564,
+        "avg_defects_per_inspection": 0.7124
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 16393,
+      "Diesel": 1036,
+      "Elektriciteit": 1544,
+      "LPG": 895,
+      "other": 40
+    },
+    "avg_defects_per_inspection": 1.1043,
+    "avg_age_years": 14.06,
+    "defects_per_year": 0.078542,
+    "merk": "JEEP"
+  },
+  {
+    "vehicle_count": 540,
+    "total_inspections": 1161,
+    "total_defects": 1303,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 59,
+        "total_inspections": 161,
+        "total_defects": 103,
+        "avg_defects_per_inspection": 0.6398
+      },
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 532,
+      "Diesel": 6,
+      "Elektriciteit": 0,
+      "LPG": 17,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.1223,
+    "avg_age_years": 30.11,
+    "defects_per_year": 0.037273,
+    "merk": "DAIMLER"
+  },
+  {
+    "vehicle_count": 6887,
+    "total_inspections": 19542,
+    "total_defects": 21989,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": {
+        "vehicle_count": 1125,
+        "total_inspections": 3243,
+        "total_defects": 2564,
+        "avg_defects_per_inspection": 0.7906
+      },
+      "13_20": {
+        "vehicle_count": 4392,
+        "total_inspections": 13181,
+        "total_defects": 14806,
+        "avg_defects_per_inspection": 1.1233
+      },
+      "5_15": {
+        "vehicle_count": 3059,
+        "total_inspections": 9036,
+        "total_defects": 7820,
+        "avg_defects_per_inspection": 0.8654
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 6570,
+      "Diesel": 302,
+      "Elektriciteit": 1,
+      "LPG": 146,
+      "other": 15
+    },
+    "avg_defects_per_inspection": 1.1252,
+    "avg_age_years": 17.91,
+    "defects_per_year": 0.062825,
+    "merk": "LANCIA"
+  },
+  {
+    "vehicle_count": 173,
+    "total_inspections": 506,
+    "total_defects": 584,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 123,
+        "total_inspections": 358,
+        "total_defects": 406,
+        "avg_defects_per_inspection": 1.1341
+      },
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 172,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.1542,
+    "avg_age_years": 18.92,
+    "defects_per_year": 0.061004,
+    "merk": "SEA"
+  },
+  {
+    "vehicle_count": 118,
+    "total_inspections": 286,
+    "total_defects": 331,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 31,
+        "total_inspections": 79,
+        "total_defects": 57,
+        "avg_defects_per_inspection": 0.7215
+      },
+      "8_12": null,
+      "13_20": null,
+      "5_15": {
+        "vehicle_count": 33,
+        "total_inspections": 87,
+        "total_defects": 74,
+        "avg_defects_per_inspection": 0.8506
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 115,
+      "Elektriciteit": 3,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.1573,
+    "avg_age_years": 11.74,
+    "defects_per_year": 0.098578,
+    "merk": "M.A.N."
+  },
+  {
+    "vehicle_count": 670,
+    "total_inspections": 1718,
+    "total_defects": 1990,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 279,
+        "total_inspections": 736,
+        "total_defects": 744,
+        "avg_defects_per_inspection": 1.0109
+      },
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 572,
+      "Diesel": 95,
+      "Elektriciteit": 0,
+      "LPG": 22,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.1583,
+    "avg_age_years": 21.65,
+    "defects_per_year": 0.053501,
+    "merk": "DAIMLERCHRYSLER AG"
+  },
+  {
+    "vehicle_count": 242,
+    "total_inspections": 328,
+    "total_defects": 382,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 228,
+      "Diesel": 12,
+      "Elektriciteit": 0,
+      "LPG": 13,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.1646,
+    "avg_age_years": 47.1,
+    "defects_per_year": 0.024726,
+    "merk": "DATSUN"
+  },
+  {
+    "vehicle_count": 36940,
+    "total_inspections": 111539,
+    "total_defects": 130221,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 29725,
+        "total_inspections": 90512,
+        "total_defects": 99867,
+        "avg_defects_per_inspection": 1.1034
+      },
+      "5_15": {
+        "vehicle_count": 3512,
+        "total_inspections": 10650,
+        "total_defects": 8981,
+        "avg_defects_per_inspection": 0.8433
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 36848,
+      "Diesel": 13,
+      "Elektriciteit": 4,
+      "LPG": 154,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.1675,
+    "avg_age_years": 18.73,
+    "defects_per_year": 0.062333,
+    "merk": "DAIHATSU"
+  },
+  {
+    "vehicle_count": 2163,
+    "total_inspections": 5928,
+    "total_defects": 7110,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": {
+        "vehicle_count": 47,
+        "total_inspections": 131,
+        "total_defects": 70,
+        "avg_defects_per_inspection": 0.5344
+      },
+      "13_20": {
+        "vehicle_count": 1101,
+        "total_inspections": 3045,
+        "total_defects": 2658,
+        "avg_defects_per_inspection": 0.8729
+      },
+      "5_15": {
+        "vehicle_count": 122,
+        "total_inspections": 340,
+        "total_defects": 147,
+        "avg_defects_per_inspection": 0.4324
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 2047,
+      "Diesel": 113,
+      "Elektriciteit": 0,
+      "LPG": 23,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.1994,
+    "avg_age_years": 20.41,
+    "defects_per_year": 0.058765,
+    "merk": "JAGUAR CARS"
+  },
+  {
+    "vehicle_count": 25568,
+    "total_inspections": 69518,
+    "total_defects": 85083,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 11668,
+        "total_inspections": 33915,
+        "total_defects": 34092,
+        "avg_defects_per_inspection": 1.0052
+      },
+      "5_15": {
+        "vehicle_count": 1831,
+        "total_inspections": 5302,
+        "total_defects": 3663,
+        "avg_defects_per_inspection": 0.6909
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 24560,
+      "Diesel": 939,
+      "Elektriciteit": 6,
+      "LPG": 1580,
+      "other": 474
+    },
+    "avg_defects_per_inspection": 1.2239,
+    "avg_age_years": 22.57,
+    "defects_per_year": 0.054227,
+    "merk": "SAAB"
+  },
+  {
+    "vehicle_count": 117,
+    "total_inspections": 248,
+    "total_defects": 309,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 108,
+      "Diesel": 5,
+      "Elektriciteit": 3,
+      "LPG": 51,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.246,
+    "avg_age_years": 27.46,
+    "defects_per_year": 0.045375,
+    "merk": "GMC"
+  },
+  {
+    "vehicle_count": 182,
+    "total_inspections": 317,
+    "total_defects": 402,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 181,
+      "Diesel": 0,
+      "Elektriciteit": 0,
+      "LPG": 35,
+      "other": 1
+    },
+    "avg_defects_per_inspection": 1.2681,
+    "avg_age_years": 40.13,
+    "defects_per_year": 0.0316,
+    "merk": "MERCURY"
+  },
+  {
+    "vehicle_count": 102,
+    "total_inspections": 152,
+    "total_defects": 201,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 102,
+      "Diesel": 0,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.3224,
+    "avg_age_years": 43.76,
+    "defects_per_year": 0.030219,
+    "merk": "AUTO BIANCHI"
+  },
+  {
+    "vehicle_count": 102,
+    "total_inspections": 208,
+    "total_defects": 276,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 42,
+        "total_inspections": 86,
+        "total_defects": 60,
+        "avg_defects_per_inspection": 0.6977
+      },
+      "8_12": null,
+      "13_20": null,
+      "5_15": {
+        "vehicle_count": 42,
+        "total_inspections": 87,
+        "total_defects": 80,
+        "avg_defects_per_inspection": 0.9195
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 90,
+      "Elektriciteit": 12,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.3269,
+    "avg_age_years": 9.38,
+    "defects_per_year": 0.141461,
+    "merk": "MAN"
+  },
+  {
+    "vehicle_count": 1501,
+    "total_inspections": 3231,
+    "total_defects": 4392,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 49,
+        "total_inspections": 71,
+        "total_defects": 33,
+        "avg_defects_per_inspection": 0.4648
+      },
+      "8_12": {
+        "vehicle_count": 138,
+        "total_inspections": 340,
+        "total_defects": 232,
+        "avg_defects_per_inspection": 0.6824
+      },
+      "13_20": {
+        "vehicle_count": 526,
+        "total_inspections": 1445,
+        "total_defects": 1927,
+        "avg_defects_per_inspection": 1.3336
+      },
+      "5_15": {
+        "vehicle_count": 274,
+        "total_inspections": 670,
+        "total_defects": 537,
+        "avg_defects_per_inspection": 0.8015
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 1477,
+      "Diesel": 15,
+      "Elektriciteit": 5,
+      "LPG": 254,
+      "other": 4
+    },
+    "avg_defects_per_inspection": 1.3593,
+    "avg_age_years": 27.64,
+    "defects_per_year": 0.049179,
+    "merk": "CADILLAC"
+  },
+  {
+    "vehicle_count": 1380,
+    "total_inspections": 3822,
+    "total_defects": 5231,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 1336,
+      "Diesel": 41,
+      "Elektriciteit": 2,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.3687,
+    "avg_age_years": 23.73,
+    "defects_per_year": 0.057678,
+    "merk": "MICRO COMPACT CAR SMART"
+  },
+  {
+    "vehicle_count": 805,
+    "total_inspections": 1287,
+    "total_defects": 1783,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 53,
+        "total_inspections": 152,
+        "total_defects": 153,
+        "avg_defects_per_inspection": 1.0066
+      },
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 800,
+      "Diesel": 1,
+      "Elektriciteit": 0,
+      "LPG": 108,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.3854,
+    "avg_age_years": 40.51,
+    "defects_per_year": 0.034199,
+    "merk": "PONTIAC"
+  },
+  {
+    "vehicle_count": 150,
+    "total_inspections": 403,
+    "total_defects": 572,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 148,
+      "Diesel": 0,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.4194,
+    "avg_age_years": 26.09,
+    "defects_per_year": 0.054404,
+    "merk": "MICRO COMPACT CAR"
+  },
+  {
+    "vehicle_count": 2512,
+    "total_inspections": 6061,
+    "total_defects": 8678,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 231,
+        "total_inspections": 657,
+        "total_defects": 875,
+        "avg_defects_per_inspection": 1.3318
+      },
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 2398,
+      "Diesel": 90,
+      "Elektriciteit": 3,
+      "LPG": 187,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.4318,
+    "avg_age_years": 29.15,
+    "defects_per_year": 0.049118,
+    "merk": "ROVER"
+  },
+  {
+    "vehicle_count": 1349,
+    "total_inspections": 1786,
+    "total_defects": 2571,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 1343,
+      "Diesel": 0,
+      "Elektriciteit": 2,
+      "LPG": 8,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.4395,
+    "avg_age_years": 48.26,
+    "defects_per_year": 0.029828,
+    "merk": "TRIUMPH"
+  },
+  {
+    "vehicle_count": 293,
+    "total_inspections": 412,
+    "total_defects": 595,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 277,
+      "Diesel": 10,
+      "Elektriciteit": 0,
+      "LPG": 115,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.4442,
+    "avg_age_years": 45.46,
+    "defects_per_year": 0.031769,
+    "merk": "OLDSMOBILE"
+  },
+  {
+    "vehicle_count": 115,
+    "total_inspections": 155,
+    "total_defects": 225,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 104,
+      "Diesel": 9,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.4516,
+    "avg_age_years": 42.31,
+    "defects_per_year": 0.034309,
+    "merk": "AUSTIN"
+  },
+  {
+    "vehicle_count": 113,
+    "total_inspections": 231,
+    "total_defects": 336,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 30,
+        "total_inspections": 81,
+        "total_defects": 140,
+        "avg_defects_per_inspection": 1.7284
+      },
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 96,
+      "Diesel": 17,
+      "Elektriciteit": 0,
+      "LPG": 8,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.4545,
+    "avg_age_years": 29.52,
+    "defects_per_year": 0.049272,
+    "merk": "VAUXHALL"
+  },
+  {
+    "vehicle_count": 46991,
+    "total_inspections": 135776,
+    "total_defects": 197527,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 102,
+        "total_inspections": 150,
+        "total_defects": 74,
+        "avg_defects_per_inspection": 0.4933
+      },
+      "8_12": {
+        "vehicle_count": 2322,
+        "total_inspections": 6737,
+        "total_defects": 6819,
+        "avg_defects_per_inspection": 1.0122
+      },
+      "13_20": {
+        "vehicle_count": 39408,
+        "total_inspections": 119930,
+        "total_defects": 177194,
+        "avg_defects_per_inspection": 1.4775
+      },
+      "5_15": {
+        "vehicle_count": 24694,
+        "total_inspections": 74849,
+        "total_defects": 96900,
+        "avg_defects_per_inspection": 1.2946
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 46009,
+      "Diesel": 791,
+      "Elektriciteit": 464,
+      "LPG": 10613,
+      "other": 3
+    },
+    "avg_defects_per_inspection": 1.4548,
+    "avg_age_years": 18.06,
+    "defects_per_year": 0.080554,
+    "merk": "CHEVROLET"
+  },
+  {
+    "vehicle_count": 321,
+    "total_inspections": 478,
+    "total_defects": 699,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 192,
+      "Diesel": 129,
+      "Elektriciteit": 0,
+      "LPG": 27,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.4623,
+    "avg_age_years": 39.83,
+    "defects_per_year": 0.036714,
+    "merk": "DAIMLER BENZ"
+  },
+  {
+    "vehicle_count": 197,
+    "total_inspections": 254,
+    "total_defects": 376,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 196,
+      "Diesel": 0,
+      "Elektriciteit": 1,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.4803,
+    "avg_age_years": 39.16,
+    "defects_per_year": 0.037801,
+    "merk": "TRABANT"
+  },
+  {
+    "vehicle_count": 521,
+    "total_inspections": 1271,
+    "total_defects": 1883,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 64,
+        "total_inspections": 106,
+        "total_defects": 69,
+        "avg_defects_per_inspection": 0.6509
+      },
+      "8_12": {
+        "vehicle_count": 135,
+        "total_inspections": 339,
+        "total_defects": 306,
+        "avg_defects_per_inspection": 0.9027
+      },
+      "13_20": {
+        "vehicle_count": 293,
+        "total_inspections": 764,
+        "total_defects": 1397,
+        "avg_defects_per_inspection": 1.8285
+      },
+      "5_15": {
+        "vehicle_count": 228,
+        "total_inspections": 534,
+        "total_defects": 512,
+        "avg_defects_per_inspection": 0.9588
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 341,
+      "Diesel": 176,
+      "Elektriciteit": 3,
+      "LPG": 22,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.4815,
+    "avg_age_years": 14.54,
+    "defects_per_year": 0.101891,
+    "merk": "SSANGYONG"
+  },
+  {
+    "vehicle_count": 2367,
+    "total_inspections": 3964,
+    "total_defects": 5928,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 2302,
+      "Diesel": 56,
+      "Elektriciteit": 1,
+      "LPG": 63,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.4955,
+    "avg_age_years": 35.55,
+    "defects_per_year": 0.042068,
+    "merk": "AUTO UNION"
+  },
+  {
+    "vehicle_count": 140,
+    "total_inspections": 381,
+    "total_defects": 578,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 140,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.5171,
+    "avg_age_years": 25.86,
+    "defects_per_year": 0.058666,
+    "merk": "DERCKS"
+  },
+  {
+    "vehicle_count": 614,
+    "total_inspections": 1215,
+    "total_defects": 1849,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 98,
+        "total_inspections": 258,
+        "total_defects": 399,
+        "avg_defects_per_inspection": 1.5465
+      },
+      "5_15": {
+        "vehicle_count": 37,
+        "total_inspections": 68,
+        "total_defects": 36,
+        "avg_defects_per_inspection": 0.5294
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 612,
+      "Diesel": 0,
+      "Elektriciteit": 4,
+      "LPG": 154,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.5218,
+    "avg_age_years": 32.77,
+    "defects_per_year": 0.046439,
+    "merk": "LINCOLN"
+  },
+  {
+    "vehicle_count": 2872,
+    "total_inspections": 7550,
+    "total_defects": 11874,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 60,
+        "total_inspections": 78,
+        "total_defects": 31,
+        "avg_defects_per_inspection": 0.3974
+      },
+      "8_12": {
+        "vehicle_count": 286,
+        "total_inspections": 703,
+        "total_defects": 614,
+        "avg_defects_per_inspection": 0.8734
+      },
+      "13_20": {
+        "vehicle_count": 2121,
+        "total_inspections": 6035,
+        "total_defects": 10061,
+        "avg_defects_per_inspection": 1.6671
+      },
+      "5_15": {
+        "vehicle_count": 736,
+        "total_inspections": 1885,
+        "total_defects": 2331,
+        "avg_defects_per_inspection": 1.2366
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 2791,
+      "Diesel": 63,
+      "Elektriciteit": 0,
+      "LPG": 319,
+      "other": 7
+    },
+    "avg_defects_per_inspection": 1.5727,
+    "avg_age_years": 19.01,
+    "defects_per_year": 0.08273,
+    "merk": "DODGE"
+  },
+  {
+    "vehicle_count": 386,
+    "total_inspections": 691,
+    "total_defects": 1091,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 53,
+        "total_inspections": 150,
+        "total_defects": 296,
+        "avg_defects_per_inspection": 1.9733
+      },
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 383,
+      "Diesel": 1,
+      "Elektriciteit": 0,
+      "LPG": 91,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.5789,
+    "avg_age_years": 37.47,
+    "defects_per_year": 0.042138,
+    "merk": "BUICK"
+  },
+  {
+    "vehicle_count": 178,
+    "total_inspections": 446,
+    "total_defects": 705,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 128,
+        "total_inspections": 328,
+        "total_defects": 498,
+        "avg_defects_per_inspection": 1.5183
+      },
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 170,
+      "Diesel": 7,
+      "Elektriciteit": 0,
+      "LPG": 31,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.5807,
+    "avg_age_years": 20.33,
+    "defects_per_year": 0.077752,
+    "merk": "HUMMER"
+  },
+  {
+    "vehicle_count": 744,
+    "total_inspections": 961,
+    "total_defects": 1531,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 675,
+      "Diesel": 66,
+      "Elektriciteit": 0,
+      "LPG": 17,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.5931,
+    "avg_age_years": 48.94,
+    "defects_per_year": 0.032552,
+    "merk": "DAF"
+  },
+  {
+    "vehicle_count": 6338,
+    "total_inspections": 17101,
+    "total_defects": 27305,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 138,
+        "total_inspections": 192,
+        "total_defects": 101,
+        "avg_defects_per_inspection": 0.526
+      },
+      "8_12": {
+        "vehicle_count": 283,
+        "total_inspections": 729,
+        "total_defects": 767,
+        "avg_defects_per_inspection": 1.0521
+      },
+      "13_20": {
+        "vehicle_count": 3779,
+        "total_inspections": 10731,
+        "total_defects": 17080,
+        "avg_defects_per_inspection": 1.5917
+      },
+      "5_15": {
+        "vehicle_count": 689,
+        "total_inspections": 1750,
+        "total_defects": 1988,
+        "avg_defects_per_inspection": 1.136
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 5950,
+      "Diesel": 370,
+      "Elektriciteit": 100,
+      "LPG": 378,
+      "other": 16
+    },
+    "avg_defects_per_inspection": 1.5967,
+    "avg_age_years": 19.88,
+    "defects_per_year": 0.080317,
+    "merk": "CHRYSLER"
+  },
+  {
+    "vehicle_count": 481,
+    "total_inspections": 1027,
+    "total_defects": 1690,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 88,
+        "total_inspections": 261,
+        "total_defects": 445,
+        "avg_defects_per_inspection": 1.705
+      },
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 453,
+      "Diesel": 17,
+      "Elektriciteit": 0,
+      "LPG": 281,
+      "other": 2
+    },
+    "avg_defects_per_inspection": 1.6456,
+    "avg_age_years": 32.54,
+    "defects_per_year": 0.050572,
+    "merk": "G.M.C."
+  },
+  {
+    "vehicle_count": 315,
+    "total_inspections": 582,
+    "total_defects": 1003,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 112,
+        "total_inspections": 259,
+        "total_defects": 517,
+        "avg_defects_per_inspection": 1.9961
+      },
+      "5_15": {
+        "vehicle_count": 56,
+        "total_inspections": 113,
+        "total_defects": 143,
+        "avg_defects_per_inspection": 1.2655
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 315,
+      "Diesel": 0,
+      "Elektriciteit": 0,
+      "LPG": 28,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.7234,
+    "avg_age_years": 27.03,
+    "defects_per_year": 0.063759,
+    "merk": "LADA"
+  },
+  {
+    "vehicle_count": 1040,
+    "total_inspections": 2698,
+    "total_defects": 4735,
+    "age_brackets": {
+      "4_7": {
+        "vehicle_count": 36,
+        "total_inspections": 90,
+        "total_defects": 94,
+        "avg_defects_per_inspection": 1.0444
+      },
+      "8_12": {
+        "vehicle_count": 127,
+        "total_inspections": 339,
+        "total_defects": 414,
+        "avg_defects_per_inspection": 1.2212
+      },
+      "13_20": {
+        "vehicle_count": 444,
+        "total_inspections": 1228,
+        "total_defects": 2217,
+        "avg_defects_per_inspection": 1.8054
+      },
+      "5_15": {
+        "vehicle_count": 272,
+        "total_inspections": 730,
+        "total_defects": 1018,
+        "avg_defects_per_inspection": 1.3945
+      }
+    },
+    "fuel_breakdown": {
+      "Benzine": 0,
+      "Diesel": 1032,
+      "Elektriciteit": 0,
+      "LPG": 0,
+      "other": 7
+    },
+    "avg_defects_per_inspection": 1.755,
+    "avg_age_years": 19.88,
+    "defects_per_year": 0.08828,
+    "merk": "IVECO"
+  },
+  {
+    "vehicle_count": 345,
+    "total_inspections": 767,
+    "total_defects": 1352,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 46,
+      "Diesel": 298,
+      "Elektriciteit": 0,
+      "LPG": 2,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.7627,
+    "avg_age_years": 30.29,
+    "defects_per_year": 0.058194,
+    "merk": "ALKO"
+  },
+  {
+    "vehicle_count": 166,
+    "total_inspections": 250,
+    "total_defects": 458,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": null,
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 103,
+      "Diesel": 60,
+      "Elektriciteit": 0,
+      "LPG": 24,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.832,
+    "avg_age_years": 45.91,
+    "defects_per_year": 0.039904,
+    "merk": "BEDFORD"
+  },
+  {
+    "vehicle_count": 3754,
+    "total_inspections": 11382,
+    "total_defects": 20906,
+    "age_brackets": {
+      "4_7": null,
+      "8_12": null,
+      "13_20": {
+        "vehicle_count": 71,
+        "total_inspections": 214,
+        "total_defects": 378,
+        "avg_defects_per_inspection": 1.7664
+      },
+      "5_15": null
+    },
+    "fuel_breakdown": {
+      "Benzine": 3750,
+      "Diesel": 0,
+      "Elektriciteit": 0,
+      "LPG": 21,
+      "other": 0
+    },
+    "avg_defects_per_inspection": 1.8368,
+    "avg_age_years": 22.12,
+    "defects_per_year": 0.083038,
+    "merk": "DAEWOO"
+  }
+]

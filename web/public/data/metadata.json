@@ -1,0 +1,35 @@
+{
+  "generated_at": "2025-12-02T19:00:32.883725",
+  "thresholds": {
+    "brand": 100,
+    "model": 50,
+    "age_bracket": 30
+  },
+  "age_brackets": {
+    "4_7": [
+      4,
+      7
+    ],
+    "8_12": [
+      8,
+      12
+    ],
+    "13_20": [
+      13,
+      20
+    ],
+    "5_15": [
+      5,
+      15
+    ]
+  },
+  "counts": {
+    "brands": 154,
+    "models": 2862,
+    "vehicles_processed": 9937737,
+    "total_inspections": 24713924,
+    "total_defects": 24446708
+  },
+  "source": "RDW Open Data",
+  "pipeline_stage": 2
+}

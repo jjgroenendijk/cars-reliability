@@ -1,83 +1,85 @@
 # Dutch Car Reliability Analysis
 
-[![Update Data](https://github.com/jjgroenendijk/cars-reliability/actions/workflows/update.yml/badge.svg)](https://github.com/jjgroenendijk/cars-reliability/actions/workflows/update.yml)
-
-**[View the Live Site](https://jjgroenendijk.nl/cars-reliability/)**
-
-Analyzing car reliability using Dutch APK (MOT) inspection data from RDW Open Data.
+Analyzing car reliability using Dutch APK inspection data from RDW Open Data.
 
 ## Overview
 
-This project calculates reliability metrics for car brands and models using official inspection data from [RDW Open Data](https://opendata.rdw.nl/). Unlike biased samples that only look at failed inspections, we analyze ALL inspection results to provide accurate pass/fail rates.
+This project calculates reliability metrics for car brands and models using official inspection data from [RDW Open Data](https://opendata.rdw.nl/). The website displays top 10 and bottom 10 rankings, with the ability to filter by vehicle age.
+
+## Features
+
+- **Top/Bottom 10 Rankings** - Most and least reliable brands and models
+- **Age-Bracket Analysis** - Compare reliability for cars 5-15 years old
+- **Sortable Tables** - Full brand and model data, filterable and sortable
+- **Live License Plate Lookup** - Real-time vehicle inspection history
+- **Weekly Updates** - Data refreshed automatically via GitHub Actions
+
+## Architecture
+
+The project uses a 3-stage pipeline:
+
+```text
+Stage 1: Data Download (Python)  → Fetch from RDW API
+Stage 2: Data Processing (Python) → Calculate statistics
+Stage 3: Website Build (Next.js)  → Deploy to GitHub Pages
+```
 
 ## Data Sources
 
 | Dataset | ID | Description |
 |---------|-----|-------------|
-| Meldingen Keuringsinstantie | `sgfe-77wx` | **Primary** - All APK inspection results (pass/fail) |
-| Gekentekende voertuigen | `m9d7-ebf2` | Vehicle registrations (make, model, dates) |
+| Meldingen Keuringsinstantie | `sgfe-77wx` | Inspection results (pass/fail) |
+| Gekentekende voertuigen | `m9d7-ebf2` | Vehicle registrations (make, model) |
 | Geconstateerde Gebreken | `a34c-vvps` | Defects found during inspections |
-| Gebreken | `hx2c-gt7k` | Reference table of defect types |
-| Brandstof | `8ys7-d773` | Fuel type and emissions data |
+| Gebreken | `hx2c-gt7k` | Defect type descriptions |
 
-## Reliability Metrics
+## Technology Stack
 
-1. **Pass Rate** - Percentage of inspections passed on first attempt
-2. **Average Defects per Inspection** - Mean number of defects found per vehicle
-
-## Project Structure
-
-```text
-cars/
-├── src/
-│   ├── download.py        # Unified data fetching script
-│   ├── download.py        # Data fetching (API client, streaming CSV)
-│   ├── process_data.py    # Metrics calculation
-│   ├── generate_site.py   # Template copying to site/
-│   └── templates/         # HTML/JS templates
-├── data/                   # Downloaded data (gitignored)
-├── site/                   # Generated website
-├── docs/                   # Documentation
-└── .github/workflows/
-    └── update.yml          # CI/CD workflow (per-dataset caching)
-```
-
-## Documentation
-
-See [docs/](docs/index.md) for detailed documentation:
-
-- [Architecture](docs/architecture.md) - System design and data flow
-- [Data Sources](docs/data-sources.md) - RDW datasets and API details
-- [Metrics](docs/metrics.md) - How reliability is measured
-- [Development](docs/development.md) - Local setup guide
+| Component | Technology |
+|-----------|------------|
+| Data Pipeline | Python 3.11+ |
+| Website | Next.js 16 |
+| Styling | Tailwind CSS 4.1 |
+| Hosting | GitHub Pages |
+| CI/CD | GitHub Actions |
 
 ## Local Development
 
+### Prerequisites
+
+- Python 3.11+
+- Node.js 22+
+
+### Setup
+
 ```bash
-# Create virtual environment
+# Clone repository
+git clone https://github.com/jjgroenendijk/cars-reliability.git
+cd cars-reliability
+
+# Python setup
 python -m venv .venv
 source .venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
 
-# Option 1: Fetch all data at once
-DATA_SAMPLE_PERCENT=1 python src/download.py --all
+# Node.js setup
+cd web && npm install
+```
 
-# Option 2: Fetch datasets individually (for parallel CI)
-DATA_SAMPLE_PERCENT=1 python src/download.py inspections
-DATA_SAMPLE_PERCENT=1 python src/download.py vehicles --kentekens-from data/inspections.csv
-DATA_SAMPLE_PERCENT=1 python src/download.py defects_found --kentekens-from data/inspections.csv
-python src/download.py defect_codes
+### Run Pipeline
 
-# Process and generate site
-python src/process_data.py
-python src/generate_site.py
+```bash
+# Stage 1: Download data
+python scripts/data_download.py
 
-# Preview
-cd site && python -m http.server 8000
+# Stage 2: Process data
+python scripts/data_process.py
+
+# Stage 3: Run website
+cp -r data/processed/* web/public/data/
+cd web && npm run dev
 ```
 
 ## License
 
-MIT
+Data from RDW Open Data is [CC0 (Public Domain)](https://creativecommons.org/publicdomain/zero/1.0/).

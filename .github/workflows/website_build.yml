@@ -1,0 +1,91 @@
+name: Stage 3 - Website Build & Deploy
+
+on:
+  workflow_run:
+    workflows: ["Stage 2 - Data Processing"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pipeline-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Calculate cache key (weekly rotation)
+        id: cache-key
+        run: |
+          WEEK=$(date +'%Y-W%V')
+          echo "week=$WEEK" >> $GITHUB_OUTPUT
+
+      - name: Restore processed data from cache
+        id: cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: data/processed
+          key: processed-data-v2-${{ steps.cache-key.outputs.week }}
+          restore-keys: |
+            processed-data-v2-
+
+      - name: Download processed data artifact (fallback)
+        if: steps.cache-restore.outputs.cache-hit != 'true' && github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v4
+        with:
+          name: processed-data
+          path: data/processed
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy data to web public directory
+        run: |
+          mkdir -p web/public/data
+          cp -r data/processed/* web/public/data/ || echo "No processed data found, continuing..."
+
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Build Next.js static site
+        working-directory: web
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/out
+
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

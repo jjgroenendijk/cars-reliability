@@ -1,0 +1,349 @@
+name: Stage 1 - Data Download
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Sunday midnight UTC - force refresh
+  workflow_dispatch:
+    inputs:
+      force_refresh:
+        description: 'Force data refresh (ignore cache)'
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  download-gekentekende-voertuigen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Calculate cache key
+        id: cache-key
+        run: |
+          WEEK=$(date +'%Y-W%V')
+          DAYS="${INSPECTION_DAYS_LIMIT:-all}"
+          echo "key=gekentekende_voertuigen-v2-$WEEK-days-$DAYS" >> $GITHUB_OUTPUT
+        env:
+          INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
+
+      - name: Cache dataset
+        id: cache
+        if: github.event.inputs.force_refresh != 'true' && github.event_name != 'schedule'
+        uses: actions/cache@v4
+        with:
+          path: data/raw/gekentekende_voertuigen.json
+          key: ${{ steps.cache-key.outputs.key }}
+
+      - name: Set up Python
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pip install -r requirements.txt
+
+      - name: Download dataset
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: python scripts/data_download.py --dataset gekentekende_voertuigen
+        env:
+          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
+          INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
+
+      - name: Verify download
+        run: |
+          if [ ! -f "data/raw/gekentekende_voertuigen.json" ]; then
+            echo "ERROR: Download failed - file not found"
+            exit 1
+          fi
+          SIZE=$(stat -c%s "data/raw/gekentekende_voertuigen.json")
+          echo "File size: $((SIZE / 1024 / 1024)) MB"
+          if [ "$SIZE" -lt 1000 ]; then
+            echo "ERROR: File too small, download may have failed"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: raw-gekentekende_voertuigen
+          path: data/raw/gekentekende_voertuigen.json
+          retention-days: 7
+
+  download-meldingen-keuringsinstantie:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Calculate cache key
+        id: cache-key
+        run: |
+          WEEK=$(date +'%Y-W%V')
+          DAYS="${INSPECTION_DAYS_LIMIT:-all}"
+          echo "key=meldingen_keuringsinstantie-v2-$WEEK-days-$DAYS" >> $GITHUB_OUTPUT
+        env:
+          INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
+
+      - name: Cache dataset
+        id: cache
+        if: github.event.inputs.force_refresh != 'true' && github.event_name != 'schedule'
+        uses: actions/cache@v4
+        with:
+          path: data/raw/meldingen_keuringsinstantie.json
+          key: ${{ steps.cache-key.outputs.key }}
+
+      - name: Set up Python
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pip install -r requirements.txt
+
+      - name: Download dataset
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: python scripts/data_download.py --dataset meldingen_keuringsinstantie
+        env:
+          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
+          INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
+
+      - name: Verify download
+        run: |
+          if [ ! -f "data/raw/meldingen_keuringsinstantie.json" ]; then
+            echo "ERROR: Download failed - file not found"
+            exit 1
+          fi
+          SIZE=$(stat -c%s "data/raw/meldingen_keuringsinstantie.json")
+          echo "File size: $((SIZE / 1024 / 1024)) MB"
+          if [ "$SIZE" -lt 1000 ]; then
+            echo "ERROR: File too small, download may have failed"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: raw-meldingen_keuringsinstantie
+          path: data/raw/meldingen_keuringsinstantie.json
+          retention-days: 7
+
+  download-geconstateerde-gebreken:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Calculate cache key
+        id: cache-key
+        run: |
+          WEEK=$(date +'%Y-W%V')
+          DAYS="${INSPECTION_DAYS_LIMIT:-all}"
+          echo "key=geconstateerde_gebreken-v2-$WEEK-days-$DAYS" >> $GITHUB_OUTPUT
+        env:
+          INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
+
+      - name: Cache dataset
+        id: cache
+        if: github.event.inputs.force_refresh != 'true' && github.event_name != 'schedule'
+        uses: actions/cache@v4
+        with:
+          path: data/raw/geconstateerde_gebreken.json
+          key: ${{ steps.cache-key.outputs.key }}
+
+      - name: Set up Python
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pip install -r requirements.txt
+
+      - name: Download dataset
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: python scripts/data_download.py --dataset geconstateerde_gebreken
+        env:
+          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
+          INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
+
+      - name: Verify download
+        run: |
+          if [ ! -f "data/raw/geconstateerde_gebreken.json" ]; then
+            echo "ERROR: Download failed - file not found"
+            exit 1
+          fi
+          SIZE=$(stat -c%s "data/raw/geconstateerde_gebreken.json")
+          echo "File size: $((SIZE / 1024 / 1024)) MB"
+          if [ "$SIZE" -lt 1000 ]; then
+            echo "ERROR: File too small, download may have failed"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: raw-geconstateerde_gebreken
+          path: data/raw/geconstateerde_gebreken.json
+          retention-days: 7
+
+  download-gebreken:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Calculate cache key
+        id: cache-key
+        run: |
+          WEEK=$(date +'%Y-W%V')
+          echo "key=gebreken-v2-$WEEK" >> $GITHUB_OUTPUT
+
+      - name: Cache dataset
+        id: cache
+        if: github.event.inputs.force_refresh != 'true' && github.event_name != 'schedule'
+        uses: actions/cache@v4
+        with:
+          path: data/raw/gebreken.json
+          key: ${{ steps.cache-key.outputs.key }}
+
+      - name: Set up Python
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pip install -r requirements.txt
+
+      - name: Download dataset
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: python scripts/data_download.py --dataset gebreken
+        env:
+          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
+
+      - name: Verify download
+        run: |
+          if [ ! -f "data/raw/gebreken.json" ]; then
+            echo "ERROR: Download failed - file not found"
+            exit 1
+          fi
+          SIZE=$(stat -c%s "data/raw/gebreken.json")
+          echo "File size: $((SIZE / 1024)) KB"
+          if [ "$SIZE" -lt 100 ]; then
+            echo "ERROR: File too small, download may have failed"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: raw-gebreken
+          path: data/raw/gebreken.json
+          retention-days: 7
+
+  download-brandstof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Calculate cache key
+        id: cache-key
+        run: |
+          WEEK=$(date +'%Y-W%V')
+          echo "key=brandstof-v2-$WEEK" >> $GITHUB_OUTPUT
+
+      - name: Cache dataset
+        id: cache
+        if: github.event.inputs.force_refresh != 'true' && github.event_name != 'schedule'
+        uses: actions/cache@v4
+        with:
+          path: data/raw/brandstof.json
+          key: ${{ steps.cache-key.outputs.key }}
+
+      - name: Set up Python
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pip install -r requirements.txt
+
+      - name: Download dataset
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: python scripts/data_download.py --dataset brandstof
+        env:
+          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
+
+      - name: Verify download
+        run: |
+          if [ ! -f "data/raw/brandstof.json" ]; then
+            echo "ERROR: Download failed - file not found"
+            exit 1
+          fi
+          SIZE=$(stat -c%s "data/raw/brandstof.json")
+          echo "File size: $((SIZE / 1024 / 1024)) MB"
+          if [ "$SIZE" -lt 1000 ]; then
+            echo "ERROR: File too small, download may have failed"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: raw-brandstof
+          path: data/raw/brandstof.json
+          retention-days: 7
+
+  merge-artifacts:
+    runs-on: ubuntu-latest
+    needs:
+      - download-gekentekende-voertuigen
+      - download-meldingen-keuringsinstantie
+      - download-geconstateerde-gebreken
+      - download-gebreken
+      - download-brandstof
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: raw-*
+          path: data/raw
+          merge-multiple: true
+
+      - name: Verify all files
+        run: |
+          echo "Downloaded files:"
+          ls -lh data/raw/
+          for f in gekentekende_voertuigen meldingen_keuringsinstantie geconstateerde_gebreken gebreken brandstof; do
+            if [ ! -f "data/raw/${f}.json" ]; then
+              echo "ERROR: Missing ${f}.json"
+              exit 1
+            fi
+          done
+          echo "All datasets present"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: raw-data
+          path: data/raw
+          retention-days: 7
