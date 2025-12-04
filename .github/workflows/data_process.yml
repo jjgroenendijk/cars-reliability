@@ -68,7 +68,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: data/processed
-          key: processed-data-v2-${{ steps.cache-key.outputs.week }}
+          key: processed-data-v3-${{ steps.cache-key.outputs.week }}
 
       - name: Upload processed data artifact
         uses: actions/upload-artifact@v4
