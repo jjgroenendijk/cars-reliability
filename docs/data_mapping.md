@@ -14,7 +14,7 @@ All field names from RDW datasets are preserved as-is throughout the pipeline. W
 
 Date filtering: when `INSPECTION_DAYS_LIMIT` is set, Stage 1 adds `meld_datum_door_keuringsinstantie >= <YYYYMMDD>` to both `sgfe-77wx` and `a34c-vvps` queries.
 
-Current raw snapshot: `data/raw/meldingen_keuringsinstantie.json` and `data/raw/geconstateerde_gebreken.json` were downloaded in aggregated form and only contain per-`kenteken` counts. They lack inspection dates and defect identifiers and must be re-downloaded with the full fields below before Stage 2 can be rerun.
+Current raw snapshot: `data/raw/*` refreshed on 2025-12-10 with `INSPECTION_DAYS_LIMIT=30` (past 30 days). Includes 10,661,997 vehicles, 701,592 inspections, 716,015 defect rows, 1,005 defect reference rows, and 16,598,354 fuel rows. All columns listed below are present in the raw JSON. Full multi-year history is still not downloaded.
 
 ### Gekentekende Voertuigen (`m9d7-ebf2`)
 
@@ -125,7 +125,7 @@ Full column list (RDW metadata, 2025-12-10):
 
 ### Meldingen Keuringsinstantie (`sgfe-77wx`)
 
-APK inspection reports (one row per inspection). Used to compute vehicle age at inspection date for age buckets. The dataset does not expose a `herstel_indicator`; a reliable re-inspection flag still needs to be identified. Current raw snapshot only includes `kenteken` and `inspection_count`.
+APK inspection reports (one row per inspection). Used to compute vehicle age at inspection date for age buckets. The dataset does not expose a `herstel_indicator`; a reliable re-inspection flag still needs to be identified. Current raw snapshot contains per-inspection rows (date, time, type, expiry) for a small sample.
 
 Recommended Stage 1 query: `$select=kenteken,meld_datum_door_keuringsinstantie,meld_tijd_door_keuringsinstantie,soort_melding_ki_omschrijving,soort_erkenning_keuringsinstantie,soort_erkenning_omschrijving,vervaldatum_keuring&$order=kenteken`
 
@@ -147,7 +147,7 @@ Full column list (RDW metadata, 2025-12-10):
 
 ### Geconstateerde Gebreken (`a34c-vvps`)
 
-Detected defects during inspections (multiple rows possible per inspection). Stage 2 aggregates `aantal_gebreken_geconstateerd` per `(kenteken, meld_datum_door_keuringsinstantie)` and defaults non-numeric values to `1`. Severity weighting from `hx2c-gt7k` is not applied yet (all defects weight 1.0). Current raw snapshot only includes `kenteken` and aggregated `defect_count`.
+Detected defects during inspections (multiple rows possible per inspection). Stage 2 aggregates `aantal_gebreken_geconstateerd` per `(kenteken, meld_datum_door_keuringsinstantie, meld_tijd_door_keuringsinstantie)`; non-numeric values default to `1`. Severity weighting from `hx2c-gt7k` is still heuristic (letters in `gebrek_identificatie` / `gebrek_artikel_nummer`). Current raw snapshot contains per-inspection rows for a small sample; full history still needs to be downloaded.
 
 Recommended Stage 1 query: `$select=kenteken,meld_datum_door_keuringsinstantie,meld_tijd_door_keuringsinstantie,gebrek_identificatie,aantal_gebreken_geconstateerd,soort_erkenning_keuringsinstantie,soort_erkenning_omschrijving&$order=kenteken`
 

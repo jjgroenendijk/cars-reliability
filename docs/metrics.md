@@ -134,7 +134,8 @@ Records below these thresholds are excluded from rankings and tables.
 | Filter | Value | Reason |
 |--------|-------|--------|
 | Vehicle type | `voertuigsoort='Personenauto'` | Exclude trucks, motorcycles, trailers |
-| Inspection type | Exclude re-tests (`herstel_indicator` not N/NEE) | Only count initial inspections, not repairs/re-inspections |
+| Inspection type | `soort_melding_ki_omschrijving='periodieke controle'` | Avoid tachograph in/out events |
+| Re-tests | Keep earliest `meld_tijd_door_keuringsinstantie` per vehicle/day | Drop likely same-day re-tests (no explicit RDW flag available) |
 | Inspection status | Exclude "Vervallen", "Niet verschenen" | Only count actual completed inspections |
 
 ### Defect Severity Weighting
@@ -146,6 +147,8 @@ Defects are weighted by severity using the European PTI framework:
 | Minor (Licht) | 1.0 | Defect code ends with 'L' or contains 'LICHT' |
 | Major (Hoofdgebrek) | 3.0 | Defect code ends with 'H' or contains 'HOOFD' |
 | Dangerous (Gevaarlijk) | 10.0 | Defect code ends with 'G' or contains 'GEVAAR' |
+
+Note: RDW does not publish a severity flag in `a34c-vvps` or `hx2c-gt7k`. The current implementation infers severity heuristically from `gebrek_identificatie` or `gebrek_artikel_nummer`; we need to replace this with the official mapping once RDW confirms the schema.
 
 This ensures that a dangerous brake failure counts more heavily than a minor cosmetic issue.
 

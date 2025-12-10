@@ -17,11 +17,22 @@
 
 - Next.js 16
 - Tailwind CSS 4.1
-- Python 3.11+
+- Python 3.11+ (managed via uv)
 - Node.js 22+
+- uv for Python dependency management
 - `.env` stores the RDW app token; never commit it.
 
 This file must always mention which frameworks and versions are in use.
+
+### Python Environment Management
+
+- Use `uv` for all Python dependency management (replaces pip/venv).
+- Python project configuration is in `scripts/` directory (pyproject.toml, .python-version, uv.lock).
+- Run Python scripts with `cd scripts && uv run python script_name.py` or activate the environment.
+- Install dependencies with `cd scripts && uv sync` (creates scripts/.venv/ automatically).
+- Add dependencies with `cd scripts && uv add package_name`.
+- Add dev dependencies with `cd scripts && uv add --dev package_name`.
+- The lockfile `scripts/uv.lock` is committed for reproducible builds.
 
 ## Code Rules
 
@@ -38,8 +49,8 @@ This file must always mention which frameworks and versions are in use.
 - Mock data is not allowed; do not invent sample data—use real RDW data or explicitly request it.
 - Logging: keep logs minimal; do not print date/time stamps.
 - Python typing: always add type hints and docstrings.
-- Python env: activate `venv/` via `source venv/bin/activate` before Python work.
-- Python formatting: run `ruff format` (with venv active) before commit; hook + CI enforce it.
+- Python env: managed automatically by uv in `scripts/` directory; use `cd scripts && uv run` or activate via `source scripts/.venv/bin/activate`.
+- Python formatting: run `cd scripts && uv run ruff format` before commit; hook + CI enforce it.
 - TypeScript: strict mode, no `any`, no `console.log` in production.
 - No emojis anywhere in code, UI, or docs.
 - No bold formatting, unless absolutely necessary.

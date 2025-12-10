@@ -45,20 +45,25 @@ jobs:
           path: data/raw/gekentekende_voertuigen.json
           key: ${{ steps.cache-key.outputs.key }}
 
+      - name: Install uv
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "scripts/uv.lock"
+
       - name: Set up Python
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
+        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install -r requirements.txt
+        run: cd scripts && uv sync --frozen
 
       - name: Download dataset
         if: steps.cache.outputs.cache-hit != 'true'
-        run: python scripts/data_download.py --dataset gekentekende_voertuigen
+        run: cd scripts && uv run python data_download.py --dataset gekentekende_voertuigen
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
@@ -105,20 +110,25 @@ jobs:
           path: data/raw/meldingen_keuringsinstantie.json
           key: ${{ steps.cache-key.outputs.key }}
 
+      - name: Install uv
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "scripts/uv.lock"
+
       - name: Set up Python
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
+        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install -r requirements.txt
+        run: cd scripts && uv sync --frozen
 
       - name: Download dataset
         if: steps.cache.outputs.cache-hit != 'true'
-        run: python scripts/data_download.py --dataset meldingen_keuringsinstantie
+        run: cd scripts && uv run python data_download.py --dataset meldingen_keuringsinstantie
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
@@ -165,20 +175,25 @@ jobs:
           path: data/raw/geconstateerde_gebreken.json
           key: ${{ steps.cache-key.outputs.key }}
 
+      - name: Install uv
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "scripts/uv.lock"
+
       - name: Set up Python
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
+        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install -r requirements.txt
+        run: cd scripts && uv sync --frozen
 
       - name: Download dataset
         if: steps.cache.outputs.cache-hit != 'true'
-        run: python scripts/data_download.py --dataset geconstateerde_gebreken
+        run: cd scripts && uv run python data_download.py --dataset geconstateerde_gebreken
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
           INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
@@ -222,20 +237,25 @@ jobs:
           path: data/raw/gebreken.json
           key: ${{ steps.cache-key.outputs.key }}
 
+      - name: Install uv
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "scripts/uv.lock"
+
       - name: Set up Python
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
+        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install -r requirements.txt
+        run: cd scripts && uv sync --frozen
 
       - name: Download dataset
         if: steps.cache.outputs.cache-hit != 'true'
-        run: python scripts/data_download.py --dataset gebreken
+        run: cd scripts && uv run python data_download.py --dataset gebreken
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
 
@@ -278,20 +298,25 @@ jobs:
           path: data/raw/brandstof.json
           key: ${{ steps.cache-key.outputs.key }}
 
+      - name: Install uv
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "scripts/uv.lock"
+
       - name: Set up Python
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
+        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install -r requirements.txt
+        run: cd scripts && uv sync --frozen
 
       - name: Download dataset
         if: steps.cache.outputs.cache-hit != 'true'
-        run: python scripts/data_download.py --dataset brandstof
+        run: cd scripts && uv run python data_download.py --dataset brandstof
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
 

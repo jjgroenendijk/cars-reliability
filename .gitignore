@@ -9,6 +9,9 @@ env/
 .venv/
 ENV/
 
+# uv lockfile (tracked for reproducible builds)
+# uv.lock is intentionally tracked in git
+
 # Data files (too large for git)
 data/*.csv
 data/*.json
