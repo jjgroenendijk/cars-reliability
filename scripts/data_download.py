@@ -84,15 +84,13 @@ def datasets_build() -> dict[str, dict[str, Any]]:
         },
         "meldingen_keuringsinstantie": {
             "id": "sgfe-77wx",
-            "select": "kenteken,count(kenteken) as inspection_count",
-            "group": "kenteken",
+            "select": "kenteken,meld_datum_door_keuringsinstantie,meld_tijd_door_keuringsinstantie,soort_melding_ki_omschrijving,soort_erkenning_keuringsinstantie,soort_erkenning_omschrijving,vervaldatum_keuring",
             "order": "kenteken",
             "parallel_pages": True,
         },
         "geconstateerde_gebreken": {
             "id": "a34c-vvps",
-            "select": "kenteken,count(kenteken) as defect_count",
-            "group": "kenteken",
+            "select": "kenteken,meld_datum_door_keuringsinstantie,meld_tijd_door_keuringsinstantie,gebrek_identificatie,aantal_gebreken_geconstateerd,soort_erkenning_keuringsinstantie,soort_erkenning_omschrijving",
             "order": "kenteken",
             "parallel_pages": True,
         },
@@ -278,8 +276,8 @@ def main() -> None:
     total_rows = 0
     row_counts: list[tuple[str, int, int]] = []
     for name, config in datasets.items():
-        # For grouped queries, count distinct values
-        group_field = config.get("group") if config.get("group") else None
+        # For grouped queries, count distinct values; otherwise count all rows
+        group_field = config.get("group")
         count = row_count_get(session, config["id"], config.get("filter"), group_field)
         pages = math.ceil(count / config.get("page_size", PAGE_SIZE))
         row_counts.append((name, count, pages))

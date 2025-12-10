@@ -1,6 +1,6 @@
 # Reliability Metrics
 
-> **Last Updated:** 2025-12-03
+> **Last Updated:** 2025-12-10
 
 ## Overview
 
@@ -10,31 +10,46 @@ This document describes how reliability metrics are calculated from RDW APK insp
 
 ## Primary Metrics
 
-### Defects per Year (Age-Normalized) - Primary Ranking Metric
+### Defects per Vehicle-Year - Primary Ranking Metric
 
-The main reliability indicator used for rankings. This metric accounts for vehicle age, ensuring fair comparison between brands with different age profiles.
+The main reliability indicator used for rankings. This metric normalizes defects by the actual time vehicles were under inspection, avoiding cadence bias from varying inspection frequencies.
 
 **Formula:**
 
 ```text
-defects_per_year = avg_defects_per_inspection / avg_age_years
+defects_per_vehicle_year = total_defects / total_vehicle_years
+
+where:
+  vehicle_years = sum of inspection_coverage_years for each vehicle
+
+inspection_coverage_years = max((vervaldatum_keuring - meld_datum_door_keuringsinstantie)/365.25, 0.25)
+- fallback: 1.0 year if vervaldatum_keuring is missing or invalid
+- inspections are deduped to the earliest meld_tijd_door_keuringsinstantie per vehicle/day to avoid counting re-tests
+- only `periodieke controle` records are included (tachograph in/out events are excluded)
 ```
+
+**Why Vehicle-Years Instead of Average Age:**
+
+The previous formula `defects_per_year = avg_defects_per_inspection / avg_age_years` created cadence bias:
+- APK inspections occur at different frequencies by age (first at 4 years, then biennial until 8, then annual)
+- Brands with newer fleets appeared less reliable because the denominator (avg_age) was smaller
+- Vehicle-years accounts for actual inspection opportunity, not just calendar age
 
 **Interpretation:**
 
-- Lower values = better age-adjusted reliability
-- Allows fair comparison between brands with different age profiles
-- A brand with mostly new cars may appear reliable but actually age poorly
+- Lower values = better reliability per year of service
+- Accounts for inspection cadence differences across vehicle ages
+- Fair comparison between brands with different age profiles and inspection histories
 - This is the primary metric used for ranking brands and models
 
 **Example:**
 
-| Brand | Avg Defects/Insp | Avg Age | Defects/Year |
-|-------|------------------|---------|--------------|
-| Toyota | 0.30 | 12 years | 0.025 |
-| Tesla | 0.15 | 3 years | 0.050 |
+| Brand | Total Defects | Vehicle-Years | Defects/Vehicle-Year |
+|-------|---------------|---------------|----------------------|
+| Toyota | 15,000 | 60,000 | 0.250 |
+| Tesla | 4,500 | 12,000 | 0.375 |
 
-Despite lower absolute defects, Tesla ages worse in this example. Using defects per year as the ranking metric prevents luxury brands with younger fleets from appearing artificially reliable.
+Toyota shows better reliability normalized by actual inspection time, even though both brands may have similar avg_defects_per_inspection.
 
 ---
 
@@ -119,6 +134,30 @@ Records below these thresholds are excluded from rankings and tables.
 | Filter | Value | Reason |
 |--------|-------|--------|
 | Vehicle type | `voertuigsoort='Personenauto'` | Exclude trucks, motorcycles, trailers |
+| Inspection type | Exclude re-tests (`herstel_indicator` not N/NEE) | Only count initial inspections, not repairs/re-inspections |
+| Inspection status | Exclude "Vervallen", "Niet verschenen" | Only count actual completed inspections |
+
+### Defect Severity Weighting
+
+Defects are weighted by severity using the European PTI framework:
+
+| Severity Level | Weight | Detection Method |
+|----------------|--------|------------------|
+| Minor (Licht) | 1.0 | Defect code ends with 'L' or contains 'LICHT' |
+| Major (Hoofdgebrek) | 3.0 | Defect code ends with 'H' or contains 'HOOFD' |
+| Dangerous (Gevaarlijk) | 10.0 | Defect code ends with 'G' or contains 'GEVAAR' |
+
+This ensures that a dangerous brake failure counts more heavily than a minor cosmetic issue.
+
+### Data Sanity Checks
+
+The following inspections are filtered out before analysis:
+
+- Vehicle age < 0 or > 100 years
+- Inspection date before vehicle registration date
+- Invalid or missing dates
+- Non-`periodieke controle` inspection records (tachograph in/out events)
+- Duplicate inspections on the same vehicle/day after the earliest meld_tijd (treated as re-tests)
 
 ### Excluded Data
 
@@ -126,6 +165,7 @@ Records below these thresholds are excluded from rankings and tables.
 - Vehicles with no inspection records
 - Records with missing required fields
 - Brands/models below sample size thresholds
+- Inspections failing sanity checks
 
 ---
 
@@ -133,15 +173,15 @@ Records below these thresholds are excluded from rankings and tables.
 
 ### Top 10 Most Reliable
 
-Sorted by `defects_per_year` ascending (lowest = best).
+Sorted by `defects_per_vehicle_year` ascending (lowest = best).
 
-### Top 10 Least Reliable  
+### Top 10 Least Reliable
 
-Sorted by `defects_per_year` descending (highest = worst).
+Sorted by `defects_per_vehicle_year` descending (highest = worst).
 
 ### Tie-Breaking
 
-When two brands/models have identical `defects_per_year`:
+When two brands/models have identical `defects_per_vehicle_year`:
 
 1. Higher `vehicle_count` ranks first (more confident data)
 
