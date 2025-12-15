@@ -134,3 +134,27 @@ Files modified:
 - `.github/workflows/data_download.yml`: Changed concurrency group from `pipeline-` to `stage1-`
 - `.github/workflows/data_process.yml`: Changed concurrency group from `pipeline-` to `stage2-`
 - `.github/workflows/website_build.yml`: Changed concurrency group from `pipeline-` to `stage3-`
+
+## Continued Investigation (Second Pass)
+
+After commit `e63a4ce` (concurrency fix), Stage 2 #38 and #39 still failed with same error.
+
+Analysis:
+- Stage 2 #38: triggered by commit `66a03c9`, failed after 1m 30s
+- Stage 2 #39: triggered by commit `e63a4ce`, failed after 1m 31s
+- Both showed "The operation was canceled" error
+- The runs did NOT overlap (8+ minute gap between them)
+
+The concurrency group fix didn't resolve the issue. Additional investigation:
+
+1. Stage 1 artifacts are present (raw-data: 340 MB)
+2. The download-artifact action requires proper permissions for cross-workflow access
+
+Hypothesis: The workflow needs explicit `actions: read` permission to download artifacts from a different workflow run.
+
+Fix attempt: Added explicit permissions to data_process.yml:
+```yaml
+permissions:
+  contents: read
+  actions: read
+```

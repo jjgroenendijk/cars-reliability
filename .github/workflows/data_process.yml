@@ -7,6 +7,10 @@ on:
     types:
       - completed
 
+permissions:
+  contents: read
+  actions: read
+
 concurrency:
   group: stage2-${{ github.event.workflow_run.head_branch || github.ref }}
   cancel-in-progress: true
