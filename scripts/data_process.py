@@ -25,6 +25,7 @@ from inspection_prepare import (
 )
 from stats_calculate import (
     AGE_BRACKETS,
+    defect_type_stats_build,
     metadata_create,
     rankings_generate,
     stats_filter_brands,
@@ -44,11 +45,7 @@ def gebreken_index_create(
     gebreken_data: list[dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
     """Create an index of defect classifications by gebrek_identificatie."""
-    return {
-        g["gebrek_identificatie"]: g
-        for g in gebreken_data
-        if g.get("gebrek_identificatie")
-    }
+    return {g["gebrek_identificatie"]: g for g in gebreken_data if g.get("gebrek_identificatie")}
 
 
 def fuel_index_create(fuel_data: list[dict[str, Any]]) -> dict[str, set[str]]:
@@ -137,9 +134,7 @@ def vehicle_summaries_build(
             summaries[kenteken] = summary
 
         summary["total_inspections"] += 1
-        defects = defects_by_inspection.get(
-            (kenteken, inspection_date_str, inspection_time), 0
-        )
+        defects = defects_by_inspection.get((kenteken, inspection_date_str, inspection_time), 0)
         summary["total_defects"] += defects
 
         if vervaldatum_date and vervaldatum_date >= inspection_date:
@@ -193,6 +188,9 @@ def stats_aggregate(
             "vehicle_years": 0.0,
             "age_brackets": bracket_empty(),
             "fuel_breakdown": fuel_breakdown_empty(),
+            # For std deviation calculation (Welford's online algorithm)
+            "defects_per_insp_sq_sum": 0.0,  # Sum of squared per-vehicle rates
+            "defects_per_year_sq_sum": 0.0,  # Sum of squared per-vehicle rates
         }
 
     brand_data: dict[str, dict[str, Any]] = defaultdict(new_stats)
@@ -215,6 +213,12 @@ def stats_aggregate(
         elif vehicle_years <= 0:
             vehicle_years = 1.0
 
+        # Calculate per-vehicle rates for std deviation
+        v_inspections = summary["total_inspections"]
+        v_defects = summary["total_defects"]
+        v_defects_per_insp = v_defects / v_inspections if v_inspections > 0 else 0
+        v_defects_per_year = v_defects / vehicle_years if vehicle_years > 0 else 0
+
         for data, key in [(brand_data, merk), (model_data, model_key)]:
             data[key]["vehicle_count"] += 1
             data[key]["total_inspections"] += summary["total_inspections"]
@@ -222,6 +226,9 @@ def stats_aggregate(
             data[key]["age_sum"] += summary["age_sum"]
             data[key]["age_count"] += summary["age_count"]
             data[key]["vehicle_years"] += vehicle_years
+            # Accumulate squared rates for std deviation
+            data[key]["defects_per_insp_sq_sum"] += v_defects_per_insp**2
+            data[key]["defects_per_year_sq_sum"] += v_defects_per_year**2
 
             for bracket_name in AGE_BRACKETS:
                 insp_count = summary["bracket_inspections"][bracket_name]
@@ -268,20 +275,14 @@ def main() -> None:
     vehicle_index = vehicles_index(vehicles)
     valid_inspections = inspection_keys_primary(inspections)
     gebreken_index = gebreken_index_create(gebreken_data)
-    defects_by_inspection = defect_counts_index_create(
-        defects, gebreken_index, valid_inspections
-    )
+    defects_by_inspection = defect_counts_index_create(defects, valid_inspections)
     vehicle_summaries = vehicle_summaries_build(
         inspections, vehicle_index, defects_by_inspection, valid_inspections
     )
     fuel_index = fuel_index_create(fuel_data)
 
-    total_inspections = sum(
-        summary["total_inspections"] for summary in vehicle_summaries.values()
-    )
-    total_defects = sum(
-        summary["total_defects"] for summary in vehicle_summaries.values()
-    )
+    total_inspections = sum(summary["total_inspections"] for summary in vehicle_summaries.values())
+    total_defects = sum(summary["total_defects"] for summary in vehicle_summaries.values())
 
     brand_data, model_data = stats_aggregate(vehicle_summaries, fuel_index)
 
@@ -300,11 +301,16 @@ def main() -> None:
         total_defects,
     )
 
+    # Generate defect type statistics
+    defect_stats = defect_type_stats_build(defects, gebreken_index, total_inspections)
+    print(f"Defect stats: {len(defect_stats['top_defects'])} defect types", flush=True)
+
     DIR_PROCESSED.mkdir(parents=True, exist_ok=True)
     json_save(brand_stats, DIR_PROCESSED / "brand_stats.json")
     json_save(model_stats, DIR_PROCESSED / "model_stats.json")
     json_save(rankings, DIR_PROCESSED / "rankings.json")
     json_save(metadata, DIR_PROCESSED / "metadata.json")
+    json_save(defect_stats, DIR_PROCESSED / "defect_stats.json")
 
     elapsed = (datetime.now() - start_time).total_seconds()
     print(

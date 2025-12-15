@@ -78,6 +78,23 @@ export interface DataSet {
   generated_at: string;
 }
 
+/** Single defect type statistics */
+export interface DefectTypeStat {
+  defect_code: string;
+  defect_description: string;
+  count: number;
+  percentage: number;
+}
+
+/** Defect statistics for the defects page */
+export interface DefectStats {
+  total_defects: number;
+  total_inspections: number;
+  avg_defects_per_inspection: number;
+  top_defects: DefectTypeStat[];
+  generated_at: string;
+}
+
 export type SortDirection = "asc" | "desc";
 
 export interface SortConfig {

@@ -79,6 +79,28 @@ avg_defects_per_inspection = total_defects / total_inspections
 
 ---
 
+### Standard Deviation
+
+Both metrics include standard deviation to indicate statistical uncertainty:
+
+- `std_defects_per_inspection` — Variance in per-vehicle defect rates
+- `std_defects_per_vehicle_year` — Variance in per-vehicle annual defect rates
+
+**Interpretation:**
+
+- Lower std dev = more consistent data across vehicles
+- Higher std dev = more variation (could indicate small sample or mixed fleet quality)
+- Brands with small samples (e.g., BYD) will typically show higher std dev
+
+**Example:**
+
+| Brand | Defects/Year | Std Dev | Confidence |
+|-------|--------------|---------|------------|
+| Toyota | 0.25 | 0.02 | High (large sample, low variance) |
+| BYD | 0.35 | 0.18 | Low (small sample, high variance) |
+
+---
+
 ## Age-Bracket Analysis
 
 Users can filter by vehicle age to compare reliability within similar age groups.
@@ -115,15 +137,18 @@ Only include brackets with at least 30 vehicles.
 
 ## Sample Size Thresholds
 
-To ensure statistical significance:
+Minimum thresholds for inclusion in rankings:
 
 | Level | Minimum Vehicles | Rationale |
 |-------|------------------|-----------|
-| Brand | 100 | Brand-level claims need larger samples |
+| Brand | 100 | Include emerging brands; use std deviation to indicate uncertainty |
 | Model | 50 | Balance granularity vs. confidence |
 | Age Bracket | 30 | Per-bracket minimum |
 
 Records below these thresholds are excluded from rankings and tables.
+
+> [!NOTE]
+> Brands with smaller samples (e.g., BYD, Polestar) are included but will show higher standard deviation values, indicating greater statistical uncertainty. Users should consider both the defect rate and its std deviation when comparing brands.
 
 ---
 
@@ -138,19 +163,12 @@ Records below these thresholds are excluded from rankings and tables.
 | Re-tests | Keep earliest `meld_tijd_door_keuringsinstantie` per vehicle/day | Drop likely same-day re-tests (no explicit RDW flag available) |
 | Inspection status | Exclude "Vervallen", "Niet verschenen" | Only count actual completed inspections |
 
-### Defect Severity Weighting
+### Defect Counting
 
-Defects are weighted by severity using the European PTI framework:
+All defects are counted equally (weight 1.0). 
 
-| Severity Level | Weight | Detection Method |
-|----------------|--------|------------------|
-| Minor (Licht) | 1.0 | Defect code ends with 'L' or contains 'LICHT' |
-| Major (Hoofdgebrek) | 3.0 | Defect code ends with 'H' or contains 'HOOFD' |
-| Dangerous (Gevaarlijk) | 10.0 | Defect code ends with 'G' or contains 'GEVAAR' |
-
-Note: RDW does not publish a severity flag in `a34c-vvps` or `hx2c-gt7k`. The current implementation infers severity heuristically from `gebrek_identificatie` or `gebrek_artikel_nummer`; we need to replace this with the official mapping once RDW confirms the schema.
-
-This ensures that a dangerous brake failure counts more heavily than a minor cosmetic issue.
+> [!NOTE]
+> Severity weighting was removed because RDW does not publish defect severity classifications in their open data (`a34c-vvps` or `hx2c-gt7k`). The previous heuristic approach (inferring severity from defect code patterns) was undocumented and potentially inaccurate.
 
 ### Data Sanity Checks
 

@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { 
-  Home, 
-  Award, 
-  Car, 
-  Fuel, 
-  Search, 
-  Info, 
+import {
+  Home,
+  Award,
+  Car,
+  Fuel,
+  Search,
+  Info,
   Github,
   Menu,
-  X
+  X,
+  AlertTriangle
 } from "lucide-react";
 
 interface NavLink {
@@ -26,6 +27,7 @@ const NAV_LINKS: NavLink[] = [
   { href: "/brands", label: "Brands", icon: Award },
   { href: "/models", label: "Models", icon: Car },
   { href: "/fuels", label: "Fuel Types", icon: Fuel },
+  { href: "/defects", label: "Defects", icon: AlertTriangle },
   { href: "/lookup", label: "Lookup", icon: Search },
   { href: "/about", label: "About", icon: Info },
 ];
@@ -59,10 +61,9 @@ export function Navigation() {
                   href={link.href}
                   className={`
                     flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors
-                    ${
-                      isActive
-                        ? "bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400"
-                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+                    ${isActive
+                      ? "bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400"
+                      : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
                     }
                   `}
                 >
@@ -109,10 +110,9 @@ export function Navigation() {
                     onClick={() => setIsOpen(false)}
                     className={`
                       flex items-center gap-3 px-4 py-3 rounded-md text-base font-medium transition-colors
-                      ${
-                        isActive
-                          ? "bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400"
-                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+                      ${isActive
+                        ? "bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
                       }
                     `}
                   >
