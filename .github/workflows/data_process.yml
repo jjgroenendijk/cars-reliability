@@ -11,6 +11,9 @@ concurrency:
   group: pipeline-${{ github.event.workflow_run.head_branch || github.ref }}
   cancel-in-progress: true
 
+env:
+  PYTHON_VERSION: '3.11'
+
 jobs:
   process:
     runs-on: ubuntu-latest
@@ -29,7 +32,7 @@ jobs:
           cache-dependency-glob: "scripts/uv.lock"
 
       - name: Set up Python
-        run: uv python install 3.11
+        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: cd scripts && uv sync --frozen
@@ -38,17 +41,14 @@ jobs:
         id: cache-key
         run: |
           WEEK=$(date +'%Y-W%V')
+          DAYS="${INSPECTION_DAYS_LIMIT:-all}"
           echo "week=$WEEK" >> $GITHUB_OUTPUT
+          echo "days=$DAYS" >> $GITHUB_OUTPUT
+        env:
+          INSPECTION_DAYS_LIMIT: ${{ vars.INSPECTION_DAYS_LIMIT }}
 
-      - name: Restore raw data from cache
-        id: cache-restore
-        uses: actions/cache/restore@v4
-        with:
-          path: data/raw
-          key: raw-data-v2-${{ steps.cache-key.outputs.week }}
-
-      - name: Download raw data artifact (fallback)
-        if: steps.cache-restore.outputs.cache-hit != 'true' && github.event_name == 'workflow_run'
+      - name: Download raw data artifact (from workflow_run)
+        if: github.event_name == 'workflow_run'
         uses: actions/download-artifact@v4
         with:
           name: raw-data
@@ -56,14 +56,61 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Restore raw data from cache (workflow_dispatch fallback)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          mkdir -p data/raw
+          echo "Restoring datasets from individual caches..."
+
+      - name: Restore gekentekende_voertuigen cache
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/cache/restore@v4
+        with:
+          path: data/raw/gekentekende_voertuigen.json
+          key: gekentekende_voertuigen-v2-${{ steps.cache-key.outputs.week }}-days-${{ steps.cache-key.outputs.days }}
+
+      - name: Restore meldingen_keuringsinstantie cache
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/cache/restore@v4
+        with:
+          path: data/raw/meldingen_keuringsinstantie.json
+          key: meldingen_keuringsinstantie-v2-${{ steps.cache-key.outputs.week }}-days-${{ steps.cache-key.outputs.days }}
+
+      - name: Restore geconstateerde_gebreken cache
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/cache/restore@v4
+        with:
+          path: data/raw/geconstateerde_gebreken.json
+          key: geconstateerde_gebreken-v2-${{ steps.cache-key.outputs.week }}-days-${{ steps.cache-key.outputs.days }}
+
+      - name: Restore gebreken cache
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/cache/restore@v4
+        with:
+          path: data/raw/gebreken.json
+          key: gebreken-v2-${{ steps.cache-key.outputs.week }}
+
+      - name: Restore brandstof cache
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/cache/restore@v4
+        with:
+          path: data/raw/brandstof.json
+          key: brandstof-v2-${{ steps.cache-key.outputs.week }}
+
+      - name: Verify raw data
+        run: |
+          echo "Checking raw data files:"
+          ls -lh data/raw/ || echo "No files in data/raw"
+          for f in gekentekende_voertuigen meldingen_keuringsinstantie geconstateerde_gebreken gebreken brandstof; do
+            if [ ! -f "data/raw/${f}.json" ]; then
+              echo "ERROR: Missing ${f}.json"
+              exit 1
+            fi
+          done
+          echo "All datasets present"
+
       - name: Run data processing script
         run: cd scripts && uv run python data_process.py
-
-      - name: Cache processed data
-        uses: actions/cache/save@v4
-        with:
-          path: data/processed
-          key: processed-data-v3-${{ steps.cache-key.outputs.week }}
 
       - name: Upload processed data artifact
         uses: actions/upload-artifact@v4
