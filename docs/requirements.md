@@ -100,8 +100,9 @@ Note: The `gekentekende_voertuigen` dataset is NOT filtered by `INSPECTION_DAYS_
 
 - Framework: Next.js 16
 - Styling: Tailwind CSS 4.1
-- Output: Static export
-- Hosting: GitHub Pages
+- Dependencies: Prefer standard libraries and first-party Next.js/Tailwind capabilities; avoid unnecessary third-party packages and stay close to industry-standard patterns
+- Output: Static export (no server-side rendering or runtime functions)
+- Hosting: GitHub Pages (static site deployment)
 
 ### Pre-computed Features (from pipeline data)
 

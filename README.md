@@ -62,8 +62,9 @@ git clone https://github.com/jjgroenendijk/cars-reliability.git
 cd cars-reliability
 
 # Python setup
-curl -LsSf https://astral.sh/uv/install.sh | sh  # Install uv (first time only)
-uv sync  # Creates .venv/ and installs dependencies
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 
 # Node.js setup
 cd web && npm install
@@ -73,10 +74,10 @@ cd web && npm install
 
 ```bash
 # Stage 1: Download data
-uv run python scripts/data_download.py
+python scripts/data_download.py
 
 # Stage 2: Process data
-uv run python scripts/data_process.py
+python scripts/data_process.py
 
 # Stage 3: Run website
 cp -r data/processed/* web/public/data/

@@ -8,9 +8,10 @@ venv/
 env/
 .venv/
 ENV/
+scripts/.venv/
 
 # uv lockfile (tracked for reproducible builds)
-# uv.lock is intentionally tracked in git
+# scripts/uv.lock is intentionally tracked in git
 
 # Data files (too large for git)
 data/*.csv
