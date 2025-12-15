@@ -12,7 +12,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pipeline-${{ github.event.workflow_run.head_branch }}
+  group: stage3-${{ github.event.workflow_run.head_branch }}
   cancel-in-progress: true
 
 jobs:

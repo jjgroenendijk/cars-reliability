@@ -111,22 +111,26 @@ Analysis of Stage 2 #37:
   - "Cache service responded with 400" (warning, not error - from skipped cache restore steps)
   - "The operation was canceled"
 
-Observations:
-1. The workflow file was correctly updated (uv steps visible)
-2. Artifacts were available from Stage 1 (340 MB raw-data)
-3. Artifact download step ran for 19s indicating data was downloaded
-4. Processing script ran for 51s before something happened
-5. The "operation was canceled" suggests concurrency cancellation or timeout
+Root cause found: Concurrency group conflict!
 
-Possible causes still to investigate:
-1. Concurrency group conflict between multiple Stage 2 runs
-2. Processing script hitting memory or timeout limits
-3. Something in the processing code causing a crash
+All three stages (Stage 1, 2, 3) used the same concurrency group pattern `pipeline-${{ github.ref }}` with `cancel-in-progress: true`. This means:
+1. Stage 1 #37 completes, triggers Stage 2 #37
+2. Stage 1 #38 starts (triggered by commit `66a03c9`)
+3. Since Stage 1 #38 and Stage 2 #37 share the same concurrency group `pipeline-refs/heads/main`, GitHub Actions cancels Stage 2 #37 to allow Stage 1 #38 to run
 
-Next steps:
-- Manual trigger of Stage 2 via workflow_dispatch to isolate from concurrency issues
-- Check if data processing script has any issues with current data
+This explains why Stage 2 kept getting "The operation was canceled" - it was being terminated by new Stage 1 runs.
 
 ## Resolution
 
-(To be filled in after verification)
+Fixed by giving each stage its own concurrency group (commit pending):
+
+1. Stage 1: `stage1-${{ github.ref }}`
+2. Stage 2: `stage2-${{ github.event.workflow_run.head_branch || github.ref }}`
+3. Stage 3: `stage3-${{ github.event.workflow_run.head_branch }}`
+
+This allows each stage to cancel only its own duplicate runs, not runs from other stages.
+
+Files modified:
+- `.github/workflows/data_download.yml`: Changed concurrency group from `pipeline-` to `stage1-`
+- `.github/workflows/data_process.yml`: Changed concurrency group from `pipeline-` to `stage2-`
+- `.github/workflows/website_build.yml`: Changed concurrency group from `pipeline-` to `stage3-`
