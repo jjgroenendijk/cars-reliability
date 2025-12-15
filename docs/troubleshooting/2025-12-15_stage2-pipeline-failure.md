@@ -96,6 +96,37 @@ Updated `.github/workflows/data_process.yml`:
 
 5. Removed processed data cache save (unnecessary, artifacts are sufficient)
 
+## Continued Investigation
+
+After deploying fix commit `4ac28b5`, Stage 2 #37 still failed.
+
+Analysis of Stage 2 #37:
+- Stage 1 #37 completed successfully with all artifacts (raw-data: 340 MB)
+- Stage 2 #37 used our updated workflow (confirmed by "Install uv" step present)
+- Steps executed:
+  - Download raw data artifact: 19s (success)
+  - Run data processing script: 51s
+  - Upload processed data artifact: 0s
+- Error messages:
+  - "Cache service responded with 400" (warning, not error - from skipped cache restore steps)
+  - "The operation was canceled"
+
+Observations:
+1. The workflow file was correctly updated (uv steps visible)
+2. Artifacts were available from Stage 1 (340 MB raw-data)
+3. Artifact download step ran for 19s indicating data was downloaded
+4. Processing script ran for 51s before something happened
+5. The "operation was canceled" suggests concurrency cancellation or timeout
+
+Possible causes still to investigate:
+1. Concurrency group conflict between multiple Stage 2 runs
+2. Processing script hitting memory or timeout limits
+3. Something in the processing code causing a crash
+
+Next steps:
+- Manual trigger of Stage 2 via workflow_dispatch to isolate from concurrency issues
+- Check if data processing script has any issues with current data
+
 ## Resolution
 
 (To be filled in after verification)
