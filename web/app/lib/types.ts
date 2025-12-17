@@ -27,7 +27,7 @@ export interface BrandStats {
   total_defects: number;
   avg_defects_per_inspection: number | null;
   avg_age_years: number | null;
-  defects_per_year: number | null;
+  defects_per_vehicle_year: number | null;
   fuel_breakdown: FuelBreakdown;
   age_brackets: {
     "4_7": AgeBracketStats | null;
@@ -45,7 +45,7 @@ export interface ModelStats {
   total_defects: number;
   avg_defects_per_inspection: number | null;
   avg_age_years: number | null;
-  defects_per_year: number | null;
+  defects_per_vehicle_year: number | null;
   fuel_breakdown: FuelBreakdown;
   age_brackets: {
     "4_7": AgeBracketStats | null;
@@ -59,7 +59,7 @@ export interface RankingEntry {
   rank: number;
   merk: string;
   handelsbenaming?: string;
-  defects_per_year?: number;
+  defects_per_vehicle_year?: number;
   total_inspections: number;
 }
 

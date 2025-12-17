@@ -192,7 +192,7 @@ function RankingCard({
   show_model = false,
 }: RankingCardProps) {
   const isGreen = highlight_color === "green";
-  
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow">
       <div className={`px-6 py-5 border-b border-gray-100 dark:border-gray-800 ${isGreen ? 'bg-green-50/50 dark:bg-green-900/10' : 'bg-red-50/50 dark:bg-red-900/10'}`}>
@@ -216,7 +216,7 @@ function RankingCard({
               <div className="flex items-center gap-4">
                 <span className={`
                   flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold
-                  ${index < 3 
+                  ${index < 3
                     ? (isGreen ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400')
                     : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}
                 `}>
@@ -235,7 +235,7 @@ function RankingCard({
               </div>
               <div className="text-right">
                 <div className={`font-mono font-medium ${isGreen ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-                  {(entry.defects_per_year ?? 0).toFixed(2)}
+                  {(entry.defects_per_vehicle_year ?? 0).toFixed(2)}
                 </div>
               </div>
             </div>

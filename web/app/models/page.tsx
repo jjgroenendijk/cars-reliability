@@ -36,7 +36,7 @@ const MODEL_COLUMNS_FULL: Column<ModelStats>[] = [
   { key: "total_inspections", label: "Inspections" },
   { key: "avg_defects_per_inspection", label: "Avg. Defects" },
   { key: "avg_age_years", label: "Avg. Age" },
-  { key: "defects_per_year", label: "Defects/Year" },
+  { key: "defects_per_vehicle_year", label: "Defects/Year" },
 ];
 
 const MODEL_COLUMNS_FILTERED: Column<ModelStatsFiltered>[] = [
@@ -189,11 +189,10 @@ export default function ModelsPage() {
               <button
                 key={option.key}
                 onClick={() => setSelectedAgeBracket(option.key)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  selected_age_bracket === option.key
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selected_age_bracket === option.key
                     ? "bg-blue-600 text-white"
                     : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                }`}
+                  }`}
               >
                 {option.label}
               </button>
@@ -207,7 +206,7 @@ export default function ModelsPage() {
           <ReliabilityTable
             data={filtered_data as ModelStats[]}
             columns={MODEL_COLUMNS_FULL}
-            defaultSortKey="defects_per_year"
+            defaultSortKey="defects_per_vehicle_year"
             defaultSortDirection="asc"
             filterKey="handelsbenaming"
             filterPlaceholder="Search model..."
@@ -221,9 +220,8 @@ export default function ModelsPage() {
             defaultSortDirection="asc"
             filterKey="handelsbenaming"
             filterPlaceholder="Search model..."
-            emptyMessage={`No models with 100+ inspections in ${
-              AGE_BRACKET_OPTIONS.find((o) => o.key === selected_age_bracket)?.label ?? ""
-            } range`}
+            emptyMessage={`No models with 100+ inspections in ${AGE_BRACKET_OPTIONS.find((o) => o.key === selected_age_bracket)?.label ?? ""
+              } range`}
           />
         )}
       </div>
