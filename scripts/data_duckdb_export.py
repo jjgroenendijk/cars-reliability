@@ -66,13 +66,13 @@ DATE_FIELDS = {
     "8ys7-d773": None,  # No date field, use full download with merge
 }
 
-# Primary keys for deduplication during merge
+# Primary keys for deduplication during merge (using actual RDW column names)
 PRIMARY_KEYS = {
-    "m9d7-ebf2": ["kenteken"],
-    "sgfe-77wx": ["kenteken", "meld_datum_door_keuringsinstantie", "meld_tijd_door_keuringsinstantie"],
-    "a34c-vvps": ["kenteken", "meld_datum_door_keuringsinstantie", "meld_tijd_door_keuringsinstantie", "gebrek_identificatie"],
-    "hx2c-gt7k": ["gebrek_identificatie"],
-    "8ys7-d773": ["kenteken", "brandstof_volgnummer"],
+    "m9d7-ebf2": ["Kenteken"],
+    "sgfe-77wx": ["Kenteken", "Meld datum door keuringsinstantie", "Meld tijd door keuringsinstantie"],
+    "a34c-vvps": ["Kenteken", "Meld datum door keuringsinstantie", "Meld tijd door keuringsinstantie", "Gebrek identificatie"],
+    "hx2c-gt7k": ["Gebrek identificatie"],
+    "8ys7-d773": ["Kenteken", "Brandstof volgnummer"],
 }
 
 
@@ -255,15 +255,13 @@ def dataset_download_to_parquet(
             # For incremental updates, merge with existing data
             if incremental and output_path.exists() and dataset_id in PRIMARY_KEYS:
                 # Check if new data has any rows (beyond header)
-                # Use normalize_names to convert "Column Name" to "column_name" to match parquet
                 new_row_count = con.execute(f"""
                     SELECT COUNT(*) FROM read_csv_auto(
                         '{temp_path}',
                         header=true,
                         all_varchar=true,
                         ignore_errors=true,
-                        null_padding=true,
-                        normalize_names=true
+                        null_padding=true
                     )
                 """).fetchone()[0]
                 
@@ -286,11 +284,12 @@ def dataset_download_to_parquet(
                     return row_count, total_time
                 
                 primary_keys = PRIMARY_KEYS[dataset_id]
-                pk_columns = ", ".join(primary_keys)
+                # Quote column names since they may contain spaces
+                pk_columns = ", ".join([f'"{pk}"' for pk in primary_keys])
                 
                 print(f"[{output_name}] merging {new_row_count:,} new records with existing data...", flush=True)
                 
-                # Create view of new data with normalized column names
+                # Create view of new data (keeping original column names)
                 con.execute(f"""
                     CREATE VIEW new_data AS 
                     SELECT * FROM read_csv_auto(
@@ -298,8 +297,7 @@ def dataset_download_to_parquet(
                         header=true,
                         all_varchar=true,
                         ignore_errors=true,
-                        null_padding=true,
-                        normalize_names=true
+                        null_padding=true
                     )
                 """)
                 
@@ -341,8 +339,7 @@ def dataset_download_to_parquet(
                             header=true,
                             all_varchar=true,
                             ignore_errors=true,
-                            null_padding=true,
-                            normalize_names=true
+                            null_padding=true
                         ))
                         TO '{output_path}' (FORMAT PARQUET, COMPRESSION ZSTD)
                     """)
@@ -381,8 +378,7 @@ def dataset_download_to_parquet(
                         header=true,
                         all_varchar=true,
                         ignore_errors=true,
-                        null_padding=true,
-                        normalize_names=true
+                        null_padding=true
                     ))
                     TO '{output_path}' (FORMAT PARQUET, COMPRESSION ZSTD)
                 """)
