@@ -1,7 +1,7 @@
 name: Data Pipeline (Parquet)
 
 # Parquet-based data pipeline with incremental updates and caching
-# Replaces JSON-based downloads with efficient Parquet format
+# Uses GitHub Actions cache for dataset sharing between jobs
 
 on:
   schedule:
@@ -41,54 +41,49 @@ jobs:
           - id: m9d7-ebf2
             name: voertuigen
             timeout: 60
-            incremental: true  # Uses datum_tenaamstelling
+            incremental: true
           - id: sgfe-77wx
             name: meldingen
             timeout: 60
-            incremental: true  # Uses meld_datum_door_keuringsinstantie
+            incremental: true
           - id: a34c-vvps
             name: geconstateerde_gebreken
             timeout: 60
-            incremental: true  # Uses meld_datum_door_keuringsinstantie
+            incremental: true
           - id: hx2c-gt7k
             name: gebreken
             timeout: 10
-            incremental: true  # Uses ingangsdatum_gebrek
+            incremental: true
           - id: 8ys7-d773
             name: brandstof
             timeout: 30
-            incremental: true  # Full download with merge (no date field)
+            incremental: true
     timeout-minutes: ${{ matrix.timeout }}
 
     steps:
       - uses: actions/checkout@v4
 
-      # Calculate cache key based on week
       - name: Calculate cache key
         id: cache-key
         run: |
           WEEK=$(date +'%Y-W%V')
-          echo "key=parquet-${{ matrix.name }}-$WEEK" >> $GITHUB_OUTPUT
-          echo "restore-key=parquet-${{ matrix.name }}-" >> $GITHUB_OUTPUT
+          echo "dataset-key=parquet-${{ matrix.name }}-$WEEK" >> $GITHUB_OUTPUT
+          echo "dataset-restore-key=parquet-${{ matrix.name }}-" >> $GITHUB_OUTPUT
 
-      # Restore cached parquet file
-      - name: Restore cache
+      - name: Restore dataset cache
         id: cache
         if: github.event.inputs.force_refresh != 'true'
         uses: actions/cache/restore@v4
         with:
-          path: |
-            data/duckdb/${{ matrix.name }}.parquet
-            data/duckdb/.download_metadata.json
-          key: ${{ steps.cache-key.outputs.key }}
-          restore-keys: ${{ steps.cache-key.outputs.restore-key }}
+          path: data/duckdb/${{ matrix.name }}.parquet
+          key: ${{ steps.cache-key.outputs.dataset-key }}
+          restore-keys: ${{ steps.cache-key.outputs.dataset-restore-key }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: "latest"
-          enable-cache: true
-          cache-dependency-glob: "scripts/uv.lock"
+          enable-cache: false
 
       - name: Set up Python
         run: uv python install ${{ env.PYTHON_VERSION }}
@@ -96,7 +91,6 @@ jobs:
       - name: Install dependencies
         run: cd scripts && uv sync --frozen
 
-      # Download dataset (incremental if cache hit and incremental dataset)
       - name: Download dataset
         run: |
           ARGS="${{ matrix.id }} --verbose"
@@ -120,77 +114,70 @@ jobs:
           SIZE=$(stat -c%s "$FILE")
           echo "File size: $((SIZE / 1024 / 1024)) MB"
 
-      # Save to cache with week-based key
-      - name: Save cache
+      - name: Save dataset cache
         if: always()
         uses: actions/cache/save@v4
         with:
-          path: |
-            data/duckdb/${{ matrix.name }}.parquet
-            data/duckdb/.download_metadata.json
-          key: ${{ steps.cache-key.outputs.key }}
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: parquet-${{ matrix.name }}
           path: data/duckdb/${{ matrix.name }}.parquet
-          retention-days: 7
-
-  merge:
-    runs-on: ubuntu-latest
-    needs: [download]
-    steps:
-      - name: Download all parquet artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: parquet-*
-          path: data/duckdb
-          merge-multiple: true
-
-      - name: Verify all files
-        run: |
-          echo "Downloaded files:"
-          ls -lh data/duckdb/
-          for f in voertuigen meldingen geconstateerde_gebreken gebreken brandstof; do
-            if [ ! -f "data/duckdb/${f}.parquet" ]; then
-              echo "ERROR: Missing ${f}.parquet"
-              exit 1
-            fi
-          done
-          echo "All datasets present"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: parquet-data
-          path: data/duckdb
-          retention-days: 7
+          key: ${{ steps.cache-key.outputs.dataset-key }}
 
   process:
     runs-on: ubuntu-latest
-    needs: [merge]
+    needs: [download]
     timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download parquet data
-        uses: actions/download-artifact@v4
+      - name: Calculate cache keys
+        id: cache-key
+        run: |
+          WEEK=$(date +'%Y-W%V')
+          echo "voertuigen-key=parquet-voertuigen-$WEEK" >> $GITHUB_OUTPUT
+          echo "meldingen-key=parquet-meldingen-$WEEK" >> $GITHUB_OUTPUT
+          echo "geconstateerde-key=parquet-geconstateerde_gebreken-$WEEK" >> $GITHUB_OUTPUT
+          echo "gebreken-key=parquet-gebreken-$WEEK" >> $GITHUB_OUTPUT
+          echo "brandstof-key=parquet-brandstof-$WEEK" >> $GITHUB_OUTPUT
+
+      - name: Restore voertuigen cache
+        uses: actions/cache/restore@v4
         with:
-          name: parquet-data
-          path: data/duckdb
+          path: data/duckdb/voertuigen.parquet
+          key: ${{ steps.cache-key.outputs.voertuigen-key }}
+          restore-keys: parquet-voertuigen-
+          fail-on-cache-miss: true
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
+      - name: Restore meldingen cache
+        uses: actions/cache/restore@v4
         with:
-          version: "latest"
-          enable-cache: true
-          cache-dependency-glob: "scripts/uv.lock"
+          path: data/duckdb/meldingen.parquet
+          key: ${{ steps.cache-key.outputs.meldingen-key }}
+          restore-keys: parquet-meldingen-
+          fail-on-cache-miss: true
 
-      - name: Set up Python
-        run: uv python install ${{ env.PYTHON_VERSION }}
+      - name: Restore geconstateerde_gebreken cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/duckdb/geconstateerde_gebreken.parquet
+          key: ${{ steps.cache-key.outputs.geconstateerde-key }}
+          restore-keys: parquet-geconstateerde_gebreken-
+          fail-on-cache-miss: true
 
-      - name: Install dependencies
-        run: cd scripts && uv sync --frozen
+      - name: Restore gebreken cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/duckdb/gebreken.parquet
+          key: ${{ steps.cache-key.outputs.gebreken-key }}
+          restore-keys: parquet-gebreken-
+          fail-on-cache-miss: true
+
+      - name: Restore brandstof cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/duckdb/brandstof.parquet
+          key: ${{ steps.cache-key.outputs.brandstof-key }}
+          restore-keys: parquet-brandstof-
+          fail-on-cache-miss: true
 
       - name: Verify parquet data
         run: |
@@ -203,6 +190,18 @@ jobs:
             fi
           done
           echo "All datasets present"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          enable-cache: false
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: cd scripts && uv sync --frozen
 
       - name: Process data
         run: cd scripts && uv run python data_process.py
