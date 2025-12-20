@@ -255,13 +255,15 @@ def dataset_download_to_parquet(
             # For incremental updates, merge with existing data
             if incremental and output_path.exists() and dataset_id in PRIMARY_KEYS:
                 # Check if new data has any rows (beyond header)
+                # Use normalize_names to convert "Column Name" to "column_name" to match parquet
                 new_row_count = con.execute(f"""
                     SELECT COUNT(*) FROM read_csv_auto(
                         '{temp_path}',
                         header=true,
                         all_varchar=true,
                         ignore_errors=true,
-                        null_padding=true
+                        null_padding=true,
+                        normalize_names=true
                     )
                 """).fetchone()[0]
                 
@@ -288,7 +290,7 @@ def dataset_download_to_parquet(
                 
                 print(f"[{output_name}] merging {new_row_count:,} new records with existing data...", flush=True)
                 
-                # Create view of new data
+                # Create view of new data with normalized column names
                 con.execute(f"""
                     CREATE VIEW new_data AS 
                     SELECT * FROM read_csv_auto(
@@ -296,7 +298,8 @@ def dataset_download_to_parquet(
                         header=true,
                         all_varchar=true,
                         ignore_errors=true,
-                        null_padding=true
+                        null_padding=true,
+                        normalize_names=true
                     )
                 """)
                 
@@ -306,31 +309,70 @@ def dataset_download_to_parquet(
                     SELECT * FROM read_parquet('{output_path}')
                 """)
                 
-                # Get column names (excluding rn which we'll add)
-                columns = con.execute("SELECT column_name FROM (DESCRIBE SELECT * FROM existing_data)").fetchall()
-                column_list = ", ".join([f'"{col[0]}"' for col in columns])
+                # Check if column names are compatible (both should have normalized names)
+                new_cols = set(col[0] for col in con.execute("SELECT column_name FROM (DESCRIBE SELECT * FROM new_data)").fetchall())
+                existing_cols = set(col[0] for col in con.execute("SELECT column_name FROM (DESCRIBE SELECT * FROM existing_data)").fetchall())
                 
-                # Merge: new data takes precedence (UNION ALL with dedup)
-                # Use window function to keep latest record per primary key
-                con.execute(f"""
-                    COPY (
-                        SELECT {column_list} FROM (
-                            SELECT *, ROW_NUMBER() OVER (
-                                PARTITION BY {pk_columns} 
-                                ORDER BY (SELECT NULL)
-                            ) as rn
-                            FROM (
-                                SELECT * FROM new_data
-                                UNION ALL
-                                SELECT * FROM existing_data
-                            )
-                        ) WHERE rn = 1
-                    )
-                    TO '{temp_parquet}' (FORMAT PARQUET, COMPRESSION ZSTD)
-                """)
-                
-                # Replace original with merged
-                temp_parquet.replace(output_path)
+                # If columns don't match, existing file has old format - do full refresh
+                if new_cols != existing_cols:
+                    print(f"[{output_name}] column schema mismatch detected, doing full refresh with normalized names...", flush=True)
+                    con.execute(f"""
+                        COPY (SELECT * FROM new_data)
+                        TO '{temp_parquet}' (FORMAT PARQUET, COMPRESSION ZSTD)
+                    """)
+                    # Also need to re-download full data since we only have recent incrementals
+                    con.close()
+                    # Re-download as full (non-incremental) 
+                    con = duckdb.connect(":memory:")
+                    # Use full export URL
+                    full_url = EXPORT_URL.format(id=dataset_id)
+                    print(f"[{output_name}] downloading full dataset...", flush=True)
+                    response = session.get(full_url, timeout=REQUEST_TIMEOUT, stream=True)
+                    response.raise_for_status()
+                    # Save to temp file
+                    with tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False) as full_temp:
+                        full_temp_path = full_temp.name
+                        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                            if chunk:
+                                full_temp.write(chunk)
+                    con.execute(f"""
+                        COPY (SELECT * FROM read_csv_auto(
+                            '{full_temp_path}',
+                            header=true,
+                            all_varchar=true,
+                            ignore_errors=true,
+                            null_padding=true,
+                            normalize_names=true
+                        ))
+                        TO '{output_path}' (FORMAT PARQUET, COMPRESSION ZSTD)
+                    """)
+                    os.unlink(full_temp_path)
+                else:
+                    # Get column names (excluding rn which we'll add)
+                    columns = con.execute("SELECT column_name FROM (DESCRIBE SELECT * FROM existing_data)").fetchall()
+                    column_list = ", ".join([f'"{col[0]}"' for col in columns])
+                    
+                    # Merge: new data takes precedence (UNION ALL with dedup)
+                    # Use window function to keep latest record per primary key
+                    con.execute(f"""
+                        COPY (
+                            SELECT {column_list} FROM (
+                                SELECT *, ROW_NUMBER() OVER (
+                                    PARTITION BY {pk_columns} 
+                                    ORDER BY (SELECT NULL)
+                                ) as rn
+                                FROM (
+                                    SELECT * FROM new_data
+                                    UNION ALL
+                                    SELECT * FROM existing_data
+                                )
+                            ) WHERE rn = 1
+                        )
+                        TO '{temp_parquet}' (FORMAT PARQUET, COMPRESSION ZSTD)
+                    """)
+                    
+                    # Replace original with merged
+                    temp_parquet.replace(output_path)
             else:
                 # Full download - just write directly
                 con.execute(f"""
@@ -339,7 +381,8 @@ def dataset_download_to_parquet(
                         header=true,
                         all_varchar=true,
                         ignore_errors=true,
-                        null_padding=true
+                        null_padding=true,
+                        normalize_names=true
                     ))
                     TO '{output_path}' (FORMAT PARQUET, COMPRESSION ZSTD)
                 """)
