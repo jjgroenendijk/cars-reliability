@@ -6,6 +6,9 @@ name: Data Pipeline (Parquet)
 on:
   schedule:
     - cron: '0 0 * * 0'  # Sunday midnight UTC
+  push:
+    branches:
+      - feature/parquet-pipeline
   workflow_dispatch:
     inputs:
       force_refresh:
