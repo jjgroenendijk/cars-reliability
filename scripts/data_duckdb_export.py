@@ -4,7 +4,7 @@ RDW Dataset to DuckDB/Parquet Export Script
 
 Downloads complete RDW datasets via streaming CSV and exports to Parquet format.
 Uses memory-efficient streaming to handle datasets larger than available RAM.
-Supports incremental downloads for inspection-related datasets.
+Supports incremental downloads for all datasets.
 
 Usage:
     uv run python data_duckdb_export.py --all                  # Download all 5 datasets
@@ -12,12 +12,12 @@ Usage:
     uv run python data_duckdb_export.py hx2c-gt7k --verbose    # Small dataset for testing
     uv run python data_duckdb_export.py sgfe-77wx --incremental # Incremental update
 
-Datasets:
-    m9d7-ebf2 - Gekentekende Voertuigen (vehicle registrations)
-    sgfe-77wx - Meldingen Keuringsinstantie (inspection results) [incremental]
-    a34c-vvps - Geconstateerde Gebreken (defects found) [incremental]
-    hx2c-gt7k - Gebreken (defect type reference)
-    8ys7-d773 - Brandstof (fuel data)
+Datasets (all support incremental updates):
+    m9d7-ebf2 - Gekentekende Voertuigen (uses datum_tenaamstelling)
+    sgfe-77wx - Meldingen Keuringsinstantie (uses meld_datum_door_keuringsinstantie)
+    a34c-vvps - Geconstateerde Gebreken (uses meld_datum_door_keuringsinstantie)
+    hx2c-gt7k - Gebreken (uses ingangsdatum_gebrek)
+    8ys7-d773 - Brandstof (linked via kenteken, uses full refresh with merge)
 """
 
 import argparse
@@ -54,13 +54,25 @@ DATASETS = {
     "8ys7-d773": "brandstof",
 }
 
-# Datasets that support incremental updates (have meld_datum_door_keuringsinstantie)
-INCREMENTAL_DATASETS = {"sgfe-77wx", "a34c-vvps"}
+# All datasets support incremental updates
+INCREMENTAL_DATASETS = set(DATASETS.keys())
+
+# Date field used for incremental filtering per dataset
+DATE_FIELDS = {
+    "m9d7-ebf2": "datum_tenaamstelling",  # Vehicle registration date
+    "sgfe-77wx": "meld_datum_door_keuringsinstantie",  # Inspection date
+    "a34c-vvps": "meld_datum_door_keuringsinstantie",  # Inspection date
+    "hx2c-gt7k": "ingangsdatum_gebrek",  # Defect start date
+    "8ys7-d773": None,  # No date field, use full download with merge
+}
 
 # Primary keys for deduplication during merge
 PRIMARY_KEYS = {
+    "m9d7-ebf2": ["kenteken"],
     "sgfe-77wx": ["kenteken", "meld_datum_door_keuringsinstantie", "meld_tijd_door_keuringsinstantie"],
     "a34c-vvps": ["kenteken", "meld_datum_door_keuringsinstantie", "meld_tijd_door_keuringsinstantie", "gebrek_identificatie"],
+    "hx2c-gt7k": ["gebrek_identificatie"],
+    "8ys7-d773": ["kenteken", "brandstof_volgnummer"],
 }
 
 
@@ -156,17 +168,23 @@ def dataset_download_to_parquet(
     """
     # Determine if we can do incremental download
     since_date: str | None = None
+    date_field = DATE_FIELDS.get(dataset_id)
+    output_path = DIR_OUTPUT / f"{output_name}.parquet"
+    
     if incremental and dataset_id in INCREMENTAL_DATASETS:
         since_date = last_download_date_get(dataset_id)
-        if since_date:
-            print(f"[{output_name}] incremental mode: fetching records since {since_date}", flush=True)
+        if since_date and date_field:
+            print(f"[{output_name}] incremental mode: fetching records where {date_field} >= {since_date}", flush=True)
+        elif since_date and not date_field:
+            # Dataset has no date field but we have existing data - do full download + merge
+            print(f"[{output_name}] incremental mode: full download with merge (no date field)", flush=True)
         else:
             print(f"[{output_name}] no previous download found, doing full download", flush=True)
             incremental = False
 
-    # Build URL - use filtered endpoint for incremental, full export for complete download
-    if incremental and since_date:
-        where_clause = f"meld_datum_door_keuringsinstantie >= '{since_date}'"
+    # Build URL - use filtered endpoint for incremental with date field, full export otherwise
+    if incremental and since_date and date_field:
+        where_clause = f"{date_field} >= '{since_date}'"
         url = FILTERED_EXPORT_URL.format(id=dataset_id, where=quote(where_clause))
     else:
         url = EXPORT_URL.format(id=dataset_id)
@@ -225,7 +243,6 @@ def dataset_download_to_parquet(
             print(f"[{output_name}] converting to Parquet...", flush=True)
             convert_start = time.time()
 
-            output_path = DIR_OUTPUT / f"{output_name}.parquet"
             temp_parquet = DIR_OUTPUT / f"{output_name}.parquet.tmp"
 
             # Use DuckDB's CSV reader which handles large files efficiently
@@ -237,10 +254,39 @@ def dataset_download_to_parquet(
             
             # For incremental updates, merge with existing data
             if incremental and output_path.exists() and dataset_id in PRIMARY_KEYS:
+                # Check if new data has any rows (beyond header)
+                new_row_count = con.execute(f"""
+                    SELECT COUNT(*) FROM read_csv_auto(
+                        '{temp_path}',
+                        header=true,
+                        all_varchar=true,
+                        ignore_errors=true,
+                        null_padding=true
+                    )
+                """).fetchone()[0]
+                
+                if new_row_count == 0:
+                    print(f"[{output_name}] no new records, keeping existing data", flush=True)
+                    con.close()
+                    # Get row count from existing file
+                    con2 = duckdb.connect(":memory:")
+                    row_count = con2.execute(
+                        f"SELECT COUNT(*) FROM read_parquet('{output_path}')"
+                    ).fetchone()[0]
+                    con2.close()
+                    total_time = time.time() - start
+                    file_size_mb = output_path.stat().st_size / (1024 * 1024)
+                    print(
+                        f"[{output_name}] done (no changes): {row_count:,} rows, {file_size_mb:.1f} MB Parquet, "
+                        f"{total_time:.0f}s total",
+                        flush=True,
+                    )
+                    return row_count, total_time
+                
                 primary_keys = PRIMARY_KEYS[dataset_id]
                 pk_columns = ", ".join(primary_keys)
                 
-                print(f"[{output_name}] merging with existing data...", flush=True)
+                print(f"[{output_name}] merging {new_row_count:,} new records with existing data...", flush=True)
                 
                 # Create view of new data
                 con.execute(f"""
@@ -260,11 +306,15 @@ def dataset_download_to_parquet(
                     SELECT * FROM read_parquet('{output_path}')
                 """)
                 
+                # Get column names (excluding rn which we'll add)
+                columns = con.execute("SELECT column_name FROM (DESCRIBE SELECT * FROM existing_data)").fetchall()
+                column_list = ", ".join([f'"{col[0]}"' for col in columns])
+                
                 # Merge: new data takes precedence (UNION ALL with dedup)
                 # Use window function to keep latest record per primary key
                 con.execute(f"""
                     COPY (
-                        SELECT * FROM (
+                        SELECT {column_list} FROM (
                             SELECT *, ROW_NUMBER() OVER (
                                 PARTITION BY {pk_columns} 
                                 ORDER BY (SELECT NULL)
@@ -275,7 +325,7 @@ def dataset_download_to_parquet(
                                 SELECT * FROM existing_data
                             )
                         ) WHERE rn = 1
-                    ) EXCLUDE (rn)
+                    )
                     TO '{temp_parquet}' (FORMAT PARQUET, COMPRESSION ZSTD)
                 """)
                 

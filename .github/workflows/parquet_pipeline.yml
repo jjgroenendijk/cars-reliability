@@ -41,23 +41,23 @@ jobs:
           - id: m9d7-ebf2
             name: voertuigen
             timeout: 60
-            incremental: false  # No date field for incremental
+            incremental: true  # Uses datum_tenaamstelling
           - id: sgfe-77wx
             name: meldingen
             timeout: 60
-            incremental: true
+            incremental: true  # Uses meld_datum_door_keuringsinstantie
           - id: a34c-vvps
             name: geconstateerde_gebreken
             timeout: 60
-            incremental: true
+            incremental: true  # Uses meld_datum_door_keuringsinstantie
           - id: hx2c-gt7k
             name: gebreken
             timeout: 10
-            incremental: false
+            incremental: true  # Uses ingangsdatum_gebrek
           - id: 8ys7-d773
             name: brandstof
             timeout: 30
-            incremental: false
+            incremental: true  # Full download with merge (no date field)
     timeout-minutes: ${{ matrix.timeout }}
 
     steps:
