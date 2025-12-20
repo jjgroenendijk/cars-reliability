@@ -78,8 +78,17 @@ def vehicle_summaries_build(
     vehicle_index: dict[str, dict[str, Any]],
     defects_by_inspection: dict[tuple[str, str, str], float],
     valid_inspections: set[tuple[str, str, str]],
+    reliability_defects_by_inspection: dict[tuple[str, str, str], float] | None = None,
 ) -> dict[str, dict[str, Any]]:
-    """Build per-vehicle summaries using inspection dates for age buckets and vehicle-years."""
+    """Build per-vehicle summaries using inspection dates for age buckets and vehicle-years.
+
+    Args:
+        inspections: List of inspection records
+        vehicle_index: Index of vehicle data by kenteken
+        defects_by_inspection: All defects indexed by inspection key
+        valid_inspections: Set of valid inspection keys
+        reliability_defects_by_inspection: Optional reliability-only defects indexed by inspection key
+    """
     summaries: dict[str, dict[str, Any]] = {}
     filtered_count = 0
 
@@ -123,6 +132,7 @@ def vehicle_summaries_build(
                 "handelsbenaming": handelsbenaming,
                 "total_inspections": 0,
                 "total_defects": 0,
+                "total_reliability_defects": 0,
                 "age_sum": 0,
                 "age_count": 0,
                 "vehicle_years": 0.0,
@@ -130,12 +140,22 @@ def vehicle_summaries_build(
                 "last_inspection_date": None,
                 "bracket_inspections": {b: 0 for b in AGE_BRACKETS},
                 "bracket_defects": {b: 0 for b in AGE_BRACKETS},
+                "bracket_reliability_defects": {b: 0 for b in AGE_BRACKETS},
             }
             summaries[kenteken] = summary
 
         summary["total_inspections"] += 1
         defects = defects_by_inspection.get((kenteken, inspection_date_str, inspection_time), 0)
         summary["total_defects"] += defects
+
+        # Track reliability-only defects if provided
+        if reliability_defects_by_inspection is not None:
+            rel_defects = reliability_defects_by_inspection.get(
+                (kenteken, inspection_date_str, inspection_time), 0
+            )
+            summary["total_reliability_defects"] += rel_defects
+        else:
+            rel_defects = defects  # Fall back to all defects
 
         if vervaldatum_date and vervaldatum_date >= inspection_date:
             coverage_years = (vervaldatum_date - inspection_date).days / 365.25
@@ -165,6 +185,7 @@ def vehicle_summaries_build(
             if min_age <= age_at_inspection <= max_age:
                 summary["bracket_inspections"][bracket_name] += 1
                 summary["bracket_defects"][bracket_name] += defects
+                summary["bracket_reliability_defects"][bracket_name] += rel_defects
 
     if filtered_count > 0:
         print(f"Filtered {filtered_count} invalid inspection records", flush=True)
@@ -183,6 +204,7 @@ def stats_aggregate(
             "vehicle_count": 0,
             "total_inspections": 0,
             "total_defects": 0,
+            "total_reliability_defects": 0,
             "age_sum": 0,
             "age_count": 0,
             "vehicle_years": 0.0,
@@ -191,6 +213,7 @@ def stats_aggregate(
             # For std deviation calculation (Welford's online algorithm)
             "defects_per_insp_sq_sum": 0.0,  # Sum of squared per-vehicle rates
             "defects_per_year_sq_sum": 0.0,  # Sum of squared per-vehicle rates
+            "reliability_defects_per_year_sq_sum": 0.0,  # Reliability defects std dev
         }
 
     brand_data: dict[str, dict[str, Any]] = defaultdict(new_stats)
@@ -216,19 +239,23 @@ def stats_aggregate(
         # Calculate per-vehicle rates for std deviation
         v_inspections = summary["total_inspections"]
         v_defects = summary["total_defects"]
+        v_reliability_defects = summary.get("total_reliability_defects", v_defects)
         v_defects_per_insp = v_defects / v_inspections if v_inspections > 0 else 0
         v_defects_per_year = v_defects / vehicle_years if vehicle_years > 0 else 0
+        v_rel_defects_per_year = v_reliability_defects / vehicle_years if vehicle_years > 0 else 0
 
         for data, key in [(brand_data, merk), (model_data, model_key)]:
             data[key]["vehicle_count"] += 1
             data[key]["total_inspections"] += summary["total_inspections"]
             data[key]["total_defects"] += summary["total_defects"]
+            data[key]["total_reliability_defects"] += v_reliability_defects
             data[key]["age_sum"] += summary["age_sum"]
             data[key]["age_count"] += summary["age_count"]
             data[key]["vehicle_years"] += vehicle_years
             # Accumulate squared rates for std deviation
             data[key]["defects_per_insp_sq_sum"] += v_defects_per_insp**2
             data[key]["defects_per_year_sq_sum"] += v_defects_per_year**2
+            data[key]["reliability_defects_per_year_sq_sum"] += v_rel_defects_per_year**2
 
             for bracket_name in AGE_BRACKETS:
                 insp_count = summary["bracket_inspections"][bracket_name]
@@ -255,6 +282,65 @@ def stats_aggregate(
     return dict(brand_data), dict(model_data)
 
 
+def defect_breakdown_build(
+    defects: list[dict[str, Any]],
+    vehicle_index: dict[str, dict[str, Any]],
+    valid_inspections: set[tuple[str, str, str]],
+) -> tuple[dict[str, dict[str, int]], dict[str, dict[str, int]]]:
+    """Build per-defect-code counts for each brand and model.
+
+    This enables the frontend to dynamically recalculate reliability
+    metrics when users toggle which defects count as reliability indicators.
+
+    Returns:
+        Tuple of (brand_defects, model_defects) where each is a dict mapping
+        brand/model name to a dict of defect_code -> count
+    """
+    from inspection_prepare import time_normalize
+
+    brand_defects: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    model_defects: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+
+    for record in defects:
+        kenteken = record.get("kenteken", "").strip()
+        insp_date = record.get("meld_datum_door_keuringsinstantie", "").strip()
+        insp_time = time_normalize(record.get("meld_tijd_door_keuringsinstantie", ""))
+        defect_code = record.get("gebrek_identificatie", "").strip()
+
+        if not kenteken or not insp_date or not defect_code:
+            continue
+
+        key = (kenteken, insp_date, insp_time)
+        if key not in valid_inspections:
+            continue
+
+        vehicle = vehicle_index.get(kenteken)
+        if not vehicle:
+            continue
+
+        merk = vehicle.get("merk", "").strip().upper()
+        handelsbenaming = vehicle.get("handelsbenaming", "").strip().upper()
+        if not merk:
+            continue
+
+        raw_count = record.get("aantal_gebreken_geconstateerd", 1)
+        try:
+            count = max(int(raw_count), 1)
+        except (TypeError, ValueError):
+            count = 1
+
+        brand_defects[merk][defect_code] += count
+
+        model_key = f"{merk}|{handelsbenaming}" if handelsbenaming else merk
+        model_defects[model_key][defect_code] += count
+
+    # Convert defaultdicts to regular dicts
+    return (
+        {brand: dict(codes) for brand, codes in brand_defects.items()},
+        {model: dict(codes) for model, codes in model_defects.items()},
+    )
+
+
 def main() -> None:
     """Main entry point for the data processing script."""
     print("Stage2: Processing", flush=True)
@@ -275,9 +361,23 @@ def main() -> None:
     vehicle_index = vehicles_index(vehicles)
     valid_inspections = inspection_keys_primary(inspections)
     gebreken_index = gebreken_index_create(gebreken_data)
-    defects_by_inspection = defect_counts_index_create(defects, valid_inspections)
+
+    # Compute all defects (for backwards compatibility and full view)
+    defects_by_inspection = defect_counts_index_create(
+        defects, valid_inspections, gebreken_index, reliability_only=False
+    )
+
+    # Compute reliability-only defects (excluding wear-and-tear like tires/lights)
+    reliability_defects_by_inspection = defect_counts_index_create(
+        defects, valid_inspections, gebreken_index, reliability_only=True
+    )
+
     vehicle_summaries = vehicle_summaries_build(
-        inspections, vehicle_index, defects_by_inspection, valid_inspections
+        inspections,
+        vehicle_index,
+        defects_by_inspection,
+        valid_inspections,
+        reliability_defects_by_inspection,
     )
     fuel_index = fuel_index_create(fuel_data)
 

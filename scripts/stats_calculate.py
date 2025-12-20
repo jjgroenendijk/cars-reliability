@@ -29,9 +29,16 @@ def metrics_calculate(stats: dict[str, Any]) -> dict[str, Any]:
 
     result["avg_age_years"] = round(age_sum / age_count, 2) if age_count > 0 else None
 
-    # Mean defects per vehicle-year
+    # Mean defects per vehicle-year (all defects)
     mean_per_year = total_def / vehicle_years if vehicle_years > 0 else None
     result["defects_per_vehicle_year"] = round(mean_per_year, 6) if mean_per_year else None
+
+    # Mean reliability defects per vehicle-year (excluding wear-and-tear)
+    total_rel_def = stats.get("total_reliability_defects", total_def)
+    rel_mean_per_year = total_rel_def / vehicle_years if vehicle_years > 0 else None
+    result["reliability_defects_per_vehicle_year"] = (
+        round(rel_mean_per_year, 6) if rel_mean_per_year else None
+    )
 
     # Standard deviation calculations
     # Using: variance = (sum of squares / n) - mean^2
@@ -80,6 +87,7 @@ def metrics_calculate(stats: dict[str, Any]) -> dict[str, Any]:
     del result["vehicle_years"]
     result.pop("defects_per_insp_sq_sum", None)
     result.pop("defects_per_year_sq_sum", None)
+    result.pop("reliability_defects_per_year_sq_sum", None)
     return result
 
 
@@ -225,12 +233,17 @@ def defect_type_stats_build(
         description = gebrek_info.get("gebrek_omschrijving", "Onbekend gebrek")
         percentage = round((count / total_defect_count) * 100, 2) if total_defect_count > 0 else 0
 
+        # Import here to avoid circular imports
+        from defect_categories import categorize_defect, is_reliability_defect
+
         top_defects.append(
             {
                 "defect_code": defect_code,
                 "defect_description": description,
                 "count": count,
                 "percentage": percentage,
+                "is_reliability": is_reliability_defect(defect_code, gebreken_index),
+                "category": categorize_defect(defect_code, gebreken_index),
             }
         )
 

@@ -38,3 +38,4 @@ Thumbs.db
 .ipynb_checkpoints/
 .env
 data/raw
+*.parquet

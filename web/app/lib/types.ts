@@ -25,9 +25,11 @@ export interface BrandStats {
   vehicle_count: number;
   total_inspections: number;
   total_defects: number;
+  total_reliability_defects?: number;
   avg_defects_per_inspection: number | null;
   avg_age_years: number | null;
   defects_per_vehicle_year: number | null;
+  reliability_defects_per_vehicle_year: number | null;
   fuel_breakdown: FuelBreakdown;
   age_brackets: {
     "4_7": AgeBracketStats | null;
@@ -43,9 +45,11 @@ export interface ModelStats {
   vehicle_count: number;
   total_inspections: number;
   total_defects: number;
+  total_reliability_defects?: number;
   avg_defects_per_inspection: number | null;
   avg_age_years: number | null;
   defects_per_vehicle_year: number | null;
+  reliability_defects_per_vehicle_year: number | null;
   fuel_breakdown: FuelBreakdown;
   age_brackets: {
     "4_7": AgeBracketStats | null;
@@ -84,6 +88,8 @@ export interface DefectTypeStat {
   defect_description: string;
   count: number;
   percentage: number;
+  is_reliability?: boolean;
+  category?: 'reliability' | 'wear_and_tear';
 }
 
 /** Defect statistics for the defects page */
