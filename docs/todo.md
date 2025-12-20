@@ -19,10 +19,12 @@
   - [ ] Confirm cache save after download
   - [ ] Confirm cache restore on subsequent runs
   - [ ] Verify cache key strategy (week-based)
+- [x] Review `scripts/data_duckdb_export.py` for optimization opportunities
 - [ ] Update data processing to use parquet files
   - [ ] Test `data_process.py` locally with parquet input from `data/duckdb/`
   - [ ] Verify output matches expected format in `data/processed/`
   - [ ] Update GitHub Actions to use parquet files in processing stage
+- [x] Fix voertuigen parquet export schema mismatch during union/concat
 
 > **Note**: First run after code update needs full download to create parquet files with 
 > normalized column names (snake_case). Subsequent incremental runs will work correctly.

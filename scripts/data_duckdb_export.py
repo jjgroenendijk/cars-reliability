@@ -1,36 +1,36 @@
 #!/usr/bin/env python3
 """
-RDW Dataset to DuckDB/Parquet Export Script
+RDW Dataset to Parquet Export Script
 
-Downloads complete RDW datasets via streaming CSV and exports to Parquet format.
-Uses memory-efficient streaming to handle datasets larger than available RAM.
-Supports incremental downloads for all datasets.
+Downloads complete RDW datasets via parallel JSON pagination and exports to Parquet.
+Uses Polars for efficient data handling and ZSTD compression.
 
 Usage:
     uv run python data_duckdb_export.py --all                  # Download all 5 datasets
     uv run python data_duckdb_export.py m9d7-ebf2 --verbose    # Download single dataset
     uv run python data_duckdb_export.py hx2c-gt7k --verbose    # Small dataset for testing
-    uv run python data_duckdb_export.py sgfe-77wx --incremental # Incremental update
 
-Datasets (all support incremental updates):
-    m9d7-ebf2 - Gekentekende Voertuigen (uses datum_tenaamstelling)
-    sgfe-77wx - Meldingen Keuringsinstantie (uses meld_datum_door_keuringsinstantie)
-    a34c-vvps - Geconstateerde Gebreken (uses meld_datum_door_keuringsinstantie)
-    hx2c-gt7k - Gebreken (uses ingangsdatum_gebrek)
-    8ys7-d773 - Brandstof (linked via kenteken, uses full refresh with merge)
+Datasets:
+    m9d7-ebf2 - Gekentekende Voertuigen
+    sgfe-77wx - Meldingen Keuringsinstantie
+    a34c-vvps - Geconstateerde Gebreken
+    hx2c-gt7k - Gebreken
+    8ys7-d773 - Brandstof
 """
 
 import argparse
 import json
+import math
 import os
 import sys
-import tempfile
+import threading
 import time
-from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
 from pathlib import Path
-from urllib.parse import quote
 
-import duckdb
+import polars as pl
+import psutil
 import requests
 
 # Output directory
@@ -39,11 +39,11 @@ METADATA_FILE = DIR_OUTPUT / ".download_metadata.json"
 
 # RDW API
 API_BASE = "https://opendata.rdw.nl"
-EXPORT_URL = API_BASE + "/api/views/{id}/rows.csv?accessType=DOWNLOAD"
-FILTERED_EXPORT_URL = API_BASE + "/resource/{id}.csv?$limit=999999999&$where={where}"
 COUNT_URL = API_BASE + "/resource/{id}.json?$select=count(*)"
+RESOURCE_URL = API_BASE + "/resource/{id}.json?$limit={limit}&$offset={offset}"
 REQUEST_TIMEOUT = 3600  # 1 hour for very large downloads
-CHUNK_SIZE = 1024 * 1024  # 1MB chunks for streaming
+PAGE_SIZE = 50000  # Rows per page for parallel pagination
+PARALLEL_WORKERS = min(32, (os.cpu_count() or 1) + 4)  # Dynamic worker scaling
 
 # Dataset definitions
 DATASETS = {
@@ -52,27 +52,6 @@ DATASETS = {
     "a34c-vvps": "geconstateerde_gebreken",
     "hx2c-gt7k": "gebreken",
     "8ys7-d773": "brandstof",
-}
-
-# All datasets support incremental updates
-INCREMENTAL_DATASETS = set(DATASETS.keys())
-
-# Date field used for incremental filtering per dataset
-DATE_FIELDS = {
-    "m9d7-ebf2": "datum_tenaamstelling",  # Vehicle registration date
-    "sgfe-77wx": "meld_datum_door_keuringsinstantie",  # Inspection date
-    "a34c-vvps": "meld_datum_door_keuringsinstantie",  # Inspection date
-    "hx2c-gt7k": "ingangsdatum_gebrek",  # Defect start date
-    "8ys7-d773": None,  # No date field, use full download with merge
-}
-
-# Primary keys for deduplication during merge (using actual RDW column names)
-PRIMARY_KEYS = {
-    "m9d7-ebf2": ["Kenteken"],
-    "sgfe-77wx": ["Kenteken", "Meld datum door keuringsinstantie", "Meld tijd door keuringsinstantie"],
-    "a34c-vvps": ["Kenteken", "Meld datum door keuringsinstantie", "Meld tijd door keuringsinstantie", "Gebrek identificatie"],
-    "hx2c-gt7k": ["Gebrek identificatie"],
-    "8ys7-d773": ["Kenteken", "Brandstof volgnummer"],
 }
 
 
@@ -90,11 +69,11 @@ def env_load() -> None:
 
 
 def session_create() -> requests.Session:
-    """Create HTTP session with connection pooling."""
+    """Create HTTP session with connection pooling optimized for parallel downloads."""
     session = requests.Session()
     adapter = requests.adapters.HTTPAdapter(
-        pool_connections=1,
-        pool_maxsize=1,
+        pool_connections=PARALLEL_WORKERS,
+        pool_maxsize=PARALLEL_WORKERS,
         max_retries=requests.adapters.Retry(
             total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504]
         ),
@@ -121,12 +100,6 @@ def metadata_save(metadata: dict) -> None:
         json.dump(metadata, f, indent=2)
 
 
-def last_download_date_get(dataset_id: str) -> str | None:
-    """Get last download date for a dataset (YYYYMMDD format)."""
-    metadata = metadata_load()
-    return metadata.get(dataset_id, {}).get("last_date")
-
-
 def last_download_date_set(dataset_id: str, date_str: str) -> None:
     """Set last download date for a dataset."""
     metadata = metadata_load()
@@ -135,6 +108,12 @@ def last_download_date_set(dataset_id: str, date_str: str) -> None:
     metadata[dataset_id]["last_date"] = date_str
     metadata[dataset_id]["updated_at"] = datetime.now().isoformat()
     metadata_save(metadata)
+
+
+def memory_usage_mb() -> float:
+    """Get current process memory usage in MB."""
+    process = psutil.Process(os.getpid())
+    return process.memory_info().rss / (1024 * 1024)
 
 
 def row_count_get(session: requests.Session, dataset_id: str) -> int | None:
@@ -149,269 +128,157 @@ def row_count_get(session: requests.Session, dataset_id: str) -> int | None:
         return None
 
 
+def page_fetch(
+    session: requests.Session, dataset_id: str, offset: int, limit: int
+) -> list[dict]:
+    """Fetch a single page of data from the API."""
+    url = RESOURCE_URL.format(id=dataset_id, limit=limit, offset=offset)
+    r = session.get(url, timeout=REQUEST_TIMEOUT)
+    r.raise_for_status()
+    return r.json()
+
+
+def dataset_download_parallel(
+    session: requests.Session,
+    dataset_id: str,
+    output_name: str,
+    output_path: Path,
+    verbose: bool,
+    total_rows: int,
+) -> int:
+    """
+    Download dataset using parallel page fetching and write directly to Parquet.
+
+    Returns: row_count
+    """
+    page_size = PAGE_SIZE
+    total_pages = math.ceil(total_rows / page_size) if total_rows > 0 else 1
+    offsets = list(range(0, total_rows, page_size))
+
+    print(
+        f"[{output_name}] downloading {total_rows:,} rows in {total_pages} pages "
+        f"using {PARALLEL_WORKERS} workers...",
+        flush=True,
+    )
+
+    # Store LazyFrames (no memory accumulation)
+    all_lazyframes: list[pl.LazyFrame] = []
+    pages_fetched = 0
+    pages_lock = threading.Lock()
+
+    start = time.time()
+    last_progress_time = [start]  # Use list to allow mutation in closure
+
+    def fetch_page_wrapper(page_idx: int, offset: int) -> None:
+        """Fetch a page and convert to LazyFrame."""
+        nonlocal pages_fetched
+        page_data = page_fetch(session, dataset_id, offset, page_size)
+
+        # Convert to LazyFrame immediately (no memory accumulation)
+        page_lf = pl.LazyFrame(page_data)
+
+        with pages_lock:
+            all_lazyframes.append(page_lf)
+            pages_fetched += 1
+
+            # Progress update every 5 seconds
+            if verbose:
+                now = time.time()
+                if now - last_progress_time[0] >= 5:
+                    elapsed = now - start
+                    pct = (pages_fetched / total_pages * 100) if total_pages > 0 else 0
+                    rows_fetched = pages_fetched * page_size
+                    speed = rows_fetched / elapsed if elapsed > 0 else 0
+                    print(
+                        f"  [{output_name}] {pct:.1f}% | {pages_fetched}/{total_pages} "
+                        f"pages | {rows_fetched:,} rows | {speed:.0f} rows/s",
+                        flush=True,
+                    )
+                    last_progress_time[0] = now
+
+    # Download all pages in parallel
+    with ThreadPoolExecutor(max_workers=PARALLEL_WORKERS) as executor:
+        futures = [
+            executor.submit(fetch_page_wrapper, idx, offset)
+            for idx, offset in enumerate(offsets)
+        ]
+        for future in as_completed(futures):
+            if exc := future.exception():
+                raise exc
+
+    download_time = time.time() - start
+    mem_after_download = memory_usage_mb()
+
+    rows_per_sec = total_rows / download_time if download_time > 0 else 0
+    print(
+        f"[{output_name}] downloaded {total_rows:,} rows in {download_time:.0f}s "
+        f"({rows_per_sec:.0f} rows/s) | memory: {mem_after_download:.1f} MB",
+        flush=True,
+    )
+
+    # Concatenate LazyFrames and stream to Parquet
+    print(f"[{output_name}] streaming to Parquet with ZSTD compression...", flush=True)
+    convert_start = time.time()
+
+    combined_lf = pl.concat(all_lazyframes, how="diagonal")
+    combined_lf.sink_parquet(output_path, compression="zstd")
+
+    convert_time = time.time() - convert_start
+    mem_after_write = memory_usage_mb()
+    file_size_mb = output_path.stat().st_size / (1024 * 1024)
+    print(
+        f"[{output_name}] wrote Parquet in {convert_time:.1f}s ({file_size_mb:.1f} MB) "
+        f"| memory: {mem_after_write:.1f} MB",
+        flush=True,
+    )
+
+    return total_rows
+
+
 def dataset_download_to_parquet(
     session: requests.Session,
     dataset_id: str,
     output_name: str,
     verbose: bool,
-    incremental: bool = False,
 ) -> tuple[int, float]:
     """
-    Download dataset and save as Parquet using DuckDB.
-
-    Strategy:
-    1. Stream CSV to a temporary file (memory efficient)
-    2. Use DuckDB to read CSV and export to Parquet (DuckDB handles memory internally)
-    3. For incremental: merge with existing parquet, deduplicate by primary key
+    Download dataset and save as Parquet using parallel pagination.
 
     Returns: (row_count, elapsed_seconds)
     """
-    # Determine if we can do incremental download
-    since_date: str | None = None
-    date_field = DATE_FIELDS.get(dataset_id)
     output_path = DIR_OUTPUT / f"{output_name}.parquet"
-    
-    if incremental and dataset_id in INCREMENTAL_DATASETS:
-        since_date = last_download_date_get(dataset_id)
-        if since_date and date_field:
-            print(f"[{output_name}] incremental mode: fetching records where {date_field} >= {since_date}", flush=True)
-        elif since_date and not date_field:
-            # Dataset has no date field but we have existing data - do full download + merge
-            print(f"[{output_name}] incremental mode: full download with merge (no date field)", flush=True)
-        else:
-            print(f"[{output_name}] no previous download found, doing full download", flush=True)
-            incremental = False
 
-    # Build URL - use filtered endpoint for incremental with date field, full export otherwise
-    if incremental and since_date and date_field:
-        where_clause = f"{date_field} >= '{since_date}'"
-        url = FILTERED_EXPORT_URL.format(id=dataset_id, where=quote(where_clause))
-    else:
-        url = EXPORT_URL.format(id=dataset_id)
+    # Get row count for parallel downloads
+    mem_start = memory_usage_mb()
+    print(f"[{output_name}] fetching row count... | memory: {mem_start:.1f} MB", flush=True)
+    total_rows = row_count_get(session, dataset_id)
 
-    # Get row count for percentage (verbose mode only)
-    total_rows: int | None = None
-    if verbose:
-        print(f"[{output_name}] fetching row count...", flush=True)
-        total_rows = row_count_get(session, dataset_id)
-        if total_rows:
-            print(f"[{output_name}] {total_rows:,} rows to download", flush=True)
+    if total_rows is None or total_rows == 0:
+        print(f"[{output_name}] no rows found or count failed", flush=True)
+        return 0, 0.0
 
-    print(f"[{output_name}] starting download...", flush=True)
+    print(f"[{output_name}] {total_rows:,} rows to download", flush=True)
+
     start = time.time()
 
-    # Create temporary file for streaming CSV
-    with tempfile.NamedTemporaryFile(
-        mode="wb", suffix=".csv", delete=False
-    ) as temp_file:
-        temp_path = temp_file.name
+    # Download using parallel pagination
+    row_count = dataset_download_parallel(
+        session, dataset_id, output_name, output_path, verbose, total_rows
+    )
 
-        try:
-            # Stream CSV to temp file
-            response = session.get(url, timeout=REQUEST_TIMEOUT, stream=True)
-            response.raise_for_status()
+    # Update metadata
+    today = datetime.now().strftime("%Y%m%d")
+    last_download_date_set(dataset_id, today)
 
-            bytes_downloaded = 0
-            last_progress_time = start
+    total_time = time.time() - start
+    file_size_mb = output_path.stat().st_size / (1024 * 1024)
+    print(
+        f"[{output_name}] done: {row_count:,} rows, {file_size_mb:.1f} MB, "
+        f"{total_time:.0f}s total",
+        flush=True,
+    )
 
-            for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                if chunk:
-                    temp_file.write(chunk)
-                    bytes_downloaded += len(chunk)
-
-                    # Progress update every 5 seconds
-                    if verbose:
-                        now = time.time()
-                        if now - last_progress_time >= 5:
-                            elapsed = now - start
-                            mb = bytes_downloaded / (1024 * 1024)
-                            speed = mb / elapsed if elapsed > 0 else 0
-                            print(
-                                f"  [{output_name}] downloading: {mb:.1f} MB | {speed:.1f} MB/s",
-                                flush=True,
-                            )
-                            last_progress_time = now
-
-            download_time = time.time() - start
-            mb_total = bytes_downloaded / (1024 * 1024)
-            print(
-                f"[{output_name}] downloaded {mb_total:.1f} MB in {download_time:.0f}s",
-                flush=True,
-            )
-
-            # Now use DuckDB to convert CSV to Parquet
-            print(f"[{output_name}] converting to Parquet...", flush=True)
-            convert_start = time.time()
-
-            temp_parquet = DIR_OUTPUT / f"{output_name}.parquet.tmp"
-
-            # Use DuckDB's CSV reader which handles large files efficiently
-            con = duckdb.connect(":memory:")
-
-            # Read CSV with error handling for malformed rows
-            # ignore_errors=true: skip rows with wrong number of columns
-            # null_padding=true: pad short rows with NULL
-            
-            # For incremental updates, merge with existing data
-            if incremental and output_path.exists() and dataset_id in PRIMARY_KEYS:
-                # Check if new data has any rows (beyond header)
-                new_row_count = con.execute(f"""
-                    SELECT COUNT(*) FROM read_csv_auto(
-                        '{temp_path}',
-                        header=true,
-                        all_varchar=true,
-                        ignore_errors=true,
-                        null_padding=true
-                    )
-                """).fetchone()[0]
-                
-                if new_row_count == 0:
-                    print(f"[{output_name}] no new records, keeping existing data", flush=True)
-                    con.close()
-                    # Get row count from existing file
-                    con2 = duckdb.connect(":memory:")
-                    row_count = con2.execute(
-                        f"SELECT COUNT(*) FROM read_parquet('{output_path}')"
-                    ).fetchone()[0]
-                    con2.close()
-                    total_time = time.time() - start
-                    file_size_mb = output_path.stat().st_size / (1024 * 1024)
-                    print(
-                        f"[{output_name}] done (no changes): {row_count:,} rows, {file_size_mb:.1f} MB Parquet, "
-                        f"{total_time:.0f}s total",
-                        flush=True,
-                    )
-                    return row_count, total_time
-                
-                primary_keys = PRIMARY_KEYS[dataset_id]
-                # Quote column names since they may contain spaces
-                pk_columns = ", ".join([f'"{pk}"' for pk in primary_keys])
-                
-                print(f"[{output_name}] merging {new_row_count:,} new records with existing data...", flush=True)
-                
-                # Create view of new data (keeping original column names)
-                con.execute(f"""
-                    CREATE VIEW new_data AS 
-                    SELECT * FROM read_csv_auto(
-                        '{temp_path}',
-                        header=true,
-                        all_varchar=true,
-                        ignore_errors=true,
-                        null_padding=true
-                    )
-                """)
-                
-                # Create view of existing data
-                con.execute(f"""
-                    CREATE VIEW existing_data AS 
-                    SELECT * FROM read_parquet('{output_path}')
-                """)
-                
-                # Check if column names are compatible (both should have normalized names)
-                new_cols = set(col[0] for col in con.execute("SELECT column_name FROM (DESCRIBE SELECT * FROM new_data)").fetchall())
-                existing_cols = set(col[0] for col in con.execute("SELECT column_name FROM (DESCRIBE SELECT * FROM existing_data)").fetchall())
-                
-                # If columns don't match, existing file has old format - do full refresh
-                if new_cols != existing_cols:
-                    print(f"[{output_name}] column schema mismatch detected, doing full refresh with normalized names...", flush=True)
-                    con.execute(f"""
-                        COPY (SELECT * FROM new_data)
-                        TO '{temp_parquet}' (FORMAT PARQUET, COMPRESSION ZSTD)
-                    """)
-                    # Also need to re-download full data since we only have recent incrementals
-                    con.close()
-                    # Re-download as full (non-incremental) 
-                    con = duckdb.connect(":memory:")
-                    # Use full export URL
-                    full_url = EXPORT_URL.format(id=dataset_id)
-                    print(f"[{output_name}] downloading full dataset...", flush=True)
-                    response = session.get(full_url, timeout=REQUEST_TIMEOUT, stream=True)
-                    response.raise_for_status()
-                    # Save to temp file
-                    with tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False) as full_temp:
-                        full_temp_path = full_temp.name
-                        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                            if chunk:
-                                full_temp.write(chunk)
-                    con.execute(f"""
-                        COPY (SELECT * FROM read_csv_auto(
-                            '{full_temp_path}',
-                            header=true,
-                            all_varchar=true,
-                            ignore_errors=true,
-                            null_padding=true
-                        ))
-                        TO '{output_path}' (FORMAT PARQUET, COMPRESSION ZSTD)
-                    """)
-                    os.unlink(full_temp_path)
-                else:
-                    # Get column names (excluding rn which we'll add)
-                    columns = con.execute("SELECT column_name FROM (DESCRIBE SELECT * FROM existing_data)").fetchall()
-                    column_list = ", ".join([f'"{col[0]}"' for col in columns])
-                    
-                    # Merge: new data takes precedence (UNION ALL with dedup)
-                    # Use window function to keep latest record per primary key
-                    con.execute(f"""
-                        COPY (
-                            SELECT {column_list} FROM (
-                                SELECT *, ROW_NUMBER() OVER (
-                                    PARTITION BY {pk_columns} 
-                                    ORDER BY (SELECT NULL)
-                                ) as rn
-                                FROM (
-                                    SELECT * FROM new_data
-                                    UNION ALL
-                                    SELECT * FROM existing_data
-                                )
-                            ) WHERE rn = 1
-                        )
-                        TO '{temp_parquet}' (FORMAT PARQUET, COMPRESSION ZSTD)
-                    """)
-                    
-                    # Replace original with merged
-                    temp_parquet.replace(output_path)
-            else:
-                # Full download - just write directly
-                con.execute(f"""
-                    COPY (SELECT * FROM read_csv_auto(
-                        '{temp_path}',
-                        header=true,
-                        all_varchar=true,
-                        ignore_errors=true,
-                        null_padding=true
-                    ))
-                    TO '{output_path}' (FORMAT PARQUET, COMPRESSION ZSTD)
-                """)
-
-            # Get row count from the parquet file
-            row_count = con.execute(
-                f"SELECT COUNT(*) FROM read_parquet('{output_path}')"
-            ).fetchone()[0]
-
-            con.close()
-
-            # Update metadata with today's date for incremental tracking
-            if dataset_id in INCREMENTAL_DATASETS:
-                today = datetime.now().strftime("%Y%m%d")
-                last_download_date_set(dataset_id, today)
-
-            convert_time = time.time() - convert_start
-            total_time = time.time() - start
-            file_size_mb = output_path.stat().st_size / (1024 * 1024)
-
-            mode_str = "incremental" if incremental and since_date else "full"
-            print(
-                f"[{output_name}] done ({mode_str}): {row_count:,} rows, {file_size_mb:.1f} MB Parquet, "
-                f"{total_time:.0f}s total",
-                flush=True,
-            )
-
-            return row_count, total_time
-
-        finally:
-            # Clean up temp file
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+    return row_count, total_time
 
 
 def main() -> None:
@@ -450,12 +317,6 @@ Examples:
         action="store_true",
         help="Show detailed progress",
     )
-    parser.add_argument(
-        "--incremental",
-        "-i",
-        action="store_true",
-        help="Incremental download (only for meldingen/gebreken datasets)",
-    )
     args = parser.parse_args()
 
     if not args.dataset_id and not args.all:
@@ -486,14 +347,11 @@ Examples:
 
     for dataset_id, output_name in datasets_to_download:
         try:
-            # Only use incremental for supported datasets
-            use_incremental = args.incremental and dataset_id in INCREMENTAL_DATASETS
             row_count, _ = dataset_download_to_parquet(
                 session=session,
                 dataset_id=dataset_id,
                 output_name=output_name,
                 verbose=args.verbose,
-                incremental=use_incremental,
             )
             total_rows += row_count
         except Exception as e:

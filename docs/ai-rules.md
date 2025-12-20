@@ -66,6 +66,25 @@ This file must always mention which frameworks and versions are in use.
   - Gebreken (`hx2c-gt7k`)
   - Brandstof (`8ys7-d773`)
 
+## Parquet Data Pipeline
+
+### Data Download (`scripts/data_duckdb_export.py`)
+
+- Downloads RDW datasets to Parquet format using DuckDB.
+- Output: `data/duckdb/*.parquet` (gitignored).
+- Column names must be preserved exactly as provided by RDW (with spaces and mixed case). Never normalize or transform column names.
+- Supports incremental downloads with `--incremental` flag.
+- Date fields for incremental filtering:
+  - voertuigen: `datum_tenaamstelling`
+  - meldingen/geconstateerde_gebreken: `meld_datum_door_keuringsinstantie`
+  - gebreken: `ingangsdatum_gebrek`
+  - brandstof: no date field (uses full download with merge)
+
+### Hard Requirements
+
+- Data must be downloaded and stored as-is without modification.
+- RDW column names with spaces (e.g., `Meld datum door keuringsinstantie`) must be preserved exactly.
+
 ## Feature Flags
 
 GitHub repository variables control optional behavior. Set in Settings > Secrets and variables > Actions > Variables.
