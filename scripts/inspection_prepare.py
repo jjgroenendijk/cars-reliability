@@ -7,9 +7,45 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import duckdb
+
+
+def parquet_load(filepath: Path) -> list[dict[str, Any]]:
+    """Load Parquet data from a file using DuckDB."""
+    con = duckdb.connect(":memory:")
+    result = con.execute(f"SELECT * FROM read_parquet('{filepath}')").fetchall()
+    columns = [desc[0] for desc in con.description]
+    con.close()
+    return [dict(zip(columns, row)) for row in result]
+
 
 def json_load(filepath: Path) -> list[dict[str, Any]]:
-    """Load JSON data from a file."""
+    """
+    Load data from a file. Supports both JSON and Parquet formats.
+    
+    First checks for parquet files in data/duckdb/, falls back to JSON.
+    """
+    # Check for parquet alternative
+    if filepath.suffix == ".json":
+        parquet_dir = filepath.parent.parent / "duckdb"
+        # Map JSON filenames to parquet filenames
+        name_mapping = {
+            "gekentekende_voertuigen": "voertuigen",
+            "meldingen_keuringsinstantie": "meldingen",
+            "geconstateerde_gebreken": "geconstateerde_gebreken",
+            "gebreken": "gebreken",
+            "brandstof": "brandstof",
+        }
+        json_stem = filepath.stem
+        parquet_name = name_mapping.get(json_stem, json_stem)
+        parquet_path = parquet_dir / f"{parquet_name}.parquet"
+        
+        if parquet_path.exists():
+            print(f"Loading from parquet: {parquet_path.name}", flush=True)
+            return parquet_load(parquet_path)
+    
+    # Fall back to JSON
+    print(f"Loading from JSON: {filepath.name}", flush=True)
     with open(filepath, encoding="utf-8") as file_handle:
         return json.load(file_handle)
 

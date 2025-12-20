@@ -1,0 +1,266 @@
+name: Data Pipeline (Parquet)
+
+# Parquet-based data pipeline with incremental updates and caching
+# Replaces JSON-based downloads with efficient Parquet format
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Sunday midnight UTC
+  workflow_dispatch:
+    inputs:
+      force_refresh:
+        description: 'Force full download (ignore cache)'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: parquet-pipeline-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: read
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '22'
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: m9d7-ebf2
+            name: voertuigen
+            timeout: 60
+            incremental: false  # No date field for incremental
+          - id: sgfe-77wx
+            name: meldingen
+            timeout: 60
+            incremental: true
+          - id: a34c-vvps
+            name: geconstateerde_gebreken
+            timeout: 60
+            incremental: true
+          - id: hx2c-gt7k
+            name: gebreken
+            timeout: 10
+            incremental: false
+          - id: 8ys7-d773
+            name: brandstof
+            timeout: 30
+            incremental: false
+    timeout-minutes: ${{ matrix.timeout }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Calculate cache key based on week
+      - name: Calculate cache key
+        id: cache-key
+        run: |
+          WEEK=$(date +'%Y-W%V')
+          echo "key=parquet-${{ matrix.name }}-$WEEK" >> $GITHUB_OUTPUT
+          echo "restore-key=parquet-${{ matrix.name }}-" >> $GITHUB_OUTPUT
+
+      # Restore cached parquet file
+      - name: Restore cache
+        id: cache
+        if: github.event.inputs.force_refresh != 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            data/duckdb/${{ matrix.name }}.parquet
+            data/duckdb/.download_metadata.json
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: ${{ steps.cache-key.outputs.restore-key }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "scripts/uv.lock"
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: cd scripts && uv sync --frozen
+
+      # Download dataset (incremental if cache hit and incremental dataset)
+      - name: Download dataset
+        run: |
+          ARGS="${{ matrix.id }} --verbose"
+          if [ "${{ steps.cache.outputs.cache-hit }}" = "true" ] && [ "${{ matrix.incremental }}" = "true" ]; then
+            echo "Running incremental download for ${{ matrix.name }}"
+            ARGS="$ARGS --incremental"
+          else
+            echo "Running full download for ${{ matrix.name }}"
+          fi
+          cd scripts && uv run python data_duckdb_export.py $ARGS
+        env:
+          RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
+
+      - name: Verify download
+        run: |
+          FILE="data/duckdb/${{ matrix.name }}.parquet"
+          if [ ! -f "$FILE" ]; then
+            echo "ERROR: Download failed - $FILE not found"
+            exit 1
+          fi
+          SIZE=$(stat -c%s "$FILE")
+          echo "File size: $((SIZE / 1024 / 1024)) MB"
+
+      # Save to cache with week-based key
+      - name: Save cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            data/duckdb/${{ matrix.name }}.parquet
+            data/duckdb/.download_metadata.json
+          key: ${{ steps.cache-key.outputs.key }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: parquet-${{ matrix.name }}
+          path: data/duckdb/${{ matrix.name }}.parquet
+          retention-days: 7
+
+  merge:
+    runs-on: ubuntu-latest
+    needs: [download]
+    steps:
+      - name: Download all parquet artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: parquet-*
+          path: data/duckdb
+          merge-multiple: true
+
+      - name: Verify all files
+        run: |
+          echo "Downloaded files:"
+          ls -lh data/duckdb/
+          for f in voertuigen meldingen geconstateerde_gebreken gebreken brandstof; do
+            if [ ! -f "data/duckdb/${f}.parquet" ]; then
+              echo "ERROR: Missing ${f}.parquet"
+              exit 1
+            fi
+          done
+          echo "All datasets present"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: parquet-data
+          path: data/duckdb
+          retention-days: 7
+
+  process:
+    runs-on: ubuntu-latest
+    needs: [merge]
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download parquet data
+        uses: actions/download-artifact@v4
+        with:
+          name: parquet-data
+          path: data/duckdb
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "scripts/uv.lock"
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: cd scripts && uv sync --frozen
+
+      - name: Verify parquet data
+        run: |
+          echo "Checking parquet data files:"
+          ls -lh data/duckdb/
+          for f in voertuigen meldingen geconstateerde_gebreken gebreken brandstof; do
+            if [ ! -f "data/duckdb/${f}.parquet" ]; then
+              echo "ERROR: Missing ${f}.parquet"
+              exit 1
+            fi
+          done
+          echo "All datasets present"
+
+      - name: Process data
+        run: cd scripts && uv run python data_process.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: processed-data
+          path: data/processed
+          retention-days: 7
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [process]
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download processed data
+        uses: actions/download-artifact@v4
+        with:
+          name: processed-data
+          path: data/processed
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Copy data to web public directory
+        run: |
+          mkdir -p web/public/data
+          cp -r data/processed/* web/public/data/
+
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Build site
+        working-directory: web
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/out
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build]
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
