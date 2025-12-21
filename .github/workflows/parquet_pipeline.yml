@@ -87,21 +87,27 @@ jobs:
         run: cd scripts && uv sync --frozen
 
       - name: Download dataset
+        id: download
+        continue-on-error: true
         run: |
           echo "Running full download for ${{ matrix.name }}"
           cd scripts && uv run python data_duckdb_export.py ${{ matrix.id }} --verbose
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
 
-      - name: Verify download
+      - name: Verify download or use cached data
         run: |
           FILE="data/duckdb/${{ matrix.name }}.parquet"
-          if [ ! -f "$FILE" ]; then
-            echo "ERROR: Download failed - $FILE not found"
+          if [ -f "$FILE" ]; then
+            SIZE=$(stat -c%s "$FILE")
+            echo "✓ Dataset available: $((SIZE / 1024 / 1024)) MB"
+            if [ "${{ steps.download.outcome }}" = "failure" ]; then
+              echo "⚠️ Fresh download failed, using cached data from previous run"
+            fi
+          else
+            echo "✗ ERROR: No dataset available - download failed and no cache exists"
             exit 1
           fi
-          SIZE=$(stat -c%s "$FILE")
-          echo "File size: $((SIZE / 1024 / 1024)) MB"
 
       - name: Save dataset cache
         if: steps.cache.outputs.cache-hit != 'true'

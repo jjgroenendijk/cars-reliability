@@ -131,11 +131,26 @@ def row_count_get(session: requests.Session, dataset_id: str) -> int | None:
 def page_fetch(
     session: requests.Session, dataset_id: str, offset: int, limit: int
 ) -> list[dict]:
-    """Fetch a single page of data from the API."""
+    """Fetch a single page of data from the API with retry logic."""
     url = RESOURCE_URL.format(id=dataset_id, limit=limit, offset=offset)
-    r = session.get(url, timeout=REQUEST_TIMEOUT)
-    r.raise_for_status()
-    return r.json()
+    max_retries = 5
+    
+    for attempt in range(max_retries):
+        try:
+            r = session.get(url, timeout=REQUEST_TIMEOUT)
+            r.raise_for_status()
+            return r.json()
+        except (requests.exceptions.ChunkedEncodingError,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout) as e:
+            if attempt == max_retries - 1:
+                raise  # Re-raise on final attempt
+            wait_time = 2 ** attempt  # Exponential backoff: 1, 2, 4, 8, 16 seconds
+            print(f"  [retry] page at offset {offset} failed: {e}, retrying in {wait_time}s...")
+            time.sleep(wait_time)
+    
+    # Should never reach here, but just in case
+    raise RuntimeError(f"Failed to fetch page at offset {offset} after {max_retries} attempts")
 
 
 def dataset_download_parallel(
