@@ -93,14 +93,8 @@ jobs:
 
       - name: Download dataset
         run: |
-          ARGS="${{ matrix.id }} --verbose"
-          if [ "${{ steps.cache.outputs.cache-hit }}" = "true" ] && [ "${{ matrix.incremental }}" = "true" ]; then
-            echo "Running incremental download for ${{ matrix.name }}"
-            ARGS="$ARGS --incremental"
-          else
-            echo "Running full download for ${{ matrix.name }}"
-          fi
-          cd scripts && uv run python data_duckdb_export.py $ARGS
+          echo "Downloading ${{ matrix.name }} (full download)"
+          cd scripts && uv run python data_duckdb_export.py ${{ matrix.id }} --verbose
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
 
