@@ -1,5 +1,7 @@
 """
 Helper utilities for Stage 2 inspection preparation and I/O.
+
+Uses Polars lazy API for memory-efficient processing - avoids Python dict conversion.
 """
 
 import json
@@ -7,47 +9,62 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import duckdb
+import polars as pl
+
+DIR_PARQUET = Path(__file__).parent.parent / "data" / "parquet"
 
 
-def parquet_load(filepath: Path) -> list[dict[str, Any]]:
-    """Load Parquet data from a file using DuckDB."""
-    con = duckdb.connect(":memory:")
-    result = con.execute(f"SELECT * FROM read_parquet('{filepath}')").fetchall()
-    columns = [desc[0] for desc in con.description]
-    con.close()
-    return [dict(zip(columns, row)) for row in result]
+def scan_dataset(dataset_name: str) -> pl.LazyFrame:
+    """Scan a Parquet dataset lazily.
 
+    Args:
+        dataset_name: Name of the dataset (e.g., "voertuigen", "meldingen")
 
-def json_load(filepath: Path) -> list[dict[str, Any]]:
+    Returns:
+        LazyFrame for the dataset
     """
-    Load data from a file. Supports both JSON and Parquet formats.
-    
-    First checks for parquet files in data/duckdb/, falls back to JSON.
+    parquet_path = DIR_PARQUET / f"{dataset_name}.parquet"
+
+    if not parquet_path.exists():
+        raise FileNotFoundError(f"Parquet file not found: {parquet_path}")
+
+    return pl.scan_parquet(parquet_path)
+
+
+def load_dataset(dataset_name: str, columns: list[str] | None = None) -> pl.DataFrame:
+    """Load a Parquet dataset as DataFrame.
+
+    Args:
+        dataset_name: Name of the dataset (e.g., "voertuigen", "meldingen")
+        columns: Optional list of columns to load
+
+    Returns:
+        DataFrame with the dataset
     """
-    # Check for parquet alternative
-    if filepath.suffix == ".json":
-        parquet_dir = filepath.parent.parent / "duckdb"
-        # Map JSON filenames to parquet filenames
-        name_mapping = {
-            "gekentekende_voertuigen": "voertuigen",
-            "meldingen_keuringsinstantie": "meldingen",
-            "geconstateerde_gebreken": "geconstateerde_gebreken",
-            "gebreken": "gebreken",
-            "brandstof": "brandstof",
-        }
-        json_stem = filepath.stem
-        parquet_name = name_mapping.get(json_stem, json_stem)
-        parquet_path = parquet_dir / f"{parquet_name}.parquet"
-        
-        if parquet_path.exists():
-            print(f"Loading from parquet: {parquet_path.name}", flush=True)
-            return parquet_load(parquet_path)
-    
-    # Fall back to JSON
-    print(f"Loading from JSON: {filepath.name}", flush=True)
-    with open(filepath, encoding="utf-8") as file_handle:
-        return json.load(file_handle)
+    parquet_path = DIR_PARQUET / f"{dataset_name}.parquet"
+
+    if not parquet_path.exists():
+        raise FileNotFoundError(f"Parquet file not found: {parquet_path}")
+
+    if columns:
+        return pl.read_parquet(parquet_path, columns=columns)
+    return pl.read_parquet(parquet_path)
+
+
+def data_load(dataset_name: str, columns: list[str] | None = None) -> list[dict[str, Any]]:
+    """Load data from a Parquet file as list of dicts (legacy compatibility).
+
+    DEPRECATED: Use load_dataset() or scan_dataset() instead for memory efficiency.
+
+    Args:
+        dataset_name: Name of the dataset
+        columns: Optional list of columns to load
+
+    Returns:
+        List of records as dictionaries
+    """
+    df = load_dataset(dataset_name, columns)
+    return df.to_dicts()
 
 
 def json_save(data: Any, filepath: Path) -> None:
@@ -82,18 +99,18 @@ def age_calculate(datum_eerste_toelating: str, reference_date: datetime) -> int 
 
 
 def vehicles_index(vehicles: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    """Create an index of vehicles by kenteken (license plate)."""
-    return {
-        vehicle["kenteken"]: vehicle for vehicle in vehicles if vehicle.get("kenteken")
-    }
+    """Create an index of vehicles by kenteken (license plate).
+
+    DEPRECATED: Use Polars join operations instead.
+    """
+    return {vehicle["kenteken"]: vehicle for vehicle in vehicles if vehicle.get("kenteken")}
 
 
 def inspection_filter(record: dict[str, Any]) -> bool:
     """
     Filter inspection records to include only primary APK inspections.
 
-    Accept only APK "periodieke controle" rows to avoid tachograph in/out events.
-    Returns True if inspection should be included.
+    DEPRECATED: Use Polars filter expressions instead.
     """
     soort_melding = record.get("soort_melding_ki_omschrijving", "").strip().lower()
     return soort_melding == "periodieke controle"
@@ -110,7 +127,10 @@ def time_normalize(value: str) -> str:
 
 
 def inspection_key_build(record: dict[str, Any]) -> tuple[str, str, str] | None:
-    """Build a stable inspection key (kenteken, date, time) or None if missing."""
+    """Build a stable inspection key (kenteken, date, time) or None if missing.
+
+    DEPRECATED: Use Polars expressions instead.
+    """
     kenteken = record.get("kenteken", "").strip()
     insp_date = record.get("meld_datum_door_keuringsinstantie", "").strip()
     insp_time = time_normalize(record.get("meld_tijd_door_keuringsinstantie", ""))
@@ -125,8 +145,7 @@ def inspection_keys_primary(
     """
     Determine primary inspection keys by vehicle/day.
 
-    Picks the earliest inspection time per (kenteken, date) for periodieke controles
-    to avoid counting same-day re-tests.
+    DEPRECATED: Use primary_inspections_filter() instead.
     """
     earliest_by_vehicle_day: dict[tuple[str, str], str] = {}
     for record in inspections:
@@ -151,6 +170,37 @@ def inspection_keys_primary(
     }
 
 
+def primary_inspections_filter(inspections_lf: pl.LazyFrame) -> pl.LazyFrame:
+    """Filter to primary APK inspections only (one per vehicle per day, earliest time).
+
+    Args:
+        inspections_lf: LazyFrame of meldingen data
+
+    Returns:
+        LazyFrame with only primary inspection records
+    """
+    return (
+        inspections_lf
+        # Filter to periodieke controle only
+        .filter(
+            pl.col("soort_melding_ki_omschrijving").str.to_lowercase().str.strip_chars()
+            == "periodieke controle"
+        )
+        # Normalize time field
+        .with_columns(
+            pl.col("meld_tijd_door_keuringsinstantie")
+            .fill_null("")
+            .str.strip_chars()
+            .str.zfill(4)
+            .alias("insp_time_normalized")
+        )
+        # Keep earliest inspection per vehicle per day
+        .sort(["kenteken", "meld_datum_door_keuringsinstantie", "insp_time_normalized"])
+        .group_by(["kenteken", "meld_datum_door_keuringsinstantie"])
+        .first()
+    )
+
+
 def data_sanity_check(
     vehicle: dict[str, Any],
     inspection_date: datetime,
@@ -159,15 +209,9 @@ def data_sanity_check(
     """
     Validate vehicle and inspection data for sanity.
 
-    Returns True if data passes sanity checks, False otherwise.
-    Filters out:
-    - Invalid ages (< 0 or > 100 years)
-    - Inspections before vehicle registration date
-    - Other data quality issues
+    DEPRECATED: Use sanity_filters() for Polars expressions.
     """
-    if age_at_inspection is not None and (
-        age_at_inspection < 0 or age_at_inspection > 100
-    ):
+    if age_at_inspection is not None and (age_at_inspection < 0 or age_at_inspection > 100):
         return False
 
     registration_date_str = vehicle.get("datum_eerste_toelating", "").strip()

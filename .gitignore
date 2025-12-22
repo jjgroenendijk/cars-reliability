@@ -14,12 +14,9 @@ scripts/.venv/
 # scripts/uv.lock is intentionally tracked in git
 
 # Data files (too large for git)
-data/*.csv
-data/*.json
-data/*.parquet
+data/parquet/
 data/raw/
 data/processed/
-data/**/*.json
 
 # Generated site data (produced by pipeline)
 site/data/*.json
@@ -37,5 +34,6 @@ Thumbs.db
 # Jupyter
 .ipynb_checkpoints/
 .env
-data/raw
-*.parquet
+
+# Documentation
+docs/articles/

@@ -8,6 +8,7 @@ on:
     - cron: '0 0 * * 0'  # Sunday midnight UTC
   push:
     branches:
+      - main
       - feature/parquet-pipeline
   workflow_dispatch:
     inputs:
@@ -70,7 +71,7 @@ jobs:
         if: github.event.inputs.force_refresh != 'true'
         uses: actions/cache/restore@v4
         with:
-          path: data/duckdb/${{ matrix.name }}.parquet
+          path: data/parquet/${{ matrix.name }}.parquet
           key: ${{ steps.cache-key.outputs.dataset-key }}
           restore-keys: ${{ steps.cache-key.outputs.dataset-restore-key }}
 
@@ -91,13 +92,13 @@ jobs:
         continue-on-error: true
         run: |
           echo "Running full download for ${{ matrix.name }}"
-          cd scripts && uv run python data_duckdb_export.py ${{ matrix.id }} --verbose
+          cd scripts && uv run python data_download.py ${{ matrix.id }} --verbose
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
 
       - name: Verify download or use cached data
         run: |
-          FILE="data/duckdb/${{ matrix.name }}.parquet"
+          FILE="data/parquet/${{ matrix.name }}.parquet"
           if [ -f "$FILE" ]; then
             SIZE=$(stat -c%s "$FILE")
             echo "✓ Dataset available: $((SIZE / 1024 / 1024)) MB"
@@ -113,7 +114,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: data/duckdb/${{ matrix.name }}.parquet
+          path: data/parquet/${{ matrix.name }}.parquet
           key: ${{ steps.cache-key.outputs.dataset-key }}
 
   process:
@@ -137,7 +138,7 @@ jobs:
       - name: Restore voertuigen cache
         uses: actions/cache/restore@v4
         with:
-          path: data/duckdb/voertuigen.parquet
+          path: data/parquet/voertuigen.parquet
           key: ${{ steps.cache-key.outputs.voertuigen-key }}
           restore-keys: parquet-voertuigen-
           fail-on-cache-miss: true
@@ -145,7 +146,7 @@ jobs:
       - name: Restore meldingen cache
         uses: actions/cache/restore@v4
         with:
-          path: data/duckdb/meldingen.parquet
+          path: data/parquet/meldingen.parquet
           key: ${{ steps.cache-key.outputs.meldingen-key }}
           restore-keys: parquet-meldingen-
           fail-on-cache-miss: true
@@ -153,7 +154,7 @@ jobs:
       - name: Restore geconstateerde_gebreken cache
         uses: actions/cache/restore@v4
         with:
-          path: data/duckdb/geconstateerde_gebreken.parquet
+          path: data/parquet/geconstateerde_gebreken.parquet
           key: ${{ steps.cache-key.outputs.geconstateerde-key }}
           restore-keys: parquet-geconstateerde_gebreken-
           fail-on-cache-miss: true
@@ -161,7 +162,7 @@ jobs:
       - name: Restore gebreken cache
         uses: actions/cache/restore@v4
         with:
-          path: data/duckdb/gebreken.parquet
+          path: data/parquet/gebreken.parquet
           key: ${{ steps.cache-key.outputs.gebreken-key }}
           restore-keys: parquet-gebreken-
           fail-on-cache-miss: true
@@ -169,7 +170,7 @@ jobs:
       - name: Restore brandstof cache
         uses: actions/cache/restore@v4
         with:
-          path: data/duckdb/brandstof.parquet
+          path: data/parquet/brandstof.parquet
           key: ${{ steps.cache-key.outputs.brandstof-key }}
           restore-keys: parquet-brandstof-
           fail-on-cache-miss: true
@@ -177,9 +178,9 @@ jobs:
       - name: Verify parquet data
         run: |
           echo "Checking parquet data files:"
-          ls -lh data/duckdb/
+          ls -lh data/parquet/
           for f in voertuigen meldingen geconstateerde_gebreken gebreken brandstof; do
-            if [ ! -f "data/duckdb/${f}.parquet" ]; then
+            if [ ! -f "data/parquet/${f}.parquet" ]; then
               echo "ERROR: Missing ${f}.parquet"
               exit 1
             fi

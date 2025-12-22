@@ -10,7 +10,7 @@
 
 - `scripts/` (Stage 1-2)
 - `web/` (Stage 3)
-- `data/raw/` + `data/processed/` (gitignored outputs)
+- `data/parquet/` + `data/processed/` (gitignored outputs)
 - `docs/` (all docs)
 
 ### Frameworks
@@ -68,10 +68,10 @@ This file must always mention which frameworks and versions are in use.
 
 ## Parquet Data Pipeline
 
-### Data Download (`scripts/data_duckdb_export.py`)
+### Data Download (`scripts/data_download.py`)
 
-- Downloads RDW datasets to Parquet format using DuckDB.
-- Output: `data/duckdb/*.parquet` (gitignored).
+- Downloads RDW datasets to Parquet format using Polars.
+- Output: `data/parquet/*.parquet` (gitignored).
 - Column names must be preserved exactly as provided by RDW (with spaces and mixed case). Never normalize or transform column names.
 - Supports incremental downloads with `--incremental` flag.
 - Date fields for incremental filtering:

@@ -95,7 +95,7 @@ def is_wear_and_tear_defect(
     # If we have the gebreken index, check article number
     if gebreken_index:
         defect_info = gebreken_index.get(defect_code, {})
-        article_number = defect_info.get("gebrek_artikel_nummer", "").strip()
+        article_number = (defect_info.get("gebrek_artikel_nummer") or "").strip()
 
         # Check if article number matches any wear-and-tear pattern
         if article_number in WEAR_AND_TEAR_ARTICLE_PATTERNS:
