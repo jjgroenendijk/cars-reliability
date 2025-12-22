@@ -111,7 +111,7 @@ Note: The `gekentekende_voertuigen` dataset is NOT filtered by `INSPECTION_DAYS_
 - Full brand reliability table (sortable, filterable)
 - Full model reliability table (sortable, filterable)
 - Age-filtered views (e.g., cars 5-15 years old)
-- Defect type filtering: Users can filter defects by category (reliability vs. wear-and-tear) to get accurate reliability metrics that reflect true build quality rather than normal maintenance items
+- Dynamic defect type filtering: Users can filter defects by category (reliability vs. wear-and-tear) or select individual defect types, with all reliability metrics recalculating in real-time across brands, models, and homepage rankings
 - Average defects per year per model
 - About/methodology page
 

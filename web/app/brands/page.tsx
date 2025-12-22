@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import type { BrandStats, Rankings, AgeBracketStats } from "@/app/lib/types";
 import { ReliabilityTable, type Column } from "@/app/components/reliability_table";
+import { DefectFilterPanel } from "@/app/components/defect_filter_panel";
+import { useDefectFilter } from "@/app/lib/defect_filter_context";
 import { timestamp_format } from "@/app/lib/data_load";
 
 type AgeBracketKey = "all" | "4_7" | "8_12" | "13_20" | "5_15";
@@ -29,13 +31,18 @@ interface BrandStatsFiltered {
   avg_defects_per_inspection: number | null;
 }
 
-const BRAND_COLUMNS_FULL: Column<BrandStats>[] = [
+interface BrandStatsWithFilteredMetrics extends BrandStats {
+  filtered_defects: number;
+  filtered_defects_per_vehicle_year: number | null;
+}
+
+const BRAND_COLUMNS_FULL: Column<BrandStatsWithFilteredMetrics>[] = [
   { key: "merk", label: "Brand" },
   { key: "vehicle_count", label: "Vehicles" },
   { key: "total_inspections", label: "Inspections" },
   { key: "avg_defects_per_inspection", label: "Avg. Defects" },
   { key: "avg_age_years", label: "Avg. Age" },
-  { key: "defects_per_vehicle_year", label: "Defects/Year" },
+  { key: "filtered_defects_per_vehicle_year", label: "Defects/Year" },
 ];
 
 const BRAND_COLUMNS_FILTERED: Column<BrandStatsFiltered>[] = [
@@ -51,6 +58,8 @@ export default function BrandsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected_age_bracket, setSelectedAgeBracket] = useState<AgeBracketKey>("all");
+
+  const { brand_breakdowns, calculate_filtered_defects, mode } = useDefectFilter();
 
   useEffect(() => {
     async function data_fetch() {
@@ -81,14 +90,32 @@ export default function BrandsPage() {
     data_fetch();
   }, []);
 
+  // Calculate filtered metrics based on defect filter
+  const stats_with_filtered_metrics = useMemo((): BrandStatsWithFilteredMetrics[] => {
+    return brand_stats.map((b) => {
+      const breakdown = brand_breakdowns[b.merk];
+      const filtered_defects = calculate_filtered_defects(breakdown);
+      const filtered_defects_per_vehicle_year =
+        b.total_vehicle_years > 0
+          ? Math.round((filtered_defects / b.total_vehicle_years) * 1000000) / 1000000
+          : null;
+
+      return {
+        ...b,
+        filtered_defects,
+        filtered_defects_per_vehicle_year,
+      };
+    });
+  }, [brand_stats, brand_breakdowns, calculate_filtered_defects]);
+
   // Transform data based on selected age bracket
   const filtered_data = useMemo((): BrandStatsFiltered[] => {
     if (selected_age_bracket === "all") {
-      return brand_stats.map((b) => ({
+      return stats_with_filtered_metrics.map((b) => ({
         merk: b.merk,
         vehicle_count: b.vehicle_count,
         total_inspections: b.total_inspections,
-        total_defects: b.total_defects,
+        total_defects: b.filtered_defects,
         avg_defects_per_inspection: b.avg_defects_per_inspection,
       }));
     }
@@ -109,7 +136,7 @@ export default function BrandsPage() {
           avg_defects_per_inspection: bracket.avg_defects_per_inspection,
         };
       });
-  }, [brand_stats, selected_age_bracket]);
+  }, [brand_stats, stats_with_filtered_metrics, selected_age_bracket]);
 
   if (loading) {
     return (
@@ -140,9 +167,12 @@ export default function BrandsPage() {
         </h1>
         <p className="text-gray-600 dark:text-gray-300">
           Overview of all car brands sorted by reliability based on APK inspection data.
-          Click a column header to sort. Filter by vehicle age bracket.
+          Click a column header to sort. Filter by vehicle age bracket or defect types.
         </p>
       </div>
+
+      {/* Defect Filter Panel */}
+      <DefectFilterPanel />
 
       {/* Age Bracket Selector */}
       <div className="mb-6">
@@ -158,8 +188,8 @@ export default function BrandsPage() {
               key={option.key}
               onClick={() => setSelectedAgeBracket(option.key)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selected_age_bracket === option.key
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                 }`}
             >
               {option.label}
@@ -171,9 +201,9 @@ export default function BrandsPage() {
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         {selected_age_bracket === "all" ? (
           <ReliabilityTable
-            data={brand_stats}
+            data={stats_with_filtered_metrics}
             columns={BRAND_COLUMNS_FULL}
-            defaultSortKey="defects_per_vehicle_year"
+            defaultSortKey="filtered_defects_per_vehicle_year"
             defaultSortDirection="asc"
             filterKey="merk"
             filterPlaceholder="Search brand..."
@@ -204,16 +234,22 @@ export default function BrandsPage() {
             <dd className="inline ml-1">Total number of APK inspections</dd>
           </div>
           <div>
-            <dt className="inline font-medium">Defect Rate:</dt>
-            <dd className="inline ml-1">Percentage of inspections with defects</dd>
+            <dt className="inline font-medium">Defects/Year:</dt>
+            <dd className="inline ml-1">
+              Defects per vehicle-year{mode !== "all" && " (filtered)"}
+            </dd>
           </div>
           <div>
             <dt className="inline font-medium">Avg. Defects:</dt>
             <dd className="inline ml-1">Average number of defects per inspection</dd>
           </div>
           <div>
-            <dt className="inline font-medium">Models:</dt>
-            <dd className="inline ml-1">Number of different models</dd>
+            <dt className="inline font-medium">Filter:</dt>
+            <dd className="inline ml-1">
+              {mode === "all" && "All defects included"}
+              {mode === "reliability" && "Wear-and-tear excluded"}
+              {mode === "custom" && "Custom defect selection"}
+            </dd>
           </div>
         </dl>
       </div>

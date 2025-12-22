@@ -81,9 +81,10 @@ def metrics_calculate(stats: dict[str, Any]) -> dict[str, Any]:
             age_brackets_result[bracket_name] = None
     result["age_brackets"] = age_brackets_result
 
-    # Clean up internal fields
+    # Clean up internal fields but keep vehicle_years for frontend calculations
     del result["age_sum"]
     del result["age_count"]
+    result["total_vehicle_years"] = round(vehicle_years, 4)  # Keep for client-side recalculation
     del result["vehicle_years"]
     result.pop("defects_per_insp_sq_sum", None)
     result.pop("defects_per_year_sq_sum", None)

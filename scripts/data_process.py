@@ -405,12 +405,31 @@ def main() -> None:
     defect_stats = defect_type_stats_build(defects, gebreken_index, total_inspections)
     print(f"Defect stats: {len(defect_stats['top_defects'])} defect types", flush=True)
 
+    # Generate per-defect breakdown for dynamic frontend filtering
+    brand_defect_breakdown, model_defect_breakdown = defect_breakdown_build(
+        defects, vehicle_index, valid_inspections
+    )
+    print(
+        f"Defect breakdowns: {len(brand_defect_breakdown)} brands, "
+        f"{len(model_defect_breakdown)} models",
+        flush=True,
+    )
+
+    # Create defect code index (code -> description) for frontend display
+    defect_codes = {
+        code: info.get("gebrek_omschrijving", "")
+        for code, info in gebreken_index.items()
+    }
+
     DIR_PROCESSED.mkdir(parents=True, exist_ok=True)
     json_save(brand_stats, DIR_PROCESSED / "brand_stats.json")
     json_save(model_stats, DIR_PROCESSED / "model_stats.json")
     json_save(rankings, DIR_PROCESSED / "rankings.json")
     json_save(metadata, DIR_PROCESSED / "metadata.json")
     json_save(defect_stats, DIR_PROCESSED / "defect_stats.json")
+    json_save(brand_defect_breakdown, DIR_PROCESSED / "brand_defect_breakdown.json")
+    json_save(model_defect_breakdown, DIR_PROCESSED / "model_defect_breakdown.json")
+    json_save(defect_codes, DIR_PROCESSED / "defect_codes.json")
 
     elapsed = (datetime.now() - start_time).total_seconds()
     print(

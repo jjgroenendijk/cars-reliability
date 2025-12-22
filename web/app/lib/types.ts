@@ -26,6 +26,7 @@ export interface BrandStats {
   total_inspections: number;
   total_defects: number;
   total_reliability_defects?: number;
+  total_vehicle_years: number;
   avg_defects_per_inspection: number | null;
   avg_age_years: number | null;
   defects_per_vehicle_year: number | null;
@@ -46,6 +47,7 @@ export interface ModelStats {
   total_inspections: number;
   total_defects: number;
   total_reliability_defects?: number;
+  total_vehicle_years: number;
   avg_defects_per_inspection: number | null;
   avg_age_years: number | null;
   defects_per_vehicle_year: number | null;
@@ -81,6 +83,18 @@ export interface DataSet {
   rankings: Rankings;
   generated_at: string;
 }
+
+/** Defect breakdown: maps defect_code -> count for a brand or model */
+export type DefectBreakdown = Record<string, number>;
+
+/** All defect breakdowns indexed by brand name or model key */
+export type DefectBreakdownIndex = Record<string, DefectBreakdown>;
+
+/** Defect code descriptions for UI display */
+export type DefectCodeIndex = Record<string, string>;
+
+/** Defect filter mode */
+export type DefectFilterMode = "all" | "reliability" | "custom";
 
 /** Single defect type statistics */
 export interface DefectTypeStat {
