@@ -15,17 +15,17 @@ from pathlib import Path
 import polars as pl
 import psutil
 
-from inspection_prepare import json_save, load_dataset, primary_inspections_filter, scan_dataset
+from config import AGE_BRACKETS, THRESHOLD_AGE_BRACKET, THRESHOLD_BRAND, THRESHOLD_MODEL
+
+from inspection_prepare import (
+    dataframe_write_json,
+    json_save,
+    load_dataset,
+    primary_inspections_filter,
+    scan_dataset,
+)
 
 DIR_PROCESSED = Path(__file__).parent.parent / "data" / "processed"
-
-# Thresholds for statistical significance
-THRESHOLD_BRAND = 100
-THRESHOLD_MODEL = 50
-THRESHOLD_AGE_BRACKET = 30
-
-# Age brackets for analysis
-AGE_BRACKETS = {"4_7": (4, 7), "8_12": (8, 12), "13_20": (13, 20), "5_15": (5, 15)}
 
 
 def memory_mb() -> float:
@@ -181,19 +181,20 @@ def generate_rankings(brand_stats: pl.DataFrame, model_stats: pl.DataFrame) -> d
     """Generate top/bottom rankings for brands and models."""
 
     def format_ranking(df: pl.DataFrame, limit: int = 10) -> list[dict]:
-        rows = df.head(limit).to_dicts()
-        return [
-            {
-                "rank": i + 1,
-                "merk": row["merk"],
-                "handelsbenaming": row.get("handelsbenaming"),
-                "defects_per_vehicle_year": round(row["defects_per_vehicle_year"], 6)
-                if row["defects_per_vehicle_year"]
-                else 0,
-                "total_inspections": row["total_inspections"],
-            }
-            for i, row in enumerate(rows)
-        ]
+        result = (
+            df.head(limit)
+            .with_row_index("rank", offset=1)
+            .with_columns(
+                [
+                    pl.col("defects_per_vehicle_year").round(6).fill_null(0),
+                ]
+            )
+        )
+        # Select columns that exist in the dataframe
+        columns = ["rank", "merk", "defects_per_vehicle_year", "total_inspections"]
+        if "handelsbenaming" in result.columns:
+            columns.insert(2, "handelsbenaming")
+        return result.select(columns).to_dicts()
 
     most_reliable_brands = format_ranking(brand_stats)
     least_reliable_brands = format_ranking(
@@ -234,26 +235,28 @@ def build_defect_stats(
         .collect()
     )
 
-    # Join with descriptions
-    defect_counts_with_desc = defect_counts.join(
-        gebreken_df.select(["gebrek_identificatie", "gebrek_omschrijving"]),
-        on="gebrek_identificatie",
-        how="left",
-    )
-
+    # Calculate total defects for percentage calculation
     total_defects = defect_counts["count"].sum()
 
-    top_defects = [
-        {
-            "defect_code": row["gebrek_identificatie"],
-            "defect_description": row["gebrek_omschrijving"] or "Onbekend gebrek",
-            "count": row["count"],
-            "percentage": round((row["count"] / total_defects) * 100, 2)
-            if total_defects > 0
-            else 0,
-        }
-        for row in defect_counts_with_desc.to_dicts()
-    ]
+    # Join with descriptions and compute all fields using Polars
+    top_defects = (
+        defect_counts.join(
+            gebreken_df.select(["gebrek_identificatie", "gebrek_omschrijving"]),
+            on="gebrek_identificatie",
+            how="left",
+        )
+        .with_columns(
+            [
+                (pl.col("count") / total_defects * 100).round(2).alias("percentage"),
+                pl.col("gebrek_omschrijving")
+                .fill_null("Onbekend gebrek")
+                .alias("defect_description"),
+            ]
+        )
+        .rename({"gebrek_identificatie": "defect_code"})
+        .select(["defect_code", "defect_description", "count", "percentage"])
+        .to_dicts()
+    )
 
     return {
         "total_defects": total_defects,
@@ -334,15 +337,14 @@ def main() -> None:
     del inspections_df
     gc.collect()
 
-    # Convert to output format and save
+    # Save outputs using native Polars for DataFrames, Python json for dicts
     DIR_PROCESSED.mkdir(parents=True, exist_ok=True)
 
-    # Convert DataFrames to list of dicts for JSON output (small, aggregated data only)
-    brand_stats_list = brand_stats.to_dicts()
-    model_stats_list = model_stats.to_dicts()
+    # Use native Polars write_json for DataFrames (more efficient than to_dicts)
+    dataframe_write_json(brand_stats, DIR_PROCESSED / "brand_stats.json")
+    dataframe_write_json(model_stats, DIR_PROCESSED / "model_stats.json")
 
-    json_save(brand_stats_list, DIR_PROCESSED / "brand_stats.json")
-    json_save(model_stats_list, DIR_PROCESSED / "model_stats.json")
+    # Use json_save for dicts (rankings, metadata, defect_stats)
     json_save(rankings, DIR_PROCESSED / "rankings.json")
     json_save(metadata, DIR_PROCESSED / "metadata.json")
     json_save(defect_stats, DIR_PROCESSED / "defect_stats.json")

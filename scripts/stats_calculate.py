@@ -5,10 +5,7 @@ Shared calculation helpers for Stage 2 outputs.
 from datetime import datetime
 from typing import Any
 
-THRESHOLD_BRAND = 100
-THRESHOLD_MODEL = 50
-THRESHOLD_AGE_BRACKET = 30
-AGE_BRACKETS = {"4_7": (4, 7), "8_12": (8, 12), "13_20": (13, 20), "5_15": (5, 15)}
+from config import AGE_BRACKETS, THRESHOLD_AGE_BRACKET, THRESHOLD_BRAND, THRESHOLD_MODEL
 
 
 def metrics_calculate(stats: dict[str, Any]) -> dict[str, Any]:
@@ -187,74 +184,4 @@ def metadata_create(
         },
         "source": "RDW Open Data",
         "pipeline_stage": 2,
-    }
-
-
-def defect_type_stats_build(
-    defect_records: list[dict[str, Any]],
-    gebreken_index: dict[str, dict[str, Any]],
-    total_inspections: int,
-) -> dict[str, Any]:
-    """Build defect type statistics with counts.
-
-    Args:
-        defect_records: Raw defect records from geconstateerde_gebreken
-        gebreken_index: Index of defect descriptions by gebrek_identificatie
-        total_inspections: Total number of inspections for rate calculation
-
-    Returns:
-        Dictionary with defect statistics including top defects
-    """
-    from collections import defaultdict
-
-    # Count defects by type
-    defect_counts: dict[str, int] = defaultdict(int)
-    total_defect_count = 0
-
-    for record in defect_records:
-        gebrek_id = record.get("gebrek_identificatie", "").strip()
-        if not gebrek_id:
-            continue
-
-        raw_count = record.get("aantal_gebreken_geconstateerd", 1)
-        try:
-            count = max(int(raw_count), 1)
-        except (TypeError, ValueError):
-            count = 1
-
-        defect_counts[gebrek_id] += count
-        total_defect_count += count
-
-    # Build top defects list with descriptions
-    top_defects: list[dict[str, Any]] = []
-    sorted_defects = sorted(defect_counts.items(), key=lambda x: -x[1])
-
-    for defect_code, count in sorted_defects[:50]:
-        gebrek_info = gebreken_index.get(defect_code, {})
-        description = gebrek_info.get("gebrek_omschrijving", "Onbekend gebrek")
-        percentage = round((count / total_defect_count) * 100, 2) if total_defect_count > 0 else 0
-
-        # Import here to avoid circular imports
-        from defect_categories import categorize_defect, is_reliability_defect
-
-        top_defects.append(
-            {
-                "defect_code": defect_code,
-                "defect_description": description,
-                "count": count,
-                "percentage": percentage,
-                "is_reliability": is_reliability_defect(defect_code, gebreken_index),
-                "category": categorize_defect(defect_code, gebreken_index),
-            }
-        )
-
-    # Calculate average defects per inspection
-    avg_defects = round(total_defect_count / total_inspections, 2) if total_inspections > 0 else 0
-
-    return {
-        "total_defects": total_defect_count,
-        "total_inspections": total_inspections,
-        "avg_defects_per_inspection": avg_defects,
-        "top_defects": top_defects,
-        "generated_at": datetime.now().isoformat(),
     }

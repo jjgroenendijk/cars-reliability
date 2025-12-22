@@ -33,6 +33,8 @@ import polars as pl
 import psutil
 import requests
 
+from config import PAGE_SIZE, REQUEST_TIMEOUT
+
 # Output directory
 DIR_OUTPUT = Path(__file__).parent.parent / "data" / "parquet"
 METADATA_FILE = DIR_OUTPUT / ".download_metadata.json"
@@ -41,8 +43,6 @@ METADATA_FILE = DIR_OUTPUT / ".download_metadata.json"
 API_BASE = "https://opendata.rdw.nl"
 COUNT_URL = API_BASE + "/resource/{id}.json?$select=count(*)"
 RESOURCE_URL = API_BASE + "/resource/{id}.json?$limit={limit}&$offset={offset}"
-REQUEST_TIMEOUT = 3600  # 1 hour for very large downloads
-PAGE_SIZE = 50000  # Rows per page for parallel pagination
 PARALLEL_WORKERS = min(32, (os.cpu_count() or 1) + 4)  # Dynamic worker scaling
 
 # Dataset definitions
