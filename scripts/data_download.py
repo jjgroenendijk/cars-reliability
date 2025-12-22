@@ -244,8 +244,15 @@ def dataset_download_parallel(
     merge_start = time.time()
 
     # Use glob pattern to scan all temp parquet files and stream to output
+    # Handle schema variations: RDW API can return different columns in different pages
+    # - missing_columns='insert': add NULL columns for fields missing in some batches
+    # - extra_columns='ignore': skip extra columns not in the first batch's schema
     temp_pattern = str(temp_dir / "batch_*.parquet")
-    pl.scan_parquet(temp_pattern).sink_parquet(output_path, compression="zstd")
+    pl.scan_parquet(
+        temp_pattern,
+        missing_columns="insert",
+        extra_columns="ignore",
+    ).sink_parquet(output_path, compression="zstd")
 
     merge_time = time.time() - merge_start
     mem_after_merge = memory_usage_mb()
