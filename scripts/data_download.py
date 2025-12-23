@@ -118,14 +118,27 @@ def memory_usage_mb() -> float:
 
 def row_count_get(session: requests.Session, dataset_id: str) -> int | None:
     """Get total row count for progress percentage."""
-    try:
-        url = COUNT_URL.format(id=dataset_id)
-        r = session.get(url, timeout=30)
-        r.raise_for_status()
-        data = r.json()
-        return int(data[0].get("count", 0)) if data else None
-    except Exception:
-        return None
+    url = COUNT_URL.format(id=dataset_id)
+    max_retries = 3
+
+    for attempt in range(max_retries):
+        try:
+            r = session.get(url, timeout=60)
+            r.raise_for_status()
+            data = r.json()
+            if data and "count" in data[0]:
+                return int(data[0]["count"])
+            print(f"  [count] unexpected response: {data}")
+            return None
+        except requests.exceptions.RequestException as e:
+            if attempt < max_retries - 1:
+                wait_time = 2 ** (attempt + 1)
+                print(f"  [count] attempt {attempt + 1} failed: {e}, retrying in {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                print(f"  [count] all attempts failed: {e}")
+                return None
+    return None
 
 
 def page_fetch(session: requests.Session, dataset_id: str, offset: int, limit: int) -> list[dict]:
