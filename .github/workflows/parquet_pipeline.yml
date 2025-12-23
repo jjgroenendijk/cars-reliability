@@ -87,8 +87,16 @@ jobs:
       - name: Install dependencies
         run: cd scripts && uv sync --frozen
 
+      - name: Validate cache
+        id: validate
+        if: steps.cache.outputs.cache-hit == 'true'
+        continue-on-error: true
+        run: |
+          cd scripts && uv run python cache_validate.py ../data/parquet/${{ matrix.name }}.parquet
+
       - name: Download dataset
         id: download
+        if: steps.validate.outcome != 'success'
         continue-on-error: true
         run: |
           echo "Running full download for ${{ matrix.name }}"
@@ -102,7 +110,9 @@ jobs:
           if [ -f "$FILE" ]; then
             SIZE=$(stat -c%s "$FILE")
             echo "✓ Dataset available: $((SIZE / 1024 / 1024)) MB"
-            if [ "${{ steps.download.outcome }}" = "failure" ]; then
+            if [ "${{ steps.validate.outcome }}" = "success" ]; then
+              echo "✓ Using validated cache - download was skipped"
+            elif [ "${{ steps.download.outcome }}" = "failure" ]; then
               echo "⚠️ Fresh download failed, using cached data from previous run"
             fi
           else
@@ -111,7 +121,7 @@ jobs:
           fi
 
       - name: Save dataset cache
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.download.outcome == 'success'
         uses: actions/cache/save@v4
         with:
           path: data/parquet/${{ matrix.name }}.parquet
