@@ -125,3 +125,16 @@ export function percentage_format(value: number): string {
 export function number_format(value: number): string {
   return value.toLocaleString("nl-NL");
 }
+
+/**
+ * Convert ALL CAPS string to Pascal Case.
+ * @param value - String to format (e.g., "VOLKSWAGEN" or "GOLF VARIANT")
+ * @returns Pascal Case string (e.g., "Volkswagen" or "Golf Variant")
+ */
+export function pascal_case_format(value: string): string {
+  return value
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}

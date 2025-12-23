@@ -50,94 +50,73 @@ export function DefectFilterPanel() {
 
     if (loading) {
         return (
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
-                <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                    <Filter className="h-4 w-4 animate-pulse" />
-                    <span>Loading defect filter...</span>
-                </div>
+            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                <Filter className="h-4 w-4 animate-pulse" />
+                <span>Loading...</span>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-6">
-                <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-                    Could not load defect filter: {error}
-                </p>
+            <div className="text-yellow-800 dark:text-yellow-200 text-sm">
+                Filter unavailable
             </div>
         );
     }
 
     return (
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg mb-6">
+        <div>
             {/* Header */}
-            <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                        <Filter className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                        <span className="font-medium text-gray-900 dark:text-white">
-                            Defect Filter
-                        </span>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                            ({active_defect_count} of {total_defect_count} types included)
-                        </span>
-                    </div>
-                    {mode !== "reliability" && (
-                        <button
-                            onClick={reset_filter}
-                            className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                        >
-                            <RotateCcw className="h-3 w-3" />
-                            Reset
-                        </button>
+            <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Defect Filter
+                </label>
+                {mode !== "reliability" && (
+                    <button
+                        onClick={reset_filter}
+                        className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                        <RotateCcw className="h-3 w-3" />
+                        Reset
+                    </button>
+                )}
+            </div>
+
+            {/* Mode buttons */}
+            <div className="flex flex-wrap gap-2">
+                <button
+                    onClick={() => mode_set("all")}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${mode === "all"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                        }`}
+                >
+                    All
+                </button>
+                <button
+                    onClick={() => mode_set("reliability")}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${mode === "reliability"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                        }`}
+                >
+                    Reliability
+                </button>
+                <button
+                    onClick={() => setExpanded(!expanded)}
+                    className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${mode === "custom"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                        }`}
+                >
+                    Custom
+                    {expanded ? (
+                        <ChevronUp className="h-4 w-4" />
+                    ) : (
+                        <ChevronDown className="h-4 w-4" />
                     )}
-                </div>
-
-                {/* Mode buttons */}
-                <div className="flex flex-wrap gap-2">
-                    <button
-                        onClick={() => mode_set("all")}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${mode === "all"
-                                ? "bg-blue-600 text-white"
-                                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                            }`}
-                    >
-                        All Defects
-                    </button>
-                    <button
-                        onClick={() => mode_set("reliability")}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${mode === "reliability"
-                                ? "bg-blue-600 text-white"
-                                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                            }`}
-                    >
-                        Reliability Only
-                    </button>
-                    <button
-                        onClick={() => setExpanded(!expanded)}
-                        className={`flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${mode === "custom"
-                                ? "bg-blue-600 text-white"
-                                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                            }`}
-                    >
-                        Custom
-                        {expanded ? (
-                            <ChevronUp className="h-4 w-4" />
-                        ) : (
-                            <ChevronDown className="h-4 w-4" />
-                        )}
-                    </button>
-                </div>
-
-                {/* Mode description */}
-                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    {mode === "all" && "Including all defect types in calculations."}
-                    {mode === "reliability" &&
-                        "Excluding wear-and-tear items (tires, wipers, etc.) for true reliability metrics."}
-                    {mode === "custom" &&
-                        `Custom selection: ${excluded_codes.size} defect types excluded.`}
-                </p>
+                </button>
             </div>
 
             {/* Expanded defect list */}
@@ -174,8 +153,8 @@ export function DefectFilterPanel() {
                                         >
                                             <div
                                                 className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${included
-                                                        ? "bg-blue-600 border-blue-600 text-white"
-                                                        : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                                                    ? "bg-blue-600 border-blue-600 text-white"
+                                                    : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                                                     }`}
                                             >
                                                 {included && <Check className="h-3 w-3" />}

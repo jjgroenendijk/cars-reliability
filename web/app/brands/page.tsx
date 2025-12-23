@@ -5,7 +5,7 @@ import type { BrandStats, Rankings, AgeBracketStats } from "@/app/lib/types";
 import { ReliabilityTable, type Column } from "@/app/components/reliability_table";
 import { DefectFilterPanel } from "@/app/components/defect_filter_panel";
 import { useDefectFilter } from "@/app/lib/defect_filter_context";
-import { timestamp_format } from "@/app/lib/data_load";
+import { timestamp_format, pascal_case_format } from "@/app/lib/data_load";
 
 type AgeBracketKey = "all" | "4_7" | "8_12" | "13_20" | "5_15";
 
@@ -37,7 +37,7 @@ interface BrandStatsWithFilteredMetrics extends BrandStats {
 }
 
 const BRAND_COLUMNS_FULL: Column<BrandStatsWithFilteredMetrics>[] = [
-  { key: "merk", label: "Brand" },
+  { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
   { key: "vehicle_count", label: "Vehicles" },
   { key: "total_inspections", label: "Inspections" },
   { key: "avg_defects_per_inspection", label: "Avg. Defects" },
@@ -46,7 +46,7 @@ const BRAND_COLUMNS_FULL: Column<BrandStatsWithFilteredMetrics>[] = [
 ];
 
 const BRAND_COLUMNS_FILTERED: Column<BrandStatsFiltered>[] = [
-  { key: "merk", label: "Brand" },
+  { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
   { key: "vehicle_count", label: "Vehicles" },
   { key: "total_inspections", label: "Inspections" },
   { key: "avg_defects_per_inspection", label: "Avg. Defects" },
@@ -171,30 +171,34 @@ export default function BrandsPage() {
         </p>
       </div>
 
-      {/* Defect Filter Panel */}
-      <DefectFilterPanel />
+      {/* Configuration Section */}
+      <div className="mb-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+          {/* Defect Filter */}
+          <div>
+            <DefectFilterPanel />
+          </div>
 
-      {/* Age Bracket Selector */}
-      <div className="mb-6">
-        <label
-          htmlFor="age-bracket"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-        >
-          Vehicle Age
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {AGE_BRACKET_OPTIONS.map((option) => (
-            <button
-              key={option.key}
-              onClick={() => setSelectedAgeBracket(option.key)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selected_age_bracket === option.key
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                }`}
-            >
-              {option.label}
-            </button>
-          ))}
+          {/* Age Bracket Selector */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Vehicle Age
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {AGE_BRACKET_OPTIONS.map((option) => (
+                <button
+                  key={option.key}
+                  onClick={() => setSelectedAgeBracket(option.key)}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selected_age_bracket === option.key
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                    }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 

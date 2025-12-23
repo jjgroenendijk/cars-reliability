@@ -1,6 +1,7 @@
 "use client";
 
 import type { RdwVehicle } from "@/app/lib/types";
+import { pascal_case_format } from "@/app/lib/data_load";
 
 interface VehicleInfoCardProps {
   vehicle: RdwVehicle;
@@ -35,7 +36,7 @@ export function VehicleInfoCard({ vehicle }: VehicleInfoCardProps) {
     <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
       <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          {vehicle.merk} {vehicle.handelsbenaming}
+          {pascal_case_format(vehicle.merk)} {pascal_case_format(vehicle.handelsbenaming)}
         </h2>
         <p className="text-gray-600 dark:text-gray-400 font-mono">
           {vehicle.kenteken}

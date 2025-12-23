@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import type { BrandStats, Rankings, FuelBreakdown } from "@/app/lib/types";
 import { FuelBreakdownBar } from "@/app/components/fuel_breakdown";
-import { timestamp_format } from "@/app/lib/data_load";
+import { timestamp_format, pascal_case_format } from "@/app/lib/data_load";
 
 type SortKey = "merk" | "vehicle_count" | "electric_pct" | "diesel_pct" | "petrol_pct";
 type SortDir = "asc" | "desc";
@@ -196,7 +196,7 @@ export default function FuelsPage() {
                   className="hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium">
-                    {brand.merk}
+                    {pascal_case_format(brand.merk)}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 text-right">
                     {brand.vehicle_count.toLocaleString()}

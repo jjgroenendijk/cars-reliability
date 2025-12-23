@@ -153,7 +153,7 @@ export function ReliabilityTable<T extends object>({
                   key={String(column.key)}
                   scope="col"
                   className={`
-                    px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider
+                    px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 tracking-wider
                     ${column.sortable !== false ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 select-none" : ""}
                     ${column.className ?? ""}
                   `}

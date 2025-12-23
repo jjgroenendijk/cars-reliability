@@ -4,7 +4,7 @@ A data analysis project that evaluates car brand and model reliability using off
 
 **Links:** [Live Site](https://jjgroenendijk.github.io/cars-reliability/) | [GitHub](https://github.com/jjgroenendijk/cars-reliability)
 
-[![Website Build & Deploy](https://github.com/jjgroenendijk/cars-reliability/actions/workflows/website_build.yml/badge.svg)](https://github.com/jjgroenendijk/cars-reliability/actions/workflows/website_build.yml)
+[![Data Pipeline & Deploy](https://github.com/jjgroenendijk/cars-reliability/actions/workflows/parquet_pipeline.yml/badge.svg)](https://github.com/jjgroenendijk/cars-reliability/actions/workflows/parquet_pipeline.yml)
 
 ## Overview
 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { Rankings, RankingEntry, BrandStats, ModelStats } from "@/app/lib/types";
 import { DefectFilterPanel } from "@/app/components/defect_filter_panel";
 import { useDefectFilter } from "@/app/lib/defect_filter_context";
-import { timestamp_format } from "@/app/lib/data_load";
+import { timestamp_format, pascal_case_format } from "@/app/lib/data_load";
 import { Search, Car, AlertCircle, Calendar, ArrowRight } from "lucide-react";
 
 interface RankingEntryWithFiltered extends RankingEntry {
@@ -345,11 +345,11 @@ function RankingCard({
                 </span>
                 <div>
                   <div className="font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    {entry.merk}
+                    {pascal_case_format(entry.merk)}
                   </div>
                   {show_model && entry.handelsbenaming && (
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {entry.handelsbenaming}
+                      {pascal_case_format(entry.handelsbenaming)}
                     </div>
                   )}
                 </div>
