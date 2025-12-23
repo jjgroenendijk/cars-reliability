@@ -118,6 +118,8 @@ def memory_usage_mb() -> float:
 
 def row_count_get(session: requests.Session, dataset_id: str) -> int | None:
     """Get total row count for progress percentage."""
+    import io
+
     url = COUNT_URL.format(id=dataset_id)
     max_retries = 3
 
@@ -125,10 +127,10 @@ def row_count_get(session: requests.Session, dataset_id: str) -> int | None:
         try:
             r = session.get(url, timeout=60)
             r.raise_for_status()
-            data = r.json()
-            if data and "count" in data[0]:
-                return int(data[0]["count"])
-            print(f"  [count] unexpected response: {data}")
+            df = pl.read_json(io.BytesIO(r.content))
+            if "count" in df.columns and len(df) > 0:
+                return int(df["count"][0])
+            print(f"  [count] unexpected response: {df}")
             return None
         except requests.exceptions.RequestException as e:
             if attempt < max_retries - 1:
