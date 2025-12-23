@@ -63,8 +63,9 @@ jobs:
         id: cache-key
         run: |
           WEEK=$(date +'%Y-W%V')
-          echo "dataset-key=parquet-${{ matrix.name }}-$WEEK" >> $GITHUB_OUTPUT
-          echo "dataset-restore-key=parquet-${{ matrix.name }}-" >> $GITHUB_OUTPUT
+          SCRIPT_HASH=$(sha256sum scripts/data_download.py | cut -c1-8)
+          echo "dataset-key=parquet-${{ matrix.name }}-$WEEK-$SCRIPT_HASH" >> $GITHUB_OUTPUT
+          echo "dataset-restore-key=parquet-${{ matrix.name }}-$WEEK-" >> $GITHUB_OUTPUT
 
       - name: Restore dataset cache
         id: cache
