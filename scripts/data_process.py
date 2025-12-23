@@ -16,7 +16,6 @@ import polars as pl
 import psutil
 
 from config import AGE_BRACKETS, THRESHOLD_AGE_BRACKET, THRESHOLD_BRAND, THRESHOLD_MODEL
-
 from inspection_prepare import (
     dataframe_write_json,
     json_save,
@@ -269,6 +268,103 @@ def build_defect_stats(
     }
 
 
+def build_defect_breakdowns(
+    defects_lf: pl.LazyFrame,
+    inspections_df: pl.DataFrame,
+) -> tuple[dict[str, dict[str, int]], dict[str, dict[str, int]]]:
+    """Build per-defect-code counts for each brand and model.
+
+    This enables the frontend to dynamically recalculate reliability
+    metrics when users toggle which defects count as reliability indicators.
+
+    Returns:
+        Tuple of (brand_defects, model_defects) where each is a dict mapping
+        brand/model name to a dict of defect_code -> count
+    """
+    # Get unique inspection keys with brand/model info from inspections_df
+    insp_keys = inspections_df.select(
+        [
+            "kenteken",
+            "meld_datum_door_keuringsinstantie",
+            "meld_tijd_door_keuringsinstantie",
+            "merk",
+            "handelsbenaming",
+        ]
+    )
+
+    # Join defects with inspections to get brand/model info
+    defects_with_brand = (
+        defects_lf.select(
+            [
+                "kenteken",
+                "meld_datum_door_keuringsinstantie",
+                "meld_tijd_door_keuringsinstantie",
+                "gebrek_identificatie",
+                pl.col("aantal_gebreken_geconstateerd").fill_null(1).cast(pl.Int64).alias("count"),
+            ]
+        )
+        .collect()
+        .join(
+            insp_keys,
+            on=[
+                "kenteken",
+                "meld_datum_door_keuringsinstantie",
+                "meld_tijd_door_keuringsinstantie",
+            ],
+            how="inner",
+        )
+    )
+
+    # Aggregate by brand and defect code
+    brand_breakdown = (
+        defects_with_brand.group_by(["merk", "gebrek_identificatie"])
+        .agg(pl.col("count").sum())
+        .to_dicts()
+    )
+
+    # Aggregate by model (merk|handelsbenaming) and defect code
+    model_breakdown = (
+        defects_with_brand.with_columns(
+            (pl.col("merk") + "|" + pl.col("handelsbenaming")).alias("model_key")
+        )
+        .group_by(["model_key", "gebrek_identificatie"])
+        .agg(pl.col("count").sum())
+        .to_dicts()
+    )
+
+    # Convert to nested dict format: {brand: {defect_code: count}}
+    brand_defects: dict[str, dict[str, int]] = {}
+    for row in brand_breakdown:
+        brand = row["merk"]
+        code = row["gebrek_identificatie"]
+        count = row["count"]
+        if brand not in brand_defects:
+            brand_defects[brand] = {}
+        brand_defects[brand][code] = count
+
+    model_defects: dict[str, dict[str, int]] = {}
+    for row in model_breakdown:
+        model = row["model_key"]
+        code = row["gebrek_identificatie"]
+        count = row["count"]
+        if model not in model_defects:
+            model_defects[model] = {}
+        model_defects[model][code] = count
+
+    return brand_defects, model_defects
+
+
+def build_defect_codes(gebreken_df: pl.DataFrame) -> dict[str, str]:
+    """Build defect code index (code -> description) for frontend display."""
+    result = {}
+    for row in gebreken_df.select(["gebrek_identificatie", "gebrek_omschrijving"]).to_dicts():
+        code = row["gebrek_identificatie"]
+        desc = row["gebrek_omschrijving"] or ""
+        if code:
+            result[code] = desc
+    return result
+
+
 def main() -> None:
     """Main entry point for the data processing script."""
     print(f"Stage2: Processing (Polars native) | memory: {memory_mb():.0f} MB", flush=True)
@@ -333,6 +429,21 @@ def main() -> None:
     defect_stats = build_defect_stats(defects_lf, gebreken_df, total_inspections)
     print(f"Defect stats: {len(defect_stats['top_defects'])} defect types", flush=True)
 
+    # Build per-defect breakdowns for dynamic frontend filtering
+    print("Building defect breakdowns...", flush=True)
+    brand_defect_breakdown, model_defect_breakdown = build_defect_breakdowns(
+        defects_lf, inspections_df
+    )
+    print(
+        f"Defect breakdowns: {len(brand_defect_breakdown)} brands, "
+        f"{len(model_defect_breakdown)} models | memory: {memory_mb():.0f} MB",
+        flush=True,
+    )
+
+    # Build defect code index for frontend display
+    defect_codes = build_defect_codes(gebreken_df)
+    print(f"Defect codes: {len(defect_codes)} codes", flush=True)
+
     # Free memory before saving
     del inspections_df
     gc.collect()
@@ -344,10 +455,13 @@ def main() -> None:
     dataframe_write_json(brand_stats, DIR_PROCESSED / "brand_stats.json")
     dataframe_write_json(model_stats, DIR_PROCESSED / "model_stats.json")
 
-    # Use json_save for dicts (rankings, metadata, defect_stats)
+    # Use json_save for dicts (rankings, metadata, defect_stats, defect breakdowns)
     json_save(rankings, DIR_PROCESSED / "rankings.json")
     json_save(metadata, DIR_PROCESSED / "metadata.json")
     json_save(defect_stats, DIR_PROCESSED / "defect_stats.json")
+    json_save(brand_defect_breakdown, DIR_PROCESSED / "brand_defect_breakdown.json")
+    json_save(model_defect_breakdown, DIR_PROCESSED / "model_defect_breakdown.json")
+    json_save(defect_codes, DIR_PROCESSED / "defect_codes.json")
 
     elapsed = (datetime.now() - start_time).total_seconds()
     print(
