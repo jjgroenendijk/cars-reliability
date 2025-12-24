@@ -55,6 +55,8 @@ Run these from indicated directory. All are safe to auto-run.
 ## Tech Stack
 
 - Python 3.11+ (managed via uv, config in `scripts/`)
+- Polars for data processing: LazyFrames (`scan_*`) and native functions are **mandatory**; actively refactor any Python loops or dicts to Polars-native code
+- Memory constraint: full dataset cannot fit in memory; always use streaming/lazy processing
 - Next.js 16, Tailwind CSS 4.1, Node.js 22+
 - `.env` stores the RDW app token; never commit it
 

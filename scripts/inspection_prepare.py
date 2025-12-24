@@ -10,7 +10,7 @@ from typing import Any
 
 import polars as pl
 
-DIR_PARQUET = Path(__file__).parent.parent / "data" / "parquet"
+from config import DIR_PARQUET
 
 
 def scan_dataset(dataset_name: str) -> pl.LazyFrame:

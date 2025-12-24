@@ -15,15 +15,7 @@ from pathlib import Path
 
 import polars as pl
 
-# Minimum file sizes in bytes (rough estimates based on expected data)
-MIN_SIZES = {
-    "voertuigen": 500_000_000,  # ~500 MB
-    "meldingen": 500_000_000,  # ~500 MB
-    "geconstateerde_gebreken": 100_000_000,  # ~100 MB
-    "gebreken": 10_000,  # ~10 KB (small reference table)
-    "brandstof": 50_000_000,  # ~50 MB
-}
-DEFAULT_MIN_SIZE = 10_000  # 10 KB fallback
+from config import DEFAULT_MIN_CACHE_SIZE, MIN_CACHE_SIZES
 
 
 def parquet_validate(file_path: Path) -> tuple[bool, str]:
@@ -34,7 +26,7 @@ def parquet_validate(file_path: Path) -> tuple[bool, str]:
     # Check file size
     size = file_path.stat().st_size
     dataset_name = file_path.stem
-    min_size = MIN_SIZES.get(dataset_name, DEFAULT_MIN_SIZE)
+    min_size = MIN_CACHE_SIZES.get(dataset_name, DEFAULT_MIN_CACHE_SIZE)
 
     if size < min_size:
         return False, f"file too small ({size:,} bytes, expected >= {min_size:,})"

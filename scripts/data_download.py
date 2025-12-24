@@ -6,9 +6,9 @@ Downloads complete RDW datasets via parallel JSON pagination and exports to Parq
 Uses Polars for efficient data handling and ZSTD compression.
 
 Usage:
-    uv run python data_duckdb_export.py --all                  # Download all 5 datasets
-    uv run python data_duckdb_export.py m9d7-ebf2 --verbose    # Download single dataset
-    uv run python data_duckdb_export.py hx2c-gt7k --verbose    # Small dataset for testing
+    uv run python data_download.py --all                  # Download all 5 datasets
+    uv run python data_download.py m9d7-ebf2 --verbose    # Download single dataset
+    uv run python data_download.py hx2c-gt7k --verbose    # Small dataset for testing
 
 Datasets:
     m9d7-ebf2 - Gekentekende Voertuigen
@@ -22,7 +22,9 @@ import argparse
 import json
 import math
 import os
+import shutil
 import sys
+import tempfile
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -33,56 +35,11 @@ import polars as pl
 import psutil
 import requests
 
-from config import PAGE_SIZE, REQUEST_TIMEOUT
+from api_client import PARALLEL_WORKERS, env_load, page_fetch, row_count_get, session_create
+from config import DATASETS, DIR_PARQUET, PAGE_SIZE
 
-# Output directory
-DIR_OUTPUT = Path(__file__).parent.parent / "data" / "parquet"
-METADATA_FILE = DIR_OUTPUT / ".download_metadata.json"
-
-# RDW API
-API_BASE = "https://opendata.rdw.nl"
-COUNT_URL = API_BASE + "/resource/{id}.json?$select=count(*)"
-RESOURCE_URL = API_BASE + "/resource/{id}.json?$limit={limit}&$offset={offset}"
-PARALLEL_WORKERS = min(32, (os.cpu_count() or 1) + 4)  # Dynamic worker scaling
-
-# Dataset definitions
-DATASETS = {
-    "m9d7-ebf2": "voertuigen",
-    "sgfe-77wx": "meldingen",
-    "a34c-vvps": "geconstateerde_gebreken",
-    "hx2c-gt7k": "gebreken",
-    "8ys7-d773": "brandstof",
-}
-
-
-def env_load() -> None:
-    """Load environment variables from .env file."""
-    env_path = Path(__file__).parent.parent / ".env"
-    if env_path.exists():
-        with open(env_path) as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#") and "=" in line:
-                    k, v = line.split("=", 1)
-                    if k.strip() not in os.environ:
-                        os.environ[k.strip()] = v.strip().strip("\"'")
-
-
-def session_create() -> requests.Session:
-    """Create HTTP session with connection pooling optimized for parallel downloads."""
-    session = requests.Session()
-    adapter = requests.adapters.HTTPAdapter(
-        pool_connections=PARALLEL_WORKERS,
-        pool_maxsize=PARALLEL_WORKERS,
-        max_retries=requests.adapters.Retry(
-            total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504]
-        ),
-    )
-    session.mount("https://", adapter)
-    if token := os.environ.get("RDW_APP_TOKEN") or os.environ.get("APP_Token"):
-        session.headers["X-App-Token"] = token
-        print(f"Using app token: {token[:8]}...")
-    return session
+# Metadata file path
+METADATA_FILE = DIR_PARQUET / ".download_metadata.json"
 
 
 def metadata_load() -> dict:
@@ -95,7 +52,7 @@ def metadata_load() -> dict:
 
 def metadata_save(metadata: dict) -> None:
     """Save download metadata to disk."""
-    DIR_OUTPUT.mkdir(parents=True, exist_ok=True)
+    DIR_PARQUET.mkdir(parents=True, exist_ok=True)
     with open(METADATA_FILE, "w") as f:
         json.dump(metadata, f, indent=2)
 
@@ -116,58 +73,6 @@ def memory_usage_mb() -> float:
     return process.memory_info().rss / (1024 * 1024)
 
 
-def row_count_get(session: requests.Session, dataset_id: str) -> int | None:
-    """Get total row count for progress percentage."""
-    import io
-
-    url = COUNT_URL.format(id=dataset_id)
-    max_retries = 3
-
-    for attempt in range(max_retries):
-        try:
-            r = session.get(url, timeout=60)
-            r.raise_for_status()
-            df = pl.read_json(io.BytesIO(r.content))
-            if "count" in df.columns and len(df) > 0:
-                return int(df["count"][0])
-            print(f"  [count] unexpected response: {df}")
-            return None
-        except requests.exceptions.RequestException as e:
-            if attempt < max_retries - 1:
-                wait_time = 2 ** (attempt + 1)
-                print(f"  [count] attempt {attempt + 1} failed: {e}, retrying in {wait_time}s...")
-                time.sleep(wait_time)
-            else:
-                print(f"  [count] all attempts failed: {e}")
-                return None
-    return None
-
-
-def page_fetch(session: requests.Session, dataset_id: str, offset: int, limit: int) -> list[dict]:
-    """Fetch a single page of data from the API with retry logic."""
-    url = RESOURCE_URL.format(id=dataset_id, limit=limit, offset=offset)
-    max_retries = 5
-
-    for attempt in range(max_retries):
-        try:
-            r = session.get(url, timeout=REQUEST_TIMEOUT)
-            r.raise_for_status()
-            return r.json()
-        except (
-            requests.exceptions.ChunkedEncodingError,
-            requests.exceptions.ConnectionError,
-            requests.exceptions.Timeout,
-        ) as e:
-            if attempt == max_retries - 1:
-                raise  # Re-raise on final attempt
-            wait_time = 2**attempt  # Exponential backoff: 1, 2, 4, 8, 16 seconds
-            print(f"  [retry] page at offset {offset} failed: {e}, retrying in {wait_time}s...")
-            time.sleep(wait_time)
-
-    # Should never reach here, but just in case
-    raise RuntimeError(f"Failed to fetch page at offset {offset} after {max_retries} attempts")
-
-
 def dataset_download_parallel(
     session: requests.Session,
     dataset_id: str,
@@ -184,9 +89,6 @@ def dataset_download_parallel(
 
     Returns: row_count
     """
-    import shutil
-    import tempfile
-
     page_size = PAGE_SIZE
     total_pages = math.ceil(total_rows / page_size) if total_rows > 0 else 1
     offsets = list(range(0, total_rows, page_size))
@@ -296,7 +198,7 @@ def dataset_download_to_parquet(
 
     Returns: (row_count, elapsed_seconds)
     """
-    output_path = DIR_OUTPUT / f"{output_name}.parquet"
+    output_path = DIR_PARQUET / f"{output_name}.parquet"
 
     # Get row count for parallel downloads
     mem_start = memory_usage_mb()
@@ -373,7 +275,7 @@ Examples:
         sys.exit(1)
 
     env_load()
-    DIR_OUTPUT.mkdir(parents=True, exist_ok=True)
+    DIR_PARQUET.mkdir(parents=True, exist_ok=True)
 
     session = session_create()
 
@@ -387,7 +289,7 @@ Examples:
             sys.exit(1)
         datasets_to_download = [(args.dataset_id, DATASETS[args.dataset_id])]
 
-    print(f"Downloading {len(datasets_to_download)} dataset(s) to {DIR_OUTPUT}")
+    print(f"Downloading {len(datasets_to_download)} dataset(s) to {DIR_PARQUET}")
     print()
 
     total_start = time.time()
