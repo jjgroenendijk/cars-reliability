@@ -40,7 +40,7 @@ const BRAND_COLUMNS_FULL: Column<BrandStatsWithFilteredMetrics>[] = [
   { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
   { key: "vehicle_count", label: "Vehicles" },
   { key: "total_inspections", label: "Inspections" },
-  { key: "avg_defects_per_inspection", label: "Avg. Defects" },
+  { key: "avg_defects_per_inspection", label: "Defects/Inspection" },
   { key: "avg_age_years", label: "Avg. Age" },
   { key: "filtered_defects_per_vehicle_year", label: "Defects/Year" },
 ];
@@ -49,7 +49,7 @@ const BRAND_COLUMNS_FILTERED: Column<BrandStatsFiltered>[] = [
   { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
   { key: "vehicle_count", label: "Vehicles" },
   { key: "total_inspections", label: "Inspections" },
-  { key: "avg_defects_per_inspection", label: "Avg. Defects" },
+  { key: "avg_defects_per_inspection", label: "Defects/Inspection" },
 ];
 
 export default function BrandsPage() {
@@ -244,8 +244,8 @@ export default function BrandsPage() {
             </dd>
           </div>
           <div>
-            <dt className="inline font-medium">Avg. Defects:</dt>
-            <dd className="inline ml-1">Average number of defects per inspection</dd>
+            <dt className="inline font-medium">Defects/Inspection:</dt>
+            <dd className="inline ml-1">Average defects found per APK inspection</dd>
           </div>
           <div>
             <dt className="inline font-medium">Filter:</dt>

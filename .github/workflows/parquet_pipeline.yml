@@ -213,6 +213,9 @@ jobs:
       - name: Process data
         run: cd scripts && uv run python data_process.py
 
+      - name: Validate output schema
+        run: cd scripts && uv run python validate_json_schema.py
+
       - uses: actions/upload-artifact@v4
         with:
           name: processed-data
