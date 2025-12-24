@@ -84,14 +84,14 @@ export default function HomePage() {
       })
       .filter((e) => e.total_inspections >= 100);
 
-    // Sort and assign ranks
+    // Sort and assign ranks (create new objects to avoid rank overwriting)
     const sorted_brands_asc = [...brand_entries]
-      .sort((a, b) => a.filtered_defects_per_vehicle_year - b.filtered_defects_per_vehicle_year);
-    sorted_brands_asc.forEach((e, i) => e.rank = i + 1);
+      .sort((a, b) => a.filtered_defects_per_vehicle_year - b.filtered_defects_per_vehicle_year)
+      .map((e, i) => ({ ...e, rank: i + 1 }));
 
     const sorted_brands_desc = [...brand_entries]
-      .sort((a, b) => b.filtered_defects_per_vehicle_year - a.filtered_defects_per_vehicle_year);
-    sorted_brands_desc.forEach((e, i) => e.rank = i + 1);
+      .sort((a, b) => b.filtered_defects_per_vehicle_year - a.filtered_defects_per_vehicle_year)
+      .map((e, i) => ({ ...e, rank: i + 1 }));
 
     // Calculate filtered model rankings
     const model_entries: RankingEntryWithFiltered[] = model_stats
@@ -114,12 +114,12 @@ export default function HomePage() {
       .filter((e) => e.total_inspections >= 50);
 
     const sorted_models_asc = [...model_entries]
-      .sort((a, b) => a.filtered_defects_per_vehicle_year - b.filtered_defects_per_vehicle_year);
-    sorted_models_asc.forEach((e, i) => e.rank = i + 1);
+      .sort((a, b) => a.filtered_defects_per_vehicle_year - b.filtered_defects_per_vehicle_year)
+      .map((e, i) => ({ ...e, rank: i + 1 }));
 
     const sorted_models_desc = [...model_entries]
-      .sort((a, b) => b.filtered_defects_per_vehicle_year - a.filtered_defects_per_vehicle_year);
-    sorted_models_desc.forEach((e, i) => e.rank = i + 1);
+      .sort((a, b) => b.filtered_defects_per_vehicle_year - a.filtered_defects_per_vehicle_year)
+      .map((e, i) => ({ ...e, rank: i + 1 }));
 
     return {
       most_reliable_brands: sorted_brands_asc.slice(0, 10),
