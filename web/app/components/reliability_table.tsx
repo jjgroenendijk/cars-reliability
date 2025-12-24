@@ -20,6 +20,10 @@ interface ReliabilityTableProps<T extends object> {
   filterKey?: keyof T;
   filterPlaceholder?: string;
   emptyMessage?: string;
+  /** External search value to control filtering from parent */
+  externalSearchValue?: string;
+  /** If true, the internal search input is hidden */
+  hideSearchInput?: boolean;
 }
 
 export function ReliabilityTable<T extends object>({
@@ -30,12 +34,16 @@ export function ReliabilityTable<T extends object>({
   filterKey,
   filterPlaceholder = "Zoeken...",
   emptyMessage = "Geen gegevens beschikbaar",
+  externalSearchValue,
+  hideSearchInput = false,
 }: ReliabilityTableProps<T>) {
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: defaultSortKey ? String(defaultSortKey) : "",
     direction: defaultSortDirection,
   });
-  const [filterValue, setFilterValue] = useState("");
+  const [internalFilterValue, setInternalFilterValue] = useState("");
+
+  const filterValue = externalSearchValue ?? internalFilterValue;
 
   const sortedAndFilteredData = useMemo(() => {
     let result = [...data];
@@ -129,12 +137,12 @@ export function ReliabilityTable<T extends object>({
 
   return (
     <div className="w-full">
-      {filterKey && (
+      {filterKey && !hideSearchInput && (
         <div className="mb-4">
           <input
             type="text"
-            value={filterValue}
-            onChange={(e) => setFilterValue(e.target.value)}
+            value={internalFilterValue}
+            onChange={(e) => setInternalFilterValue(e.target.value)}
             placeholder={filterPlaceholder}
             className="w-full sm:w-64 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
                      bg-white dark:bg-gray-800 text-gray-900 dark:text-white
@@ -144,24 +152,24 @@ export function ReliabilityTable<T extends object>({
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="overflow-x-auto rounded-lg">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-800">
+          <thead className="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
             <tr>
               {columns.map((column) => (
                 <th
                   key={String(column.key)}
                   scope="col"
                   className={`
-                    px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 tracking-wider
-                    ${column.sortable !== false ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 select-none" : ""}
+                    px-6 py-4 text-left text-lg font-semibold text-gray-900 dark:text-white tracking-wide
+                    ${column.sortable !== false ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 select-none transition-colors" : ""}
                     ${column.className ?? ""}
                   `}
                   onClick={() =>
                     column.sortable !== false && sort_toggle(String(column.key))
                   }
                 >
-                  <span className="flex items-center">
+                  <span className="flex items-center gap-2">
                     {column.label}
                     {column.sortable !== false &&
                       sort_indicator_render(String(column.key))}

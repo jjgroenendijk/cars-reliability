@@ -15,7 +15,6 @@ import polars as pl
 import psutil
 
 from config import (
-    AGE_BRACKETS,
     DIR_PROCESSED,
     THRESHOLD_AGE_BRACKET,
     THRESHOLD_BRAND,
@@ -145,12 +144,12 @@ def main() -> None:
         flush=True,
     )
 
-    # Aggregate by brand and model
-    brand_stats = aggregate_brand_stats(inspections_df)
-    model_stats = aggregate_model_stats(inspections_df)
+    # Aggregate by brand and model (returns stats + age range)
+    brand_stats, min_age, max_age = aggregate_brand_stats(inspections_df)
+    model_stats, _, _ = aggregate_model_stats(inspections_df)
     print(
         f"Aggregated: {len(brand_stats)} brands, {len(model_stats)} models "
-        f"| memory: {memory_mb():.0f} MB",
+        f"(ages {min_age}-{max_age}) | memory: {memory_mb():.0f} MB",
         flush=True,
     )
 
@@ -193,7 +192,10 @@ def main() -> None:
             "model": THRESHOLD_MODEL,
             "age_bracket": THRESHOLD_AGE_BRACKET,
         },
-        "age_brackets": AGE_BRACKETS,
+        "age_range": {
+            "min": min_age,
+            "max": max_age,
+        },
         "counts": {
             "brands": len(brand_stats),
             "models": len(model_stats),

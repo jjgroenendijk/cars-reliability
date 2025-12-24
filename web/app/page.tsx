@@ -1,41 +1,26 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { Rankings, RankingEntry, BrandStats, ModelStats } from "@/app/lib/types";
-import { DefectFilterPanel } from "@/app/components/defect_filter_panel";
-import { useDefectFilter } from "@/app/lib/defect_filter_context";
 import { timestamp_format, pascal_case_format } from "@/app/lib/data_load";
 import { Search, Car, AlertCircle, Calendar, ArrowRight } from "lucide-react";
 
-interface RankingEntryWithFiltered extends RankingEntry {
-  filtered_defects_per_vehicle_year: number;
-}
+
 
 export default function HomePage() {
   const [rankings, setRankings] = useState<Rankings | null>(null);
-  const [brand_stats, setBrandStats] = useState<BrandStats[]>([]);
-  const [model_stats, setModelStats] = useState<ModelStats[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const {
-    brand_breakdowns,
-    model_breakdowns,
-    calculate_filtered_defects,
-    mode,
-    loading: filter_loading
-  } = useDefectFilter();
+
 
   useEffect(() => {
     async function data_fetch() {
       try {
         const base_path = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-        const [rankings_res, brands_res, models_res] = await Promise.all([
-          fetch(`${base_path}/data/rankings.json`),
-          fetch(`${base_path}/data/brand_stats.json`),
-          fetch(`${base_path}/data/model_stats.json`),
-        ]);
+        const rankings_res = await fetch(`${base_path}/data/rankings.json`);
 
         if (!rankings_res.ok) {
           throw new Error("Could not load data");
@@ -43,16 +28,6 @@ export default function HomePage() {
 
         const rankings_data: Rankings = await rankings_res.json();
         setRankings(rankings_data);
-
-        if (brands_res.ok) {
-          const brands: BrandStats[] = await brands_res.json();
-          setBrandStats(brands);
-        }
-
-        if (models_res.ok) {
-          const models: ModelStats[] = await models_res.json();
-          setModelStats(models);
-        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
@@ -62,73 +37,7 @@ export default function HomePage() {
     data_fetch();
   }, []);
 
-  // Calculate filtered rankings based on defect filter
-  const filtered_rankings = useMemo(() => {
-    if (!rankings || filter_loading) return null;
 
-    // Calculate filtered brand rankings
-    const brand_entries: RankingEntryWithFiltered[] = brand_stats
-      .map((b) => {
-        const breakdown = brand_breakdowns[b.merk];
-        const filtered_defects = calculate_filtered_defects(breakdown);
-        const filtered_rate = b.total_vehicle_years > 0
-          ? filtered_defects / b.total_vehicle_years
-          : 0;
-        return {
-          rank: 0,
-          merk: b.merk,
-          total_inspections: b.total_inspections,
-          defects_per_vehicle_year: filtered_rate,
-          filtered_defects_per_vehicle_year: filtered_rate,
-        };
-      })
-      .filter((e) => e.total_inspections >= 100);
-
-    // Sort and assign ranks (create new objects to avoid rank overwriting)
-    const sorted_brands_asc = [...brand_entries]
-      .sort((a, b) => a.filtered_defects_per_vehicle_year - b.filtered_defects_per_vehicle_year)
-      .map((e, i) => ({ ...e, rank: i + 1 }));
-
-    const sorted_brands_desc = [...brand_entries]
-      .sort((a, b) => b.filtered_defects_per_vehicle_year - a.filtered_defects_per_vehicle_year)
-      .map((e, i) => ({ ...e, rank: i + 1 }));
-
-    // Calculate filtered model rankings
-    const model_entries: RankingEntryWithFiltered[] = model_stats
-      .map((m) => {
-        const model_key = `${m.merk}|${m.handelsbenaming}`;
-        const breakdown = model_breakdowns[model_key];
-        const filtered_defects = calculate_filtered_defects(breakdown);
-        const filtered_rate = m.total_vehicle_years > 0
-          ? filtered_defects / m.total_vehicle_years
-          : 0;
-        return {
-          rank: 0,
-          merk: m.merk,
-          handelsbenaming: m.handelsbenaming,
-          total_inspections: m.total_inspections,
-          defects_per_vehicle_year: filtered_rate,
-          filtered_defects_per_vehicle_year: filtered_rate,
-        };
-      })
-      .filter((e) => e.total_inspections >= 50);
-
-    const sorted_models_asc = [...model_entries]
-      .sort((a, b) => a.filtered_defects_per_vehicle_year - b.filtered_defects_per_vehicle_year)
-      .map((e, i) => ({ ...e, rank: i + 1 }));
-
-    const sorted_models_desc = [...model_entries]
-      .sort((a, b) => b.filtered_defects_per_vehicle_year - a.filtered_defects_per_vehicle_year)
-      .map((e, i) => ({ ...e, rank: i + 1 }));
-
-    return {
-      most_reliable_brands: sorted_brands_asc.slice(0, 10),
-      least_reliable_brands: sorted_brands_desc.slice(0, 10),
-      most_reliable_models: sorted_models_asc.slice(0, 10),
-      least_reliable_models: sorted_models_desc.slice(0, 10),
-      generated_at: rankings.generated_at,
-    };
-  }, [rankings, brand_stats, model_stats, brand_breakdowns, model_breakdowns, calculate_filtered_defects, filter_loading]);
 
   if (loading) {
     return (
@@ -161,8 +70,8 @@ export default function HomePage() {
     );
   }
 
-  // Use filtered rankings if available, otherwise fall back to original
-  const display_rankings = filtered_rankings ?? rankings;
+  // Use rankings directly
+  const display_rankings = rankings;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -195,18 +104,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Defect Filter Panel */}
-      <DefectFilterPanel />
 
-      {/* Filter indicator */}
-      {mode !== "all" && (
-        <div className="mb-6 text-sm text-gray-500 dark:text-gray-400 text-center">
-          Rankings filtered by{" "}
-          <span className="font-medium text-blue-600 dark:text-blue-400">
-            {mode === "reliability" ? "reliability defects only" : "custom defect selection"}
-          </span>
-        </div>
-      )}
 
       {/* Top 10 Rankings Grid */}
       <div className="grid gap-8 md:grid-cols-2 lg:gap-12 mb-16">
@@ -267,11 +165,7 @@ export default function HomePage() {
               These statistics are calculated based on APK inspection data from the RDW (Netherlands Vehicle Authority).
               The reliability score is calculated by analyzing the number of defects found relative to the vehicle&apos;s age
               and the total number of inspections. Lower scores indicate better reliability.
-              {mode !== "all" && (
-                <span className="block mt-2 text-blue-600 dark:text-blue-400">
-                  Currently showing filtered results - use the filter above to customize which defects are included.
-                </span>
-              )}
+
             </p>
             <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-2">

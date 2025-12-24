@@ -110,8 +110,13 @@ Note: The `gekentekende_voertuigen` dataset is NOT filtered by `INSPECTION_DAYS_
 - Bottom 10 least reliable brands
 - Full brand reliability table (sortable, filterable)
 - Full model reliability table (sortable, filterable)
+- Brand filtering: Users can select multiple brands to filter the displayed results on the brands and models page
 - Age-filtered views (e.g., cars 5-15 years old)
-- Dynamic defect type filtering: Users can filter defects by category (reliability vs. wear-and-tear) or select individual defect types, with all reliability metrics recalculating in real-time across brands, models, and homepage rankings
+- Dynamic defect type filtering: Users can filter defects by category (reliability vs. wear-and-tear) or select individual defect types on the brands and models pages (NOT on the home page), with reliability metrics recalculating in real-time for those views
+- Fuel type breakdown page with filtering:
+  - Vehicle age range (min and max)
+  - Minimum fleet size
+  - Brand selection (multiple brands)
 - Average defects per year per model
 - About/methodology page
 
@@ -131,7 +136,6 @@ Note: The `gekentekende_voertuigen` dataset is NOT filtered by `INSPECTION_DAYS_
 ### Future Features (Backlog)
 
 - Common issues per model - Most frequent defect types
-- Fuel type breakdown - Electric vs. diesel vs. petrol
 - Historical trend analysis - Reliability over years
 
 ### Design Requirements

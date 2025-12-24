@@ -15,11 +15,11 @@ DIR_PROCESSED = DIR_DATA / "processed"
 # === Thresholds for Statistical Significance ===
 THRESHOLD_BRAND = 100
 THRESHOLD_MODEL = 50
-THRESHOLD_AGE_BRACKET = 30
+THRESHOLD_AGE_BRACKET = 30  # Minimum vehicles per year for per-year stats
 
-# === Age Brackets for Analysis ===
-# Format: name -> (min_age, max_age)
-AGE_BRACKETS = {"4_7": (4, 7), "8_12": (8, 12), "13_20": (13, 20), "5_15": (5, 15)}
+# === Ranking Thresholds (Home Page Top 10) ===
+THRESHOLD_BRAND_RANKING = 500
+THRESHOLD_MODEL_RANKING = 100
 
 # === Download Settings ===
 REQUEST_TIMEOUT = 3600  # 1 hour for very large downloads

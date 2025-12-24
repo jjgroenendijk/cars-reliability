@@ -2,41 +2,37 @@
 Statistics aggregation functions for brand and model data.
 
 Computes reliability statistics using native Polars operations.
+Per-year statistics replace fixed age brackets for fine-grained filtering.
 """
 
 from datetime import datetime
 
 import polars as pl
 
-from config import AGE_BRACKETS, THRESHOLD_AGE_BRACKET, THRESHOLD_BRAND, THRESHOLD_MODEL
+from config import (
+    THRESHOLD_AGE_BRACKET,
+    THRESHOLD_BRAND,
+    THRESHOLD_BRAND_RANKING,
+    THRESHOLD_MODEL,
+    THRESHOLD_MODEL_RANKING,
+)
 
 
-def add_age_bracket_column(df: pl.DataFrame) -> pl.DataFrame:
-    """Add age_bracket column based on age_at_inspection."""
-    return df.with_columns(
-        pl.when((pl.col("age_at_inspection") >= 4) & (pl.col("age_at_inspection") <= 7))
-        .then(pl.lit("4_7"))
-        .when((pl.col("age_at_inspection") >= 8) & (pl.col("age_at_inspection") <= 12))
-        .then(pl.lit("8_12"))
-        .when((pl.col("age_at_inspection") >= 13) & (pl.col("age_at_inspection") <= 20))
-        .then(pl.lit("13_20"))
-        .when((pl.col("age_at_inspection") >= 5) & (pl.col("age_at_inspection") <= 15))
-        .then(pl.lit("5_15"))
-        .otherwise(pl.lit(None))
-        .alias("age_bracket")
-    )
+def compute_per_year_stats(
+    df: pl.DataFrame, group_cols: list[str]
+) -> tuple[pl.DataFrame, int, int]:
+    """Compute statistics for each age year using native Polars.
 
+    Returns:
+        Tuple of (per_year_df, min_age, max_age)
+    """
+    # Get min/max ages from the data
+    min_age = int(df["age_at_inspection"].min())
+    max_age = int(df["age_at_inspection"].max())
 
-def compute_bracket_stats_polars(
-    df: pl.DataFrame, group_cols: list[str], bracket_name: str
-) -> pl.DataFrame:
-    """Compute stats for a single age bracket using native Polars."""
-    min_age, max_age = AGE_BRACKETS[bracket_name]
-    return (
-        df.filter(
-            (pl.col("age_at_inspection") >= min_age) & (pl.col("age_at_inspection") <= max_age)
-        )
-        .group_by(group_cols)
+    # Group by (group_cols + age) and aggregate
+    per_year_df = (
+        df.group_by(group_cols + ["age_at_inspection"])
         .agg(
             [
                 pl.col("kenteken").n_unique().alias("vehicle_count"),
@@ -50,48 +46,66 @@ def compute_bracket_stats_polars(
                 (pl.col("total_defects") / pl.col("total_inspections"))
                 .round(4)
                 .alias("avg_defects_per_inspection"),
-                pl.lit(bracket_name).alias("bracket_name"),
             ]
         )
+        .sort(group_cols + ["age_at_inspection"])
     )
 
-
-def _pivot_bracket_stats(bracket_dfs: list[pl.DataFrame], group_cols: list[str]) -> pl.DataFrame:
-    """Pivot bracket statistics into struct columns per bracket."""
-    all_brackets = pl.concat(bracket_dfs)
-    return all_brackets.group_by(group_cols).agg(
-        [
-            pl.struct(
-                [
-                    pl.col("vehicle_count").filter(pl.col("bracket_name") == b).first(),
-                    pl.col("total_inspections").filter(pl.col("bracket_name") == b).first(),
-                    pl.col("total_defects").filter(pl.col("bracket_name") == b).first(),
-                    pl.col("avg_defects_per_inspection")
-                    .filter(pl.col("bracket_name") == b)
-                    .first(),
-                ]
-            ).alias(b)
-            for b in AGE_BRACKETS
-        ]
-    )
+    return per_year_df, min_age, max_age
 
 
-def _restructure_age_brackets(result: list[dict]) -> None:
-    """Restructure bracket columns into nested age_brackets dict."""
+def _build_per_year_lookup(
+    per_year_df: pl.DataFrame, group_cols: list[str]
+) -> dict[str, dict[str, dict]]:
+    """Build lookup dict from per-year stats DataFrame.
+
+    Returns dict mapping group_key -> {age: stats_dict}
+    """
+    lookup: dict[str, dict[str, dict]] = {}
+
+    for row in per_year_df.to_dicts():
+        # Build group key
+        if len(group_cols) == 1:
+            group_key = row[group_cols[0]]
+        else:
+            group_key = "|".join(str(row[c]) for c in group_cols)
+
+        age = str(int(row["age_at_inspection"]))
+        stats = {
+            "vehicle_count": row["vehicle_count"],
+            "total_inspections": row["total_inspections"],
+            "total_defects": row["total_defects"],
+            "avg_defects_per_inspection": row["avg_defects_per_inspection"],
+        }
+
+        if group_key not in lookup:
+            lookup[group_key] = {}
+        lookup[group_key][age] = stats
+
+    return lookup
+
+
+def _add_per_year_stats_to_results(
+    result: list[dict], lookup: dict[str, dict[str, dict]], group_cols: list[str]
+) -> None:
+    """Add per_year_stats to each result row from lookup."""
     for row in result:
-        if "4_7" not in row:
-            for b in AGE_BRACKETS:
-                row[b] = None
-        # Restructure into age_brackets dict
-        row["age_brackets"] = {b: row.pop(b, None) for b in AGE_BRACKETS}
-        # Clean up None structs (Polars returns struct with all nulls)
-        for b in AGE_BRACKETS:
-            if row["age_brackets"][b] and row["age_brackets"][b].get("vehicle_count") is None:
-                row["age_brackets"][b] = None
+        if len(group_cols) == 1:
+            group_key = row[group_cols[0]]
+        else:
+            group_key = "|".join(str(row[c]) for c in group_cols)
+
+        row["per_year_stats"] = lookup.get(group_key, {})
 
 
-def aggregate_brand_stats(inspections_df: pl.DataFrame) -> list[dict]:
-    """Aggregate statistics by brand with age brackets using native Polars."""
+def aggregate_brand_stats(
+    inspections_df: pl.DataFrame,
+) -> tuple[list[dict], int, int]:
+    """Aggregate statistics by brand with per-year stats using native Polars.
+
+    Returns:
+        Tuple of (brand_stats list, min_age, max_age)
+    """
     # Main aggregation
     brand_df = (
         inspections_df.group_by("merk")
@@ -119,26 +133,31 @@ def aggregate_brand_stats(inspections_df: pl.DataFrame) -> list[dict]:
         .sort("defects_per_vehicle_year")
     )
 
-    # Compute age bracket stats for all brackets
-    bracket_dfs = []
-    for bracket_name in AGE_BRACKETS:
-        bracket_df = compute_bracket_stats_polars(inspections_df, ["merk"], bracket_name)
-        if len(bracket_df) > 0:
-            bracket_dfs.append(bracket_df)
+    # Compute per-year stats using Polars group_by
+    per_year_df, min_age, max_age = compute_per_year_stats(inspections_df, ["merk"])
 
-    # Pivot bracket stats and join
-    if bracket_dfs:
-        bracket_pivot = _pivot_bracket_stats(bracket_dfs, ["merk"])
-        brand_df = brand_df.join(bracket_pivot, on="merk", how="left")
-
-    # Convert to list of dicts
+    # Convert main stats to list of dicts
     result = brand_df.to_dicts()
-    _restructure_age_brackets(result)
-    return result
+
+    # Build per-year lookup and add to results
+    if len(per_year_df) > 0:
+        per_year_lookup = _build_per_year_lookup(per_year_df, ["merk"])
+        _add_per_year_stats_to_results(result, per_year_lookup, ["merk"])
+    else:
+        for row in result:
+            row["per_year_stats"] = {}
+
+    return result, min_age, max_age
 
 
-def aggregate_model_stats(inspections_df: pl.DataFrame) -> list[dict]:
-    """Aggregate statistics by brand + model with age brackets using native Polars."""
+def aggregate_model_stats(
+    inspections_df: pl.DataFrame,
+) -> tuple[list[dict], int, int]:
+    """Aggregate statistics by brand + model with per-year stats using native Polars.
+
+    Returns:
+        Tuple of (model_stats list, min_age, max_age)
+    """
     # Main aggregation
     model_df = (
         inspections_df.group_by(["merk", "handelsbenaming"])
@@ -166,33 +185,39 @@ def aggregate_model_stats(inspections_df: pl.DataFrame) -> list[dict]:
         .sort("defects_per_vehicle_year")
     )
 
-    # Compute age bracket stats for all brackets
-    bracket_dfs = []
-    for bracket_name in AGE_BRACKETS:
-        bracket_df = compute_bracket_stats_polars(
-            inspections_df, ["merk", "handelsbenaming"], bracket_name
-        )
-        if len(bracket_df) > 0:
-            bracket_dfs.append(bracket_df)
+    # Compute per-year stats using Polars group_by
+    per_year_df, min_age, max_age = compute_per_year_stats(
+        inspections_df, ["merk", "handelsbenaming"]
+    )
 
-    # Pivot bracket stats and join
-    if bracket_dfs:
-        bracket_pivot = _pivot_bracket_stats(bracket_dfs, ["merk", "handelsbenaming"])
-        model_df = model_df.join(bracket_pivot, on=["merk", "handelsbenaming"], how="left")
-
-    # Convert to list of dicts
+    # Convert main stats to list of dicts
     result = model_df.to_dicts()
-    _restructure_age_brackets(result)
-    return result
+
+    # Build per-year lookup and add to results
+    if len(per_year_df) > 0:
+        per_year_lookup = _build_per_year_lookup(per_year_df, ["merk", "handelsbenaming"])
+        _add_per_year_stats_to_results(result, per_year_lookup, ["merk", "handelsbenaming"])
+    else:
+        for row in result:
+            row["per_year_stats"] = {}
+
+    return result, min_age, max_age
 
 
 def generate_rankings(brand_stats: list[dict], model_stats: list[dict]) -> dict:
     """Generate top/bottom rankings for brands and models."""
 
-    def format_ranking(items: list[dict], limit: int = 10, reverse: bool = False) -> list[dict]:
+    def format_ranking(
+        items: list[dict], threshold: int, limit: int = 10, reverse: bool = False
+    ) -> list[dict]:
+        # Filter by ranking threshold
+        candidates = [
+            item for item in items if item.get("vehicle_count", 0) >= threshold
+        ]
+
         # Sort by defects_per_vehicle_year
         sorted_items = sorted(
-            items,
+            candidates,
             key=lambda x: x.get("defects_per_vehicle_year") or float("inf"),
             reverse=reverse,
         )[:limit]
@@ -202,7 +227,9 @@ def generate_rankings(brand_stats: list[dict], model_stats: list[dict]) -> dict:
             entry = {
                 "rank": rank,
                 "merk": item.get("merk", ""),
-                "defects_per_vehicle_year": round(item.get("defects_per_vehicle_year") or 0, 6),
+                "defects_per_vehicle_year": round(
+                    item.get("defects_per_vehicle_year") or 0, 6
+                ),
                 "total_inspections": item.get("total_inspections", 0),
             }
             if "handelsbenaming" in item:
@@ -210,10 +237,18 @@ def generate_rankings(brand_stats: list[dict], model_stats: list[dict]) -> dict:
             result.append(entry)
         return result
 
-    most_reliable_brands = format_ranking(brand_stats, reverse=False)
-    least_reliable_brands = format_ranking(brand_stats, reverse=True)
-    most_reliable_models = format_ranking(model_stats, reverse=False)
-    least_reliable_models = format_ranking(model_stats, reverse=True)
+    most_reliable_brands = format_ranking(
+        brand_stats, threshold=THRESHOLD_BRAND_RANKING, reverse=False
+    )
+    least_reliable_brands = format_ranking(
+        brand_stats, threshold=THRESHOLD_BRAND_RANKING, reverse=True
+    )
+    most_reliable_models = format_ranking(
+        model_stats, threshold=THRESHOLD_MODEL_RANKING, reverse=False
+    )
+    least_reliable_models = format_ranking(
+        model_stats, threshold=THRESHOLD_MODEL_RANKING, reverse=True
+    )
 
     return {
         "most_reliable_brands": most_reliable_brands,

@@ -141,8 +141,12 @@ Minimum thresholds for inclusion in rankings:
 
 | Level | Minimum Vehicles | Rationale |
 |-------|------------------|-----------|
-| Brand | 100 | Include emerging brands; use std deviation to indicate uncertainty |
-| Model | 50 | Balance granularity vs. confidence |
+| Level | Minimum Vehicles | Rationale |
+|-------|------------------|-----------|
+| Brand (General) | 100 | Include emerging brands in full lists |
+| Brand (Home Page Top 10) | 500 | Higher confidence for featured ranking |
+| Model (General) | 50 | Balance granularity vs. confidence |
+| Model (Home Page Top 10) | 100 | Higher confidence for featured ranking |
 | Age Bracket | 30 | Per-bracket minimum |
 
 Records below these thresholds are excluded from rankings and tables.

@@ -3,7 +3,15 @@
  * These types match the JSON output from the data processing pipeline (scripts/data_process.py).
  */
 
-/** Age bracket statistics for a specific age range */
+/** Per-year statistics for age-based filtering */
+export interface PerYearStats {
+  vehicle_count: number;
+  total_inspections: number;
+  total_defects: number;
+  avg_defects_per_inspection: number;
+}
+
+/** @deprecated Use PerYearStats instead - kept for backward compatibility */
 export interface AgeBracketStats {
   vehicle_count: number;
   total_inspections: number;
@@ -32,7 +40,10 @@ export interface BrandStats {
   defects_per_vehicle_year: number | null;
   reliability_defects_per_vehicle_year: number | null;
   fuel_breakdown: FuelBreakdown;
-  age_brackets: {
+  /** Per-year statistics keyed by age (e.g., "4", "5", "10") */
+  per_year_stats: Record<string, PerYearStats>;
+  /** @deprecated Use per_year_stats instead */
+  age_brackets?: {
     "4_7": AgeBracketStats | null;
     "8_12": AgeBracketStats | null;
     "13_20": AgeBracketStats | null;
@@ -53,7 +64,10 @@ export interface ModelStats {
   defects_per_vehicle_year: number | null;
   reliability_defects_per_vehicle_year: number | null;
   fuel_breakdown: FuelBreakdown;
-  age_brackets: {
+  /** Per-year statistics keyed by age (e.g., "4", "5", "10") */
+  per_year_stats: Record<string, PerYearStats>;
+  /** @deprecated Use per_year_stats instead */
+  age_brackets?: {
     "4_7": AgeBracketStats | null;
     "8_12": AgeBracketStats | null;
     "13_20": AgeBracketStats | null;
