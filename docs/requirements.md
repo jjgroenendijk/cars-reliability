@@ -115,6 +115,13 @@ Note: The `gekentekende_voertuigen` dataset is NOT filtered by `INSPECTION_DAYS_
 - Average defects per year per model
 - About/methodology page
 
+### Ranking Display
+
+- Rankings MUST show ascending rank numbers (1, 2, 3...) starting from the top of each list
+- "Most Reliable" lists: rank 1 = lowest defects per vehicle-year (best)
+- "Least Reliable" lists: rank 1 = highest defects per vehicle-year (worst)
+- Each ranking list maintains its own independent numbering
+
 ### Live Query Features (browser to RDW API)
 
 - License plate (kenteken) lookup

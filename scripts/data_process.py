@@ -25,6 +25,9 @@ from inspection_prepare import (
 
 DIR_PROCESSED = Path(__file__).parent.parent / "data" / "processed"
 
+# Known fuel types to track individually; all others -> "other"
+KNOWN_FUEL_TYPES = {"Benzine", "Diesel", "Elektriciteit", "LPG"}
+
 
 def memory_mb() -> float:
     """Get current process memory in MB."""
@@ -509,6 +512,86 @@ def build_defect_codes(gebreken_df: pl.DataFrame) -> dict[str, str]:
     return result
 
 
+def build_fuel_breakdown(
+    brandstof_lf: pl.LazyFrame,
+    vehicles_lf: pl.LazyFrame,
+) -> tuple[dict[str, dict[str, int]], dict[str, dict[str, int]]]:
+    """Build fuel type breakdown per brand and model.
+
+    Returns:
+        Tuple of (brand_fuel, model_fuel) where each is a dict mapping
+        brand/model name to FuelBreakdown dict with keys:
+        Benzine, Diesel, Elektriciteit, LPG, other
+    """
+    # Join brandstof with vehicles to get brand/model info
+    # Note: a vehicle can have multiple fuel entries (e.g., hybrid)
+    fuel_with_brand = (
+        brandstof_lf.select(["kenteken", "brandstof_omschrijving"])
+        .join(
+            vehicles_lf.select(
+                [
+                    "kenteken",
+                    pl.col("merk").str.to_uppercase().str.strip_chars().alias("merk"),
+                    pl.col("handelsbenaming")
+                    .str.to_uppercase()
+                    .str.strip_chars()
+                    .alias("handelsbenaming"),
+                ]
+            ),
+            on="kenteken",
+            how="inner",
+        )
+        .with_columns(
+            # Map fuel types: known types stay as-is, others become "other"
+            pl.when(pl.col("brandstof_omschrijving").is_in(list(KNOWN_FUEL_TYPES)))
+            .then(pl.col("brandstof_omschrijving"))
+            .otherwise(pl.lit("other"))
+            .alias("fuel_type")
+        )
+        .collect()
+    )
+
+    # Aggregate by brand and fuel type (count unique vehicles per fuel type)
+    brand_fuel_df = (
+        fuel_with_brand.group_by(["merk", "fuel_type"])
+        .agg(pl.col("kenteken").n_unique().alias("count"))
+        .to_dicts()
+    )
+
+    # Aggregate by model and fuel type
+    model_fuel_df = (
+        fuel_with_brand.with_columns(
+            (pl.col("merk") + "|" + pl.col("handelsbenaming")).alias("model_key")
+        )
+        .group_by(["model_key", "fuel_type"])
+        .agg(pl.col("kenteken").n_unique().alias("count"))
+        .to_dicts()
+    )
+
+    # Initialize empty FuelBreakdown for each brand
+    empty_breakdown = {"Benzine": 0, "Diesel": 0, "Elektriciteit": 0, "LPG": 0, "other": 0}
+
+    brand_fuel: dict[str, dict[str, int]] = {}
+    for row in brand_fuel_df:
+        brand = row["merk"]
+        fuel = row["fuel_type"]
+        count = row["count"]
+        if brand not in brand_fuel:
+            brand_fuel[brand] = empty_breakdown.copy()
+        brand_fuel[brand][fuel] = count
+
+    model_fuel: dict[str, dict[str, int]] = {}
+    for row in model_fuel_df:
+        model = row["model_key"]
+        fuel = row["fuel_type"]
+        count = row["count"]
+        if model not in model_fuel:
+            model_fuel[model] = empty_breakdown.copy()
+        model_fuel[model][fuel] = count
+
+    return brand_fuel, model_fuel
+
+
 def main() -> None:
     """Main entry point for the data processing script."""
     print(f"Stage2: Processing (Polars native) | memory: {memory_mb():.0f} MB", flush=True)
@@ -522,6 +605,7 @@ def main() -> None:
     vehicles_lf = scan_dataset("voertuigen")
     inspections_lf = scan_dataset("meldingen")
     defects_lf = scan_dataset("geconstateerde_gebreken")
+    brandstof_lf = scan_dataset("brandstof")
     print(f"Scanning datasets lazily | memory: {memory_mb():.0f} MB", flush=True)
 
     # Compute inspection statistics (this is the main work)
@@ -539,6 +623,29 @@ def main() -> None:
         f"Aggregated: {len(brand_stats)} brands, {len(model_stats)} models | memory: {memory_mb():.0f} MB",
         flush=True,
     )
+
+    # Build fuel breakdowns
+    print("Building fuel breakdowns...", flush=True)
+    brand_fuel, model_fuel = build_fuel_breakdown(brandstof_lf, vehicles_lf)
+    print(
+        f"Fuel breakdowns: {len(brand_fuel)} brands, {len(model_fuel)} models | "
+        f"memory: {memory_mb():.0f} MB",
+        flush=True,
+    )
+
+    # Add fuel_breakdown to brand_stats
+    for brand in brand_stats:
+        merk = brand["merk"]
+        brand["fuel_breakdown"] = brand_fuel.get(
+            merk, {"Benzine": 0, "Diesel": 0, "Elektriciteit": 0, "LPG": 0, "other": 0}
+        )
+
+    # Add fuel_breakdown to model_stats
+    for model in model_stats:
+        model_key = f"{model['merk']}|{model['handelsbenaming']}"
+        model["fuel_breakdown"] = model_fuel.get(
+            model_key, {"Benzine": 0, "Diesel": 0, "Elektriciteit": 0, "LPG": 0, "other": 0}
+        )
 
     # Generate rankings
     rankings = generate_rankings(brand_stats, model_stats)
