@@ -113,6 +113,7 @@ Note: The `gekentekende_voertuigen` dataset is NOT filtered by `INSPECTION_DAYS_
 - Brand filtering: Users can select multiple brands to filter the displayed results on the brands and models page
 - Age-filtered views (e.g., cars 5-15 years old)
 - Dynamic defect type filtering: Users can filter defects by category (reliability vs. wear-and-tear) or select individual defect types on the brands and models pages (NOT on the home page), with reliability metrics recalculating in real-time for those views
+- Commercial vs. Personal Vehicle filtering: Users can filter on commercial vehicles or personal vehicles. Defaults to personal vehicles only. The configuration section should have a filter for this.
 - Fuel type breakdown page with filtering:
   - Vehicle age range (min and max)
   - Minimum fleet size
@@ -147,6 +148,8 @@ Note: The `gekentekende_voertuigen` dataset is NOT filtered by `INSPECTION_DAYS_
 - Show data generation timestamp
 - Modular HTML structure
 - CSS in separate files
+- **Merged Brands and Models Page**: The brands and models pages MUST be merged into a single page. The configuration section on this page MUST allow the user to select the level of granularity: "Brands" or "Models".
+
 
 ---
 
