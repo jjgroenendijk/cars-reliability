@@ -316,6 +316,7 @@ Array of brand statistics, sorted by `avg_defects_per_inspection` ascending.
 ```json
 {
   "merk": "TOYOTA",
+  "vehicle_type_group": "consumer",
   "vehicle_count": 12345,
   "total_inspections": 23456,
   "total_defects": 5678,

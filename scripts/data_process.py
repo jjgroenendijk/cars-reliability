@@ -19,6 +19,10 @@ from config import (
     THRESHOLD_AGE_BRACKET,
     THRESHOLD_BRAND,
     THRESHOLD_MODEL,
+    VEHICLE_TYPE_CONSUMER,
+    VEHICLE_TYPE_COMMERCIAL,
+    PRICE_SEGMENT_SIZE,
+    PRIMARY_FUEL_TYPES,
 )
 from defect_build import build_defect_breakdowns, build_defect_codes, build_defect_stats
 from fuel_build import build_fuel_breakdown
@@ -31,33 +35,98 @@ def memory_mb() -> float:
     return psutil.Process().memory_info().rss / (1024 * 1024)
 
 
+def _determine_primary_fuel(brandstof_lf: pl.LazyFrame) -> pl.LazyFrame:
+    """
+    Determine primary fuel type per license plate.
+    Logic:
+    - LPG: If any record is LPG
+    - Hybrid: If Electric AND (Benzine OR Diesel)
+    - EV: If Electric AND NOT (Benzine OR Diesel)
+    - Diesel: If Diesel
+    - Benzine: If Benzine
+    - Other: Fallback
+    """
+    # Create pivot-like indicators
+    fuel_indicators = brandstof_lf.group_by("kenteken").agg(
+        [
+            (pl.col("brandstof_omschrijving") == "Elektriciteit").any().alias("has_electric"),
+            (pl.col("brandstof_omschrijving") == "Benzine").any().alias("has_benzine"),
+            (pl.col("brandstof_omschrijving") == "Diesel").any().alias("has_diesel"),
+            (pl.col("brandstof_omschrijving") == "LPG").any().alias("has_lpg"),
+        ]
+    )
+
+    return fuel_indicators.select(
+        [
+            "kenteken",
+            pl.when(pl.col("has_lpg"))
+            .then(pl.lit("LPG"))
+            .when(pl.col("has_electric") & (pl.col("has_benzine") | pl.col("has_diesel")))
+            .then(pl.lit("Hybrid"))
+            .when(pl.col("has_electric"))
+            .then(pl.lit("EV"))
+            .when(pl.col("has_diesel"))
+            .then(pl.lit("Diesel"))
+            .when(pl.col("has_benzine"))
+            .then(pl.lit("Petrol"))
+            .otherwise(pl.lit("Other"))
+            .alias("primary_fuel"),
+        ]
+    )
+
+
 def compute_inspection_stats(
     inspections_lf: pl.LazyFrame,
     vehicles_lf: pl.LazyFrame,
     defects_lf: pl.LazyFrame,
+    brandstof_lf: pl.LazyFrame,
 ) -> pl.DataFrame:
     """Compute per-vehicle inspection statistics using Polars operations.
 
     This replaces the Python dict-based vehicle_summaries_build.
     """
-    # Filter to primary inspections only
+    # 1. Filter valid inspections
     primary_inspections = primary_inspections_filter(inspections_lf)
 
-    # Join with vehicle data to get brand/model info
-    inspections_with_vehicles = primary_inspections.join(
-        vehicles_lf.select(
-            [
-                "kenteken",
-                pl.col("merk").str.to_uppercase().str.strip_chars().alias("merk"),
-                pl.col("handelsbenaming")
-                .str.to_uppercase()
-                .str.strip_chars()
-                .alias("handelsbenaming"),
-                "datum_eerste_toelating",
-            ]
-        ),
-        on="kenteken",
-        how="inner",
+    # 2. Determine Primary Fuel
+    fuel_types = _determine_primary_fuel(brandstof_lf)
+
+    # 3. Join Inspections + Vehicles + Fuel
+    inspections_with_vehicles = (
+        primary_inspections.join(
+            vehicles_lf.select(
+                [
+                    "kenteken",
+                    pl.col("merk").str.to_uppercase().str.strip_chars().alias("merk"),
+                    pl.col("handelsbenaming")
+                    .str.to_uppercase()
+                    .str.strip_chars()
+                    .alias("handelsbenaming"),
+                    "datum_eerste_toelating",
+                    "catalogusprijs",
+                    # Map vehicle type to user-facing groups
+                    pl.when(pl.col("voertuigsoort") == "Personenauto")
+                    .then(pl.lit("consumer"))
+                    .when(pl.col("voertuigsoort") == "Bedrijfsauto")
+                    .then(pl.lit("commercial"))
+                    .otherwise(pl.lit("other"))
+                    .alias("vehicle_type_group"),
+                    # Price Segments (e.g. 5000, 10000, 15000)
+                    (
+                        (pl.col("catalogusprijs").cast(pl.Float64).fill_null(0) / PRICE_SEGMENT_SIZE)
+                        .floor()
+                        * PRICE_SEGMENT_SIZE
+                    )
+                    .cast(pl.Int64)
+                    .alias("price_segment"),
+                ]
+            )
+            .filter(pl.col("vehicle_type_group").is_in(["consumer", "commercial"])),
+            on="kenteken",
+            how="inner",
+        )
+        .join(fuel_types, on="kenteken", how="left")
+        .with_columns(pl.col("primary_fuel").fill_null("Other"))
     )
 
     # Parse dates and calculate age at inspection
@@ -138,7 +207,7 @@ def main() -> None:
 
     # Compute inspection statistics (this is the main work)
     print("Computing inspection statistics...", flush=True)
-    inspections_df = compute_inspection_stats(inspections_lf, vehicles_lf, defects_lf)
+    inspections_df = compute_inspection_stats(inspections_lf, vehicles_lf, defects_lf, brandstof_lf)
     print(
         f"Computed stats ({len(inspections_df):,} inspections) | memory: {memory_mb():.0f} MB",
         flush=True,
@@ -202,6 +271,16 @@ def main() -> None:
             "vehicles_processed": total_vehicles,
             "total_inspections": total_inspections,
             "total_defects": total_defects,
+            "consumer_vehicles": inspections_df.filter(
+                pl.col("vehicle_type_group") == "consumer"
+            )
+            .select(pl.col("kenteken").n_unique())
+            .item(),
+            "commercial_vehicles": inspections_df.filter(
+                pl.col("vehicle_type_group") == "commercial"
+            )
+            .select(pl.col("kenteken").n_unique())
+            .item(),
         },
         "source": "RDW Open Data",
         "pipeline_stage": 2,

@@ -108,7 +108,7 @@ def aggregate_brand_stats(
     """
     # Main aggregation
     brand_df = (
-        inspections_df.group_by("merk")
+        inspections_df.group_by(["merk", "vehicle_type_group", "primary_fuel", "price_segment"])
         .agg(
             [
                 pl.col("kenteken").n_unique().alias("vehicle_count"),
@@ -134,15 +134,21 @@ def aggregate_brand_stats(
     )
 
     # Compute per-year stats using Polars group_by
-    per_year_df, min_age, max_age = compute_per_year_stats(inspections_df, ["merk"])
+    per_year_df, min_age, max_age = compute_per_year_stats(
+        inspections_df, ["merk", "vehicle_type_group", "primary_fuel", "price_segment"]
+    )
 
     # Convert main stats to list of dicts
     result = brand_df.to_dicts()
 
     # Build per-year lookup and add to results
     if len(per_year_df) > 0:
-        per_year_lookup = _build_per_year_lookup(per_year_df, ["merk"])
-        _add_per_year_stats_to_results(result, per_year_lookup, ["merk"])
+        per_year_lookup = _build_per_year_lookup(
+            per_year_df, ["merk", "vehicle_type_group", "primary_fuel", "price_segment"]
+        )
+        _add_per_year_stats_to_results(
+            result, per_year_lookup, ["merk", "vehicle_type_group", "primary_fuel", "price_segment"]
+        )
     else:
         for row in result:
             row["per_year_stats"] = {}
@@ -160,7 +166,9 @@ def aggregate_model_stats(
     """
     # Main aggregation
     model_df = (
-        inspections_df.group_by(["merk", "handelsbenaming"])
+        inspections_df.group_by(
+            ["merk", "handelsbenaming", "vehicle_type_group", "primary_fuel", "price_segment"]
+        )
         .agg(
             [
                 pl.col("kenteken").n_unique().alias("vehicle_count"),
@@ -187,7 +195,8 @@ def aggregate_model_stats(
 
     # Compute per-year stats using Polars group_by
     per_year_df, min_age, max_age = compute_per_year_stats(
-        inspections_df, ["merk", "handelsbenaming"]
+        inspections_df,
+        ["merk", "handelsbenaming", "vehicle_type_group", "primary_fuel", "price_segment"],
     )
 
     # Convert main stats to list of dicts
@@ -195,8 +204,15 @@ def aggregate_model_stats(
 
     # Build per-year lookup and add to results
     if len(per_year_df) > 0:
-        per_year_lookup = _build_per_year_lookup(per_year_df, ["merk", "handelsbenaming"])
-        _add_per_year_stats_to_results(result, per_year_lookup, ["merk", "handelsbenaming"])
+        per_year_lookup = _build_per_year_lookup(
+            per_year_df,
+            ["merk", "handelsbenaming", "vehicle_type_group", "primary_fuel", "price_segment"],
+        )
+        _add_per_year_stats_to_results(
+            result,
+            per_year_lookup,
+            ["merk", "handelsbenaming", "vehicle_type_group", "primary_fuel", "price_segment"],
+        )
     else:
         for row in result:
             row["per_year_stats"] = {}
