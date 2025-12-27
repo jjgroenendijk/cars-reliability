@@ -30,6 +30,9 @@ export interface FuelBreakdown {
 
 export interface BrandStats {
   merk: string;
+  vehicle_type_group: string;
+  primary_fuel: string;
+  price_segment: number;
   vehicle_count: number;
   total_inspections: number;
   total_defects: number;
@@ -54,6 +57,9 @@ export interface BrandStats {
 export interface ModelStats {
   merk: string;
   handelsbenaming: string;
+  vehicle_type_group: string;
+  primary_fuel: string;
+  price_segment: number;
   vehicle_count: number;
   total_inspections: number;
   total_defects: number;

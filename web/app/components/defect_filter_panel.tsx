@@ -1,20 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useDefectFilter } from "@/app/lib/defect_filter_context";
-import { Modal } from "@/app/components/ui/modal";
-import {
-    Filter,
-    Search,
-    RotateCcw,
-    Check,
-    Settings2,
-} from "lucide-react";
+import { ChevronDown, Search, Check, RotateCcw } from "lucide-react";
 
-/**
- * Defect filter panel component.
- * Allows users to select which defect types to include in reliability calculations.
- */
 export function DefectFilterPanel() {
     const {
         mode,
@@ -28,8 +17,20 @@ export function DefectFilterPanel() {
         active_defect_count,
     } = useDefectFilter();
 
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
     const [search_term, setSearchTerm] = useState("");
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     // Sort defect codes alphabetically and filter by search
     const filtered_codes = useMemo(() => {
@@ -48,174 +49,152 @@ export function DefectFilterPanel() {
 
     if (loading) {
         return (
-            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                <Filter className="h-4 w-4 animate-pulse" />
-                <span>Loading...</span>
+            <div className="px-3 py-2 rounded-lg border border-transparent bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-sm animate-pulse">
+                Loading...
             </div>
         );
     }
 
-    if (error) {
-        return (
-            <div className="text-yellow-800 dark:text-yellow-200 text-sm">
-                Filter unavailable
-            </div>
-        );
-    }
+    if (error) return null;
 
     return (
-        <div>
-            {/* Header */}
-            <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-gray-500" />
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Defect Filter
-                    </label>
-                </div>
-                {mode !== "reliability" && (
-                    <button
-                        onClick={reset_filter}
-                        className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                    >
-                        <RotateCcw className="h-3 w-3" />
-                        Reset
-                    </button>
-                )}
-            </div>
-
-            {/* Mode buttons */}
-            <div className="flex flex-col gap-2">
-                <div className="flex rounded-lg bg-gray-100 dark:bg-gray-700 p-1">
-                    <button
-                        onClick={() => mode_set("all")}
-                        className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${mode === "all"
-                            ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
-                            : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                            }`}
-                    >
-                        All
-                    </button>
-                    <button
-                        onClick={() => mode_set("reliability")}
-                        className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${mode === "reliability"
-                            ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
-                            : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                            }`}
-                    >
-                        Reliability
-                    </button>
-                </div>
-
-                <button
-                    onClick={() => {
-                        mode_set("custom");
-                        setIsModalOpen(true);
-                    }}
-                    className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${mode === "custom"
-                        ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300"
-                        : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                        }`}
-                >
-                    <Settings2 className="h-4 w-4" />
-                    {mode === "custom"
-                        ? `Custom (${active_defect_count} selected)`
-                        : "Select Custom Defects"}
-                </button>
-            </div>
-
-            {/* Custom Defect Selection Modal */}
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title="Select Defects"
+        <div className="relative" ref={containerRef}>
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${isOpen || mode !== "all"
+                        ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300"
+                        : "bg-zinc-100 border-transparent text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    }`}
             >
-                <div className="space-y-4">
-                    {/* Search */}
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search defect codes..."
-                            value={search_term}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            autoFocus
-                        />
+                <span>Defects</span>
+                {mode === "custom" && active_defect_count > 0 && (
+                    <span className="bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-100 text-xs px-1.5 py-0.5 rounded-full">
+                        {active_defect_count}
+                    </span>
+                )}
+                {mode === "reliability" && (
+                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 rounded">Rel</span>
+                )}
+                <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            {isOpen && (
+                <div className="absolute top-full left-0 mt-2 w-80 max-h-[500px] flex flex-col bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-800 z-50 animate-in fade-in zoom-in-95 duration-100 origin-top-left">
+
+                    {/* Presets */}
+                    <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 grid grid-cols-2 gap-2">
+                        <button
+                            onClick={() => mode_set("all")}
+                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors border ${mode === "all"
+                                    ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/40 dark:border-blue-800 dark:text-blue-300"
+                                    : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400"
+                                }`}
+                        >
+                            All Defects
+                        </button>
+                        <button
+                            onClick={() => mode_set("reliability")}
+                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors border ${mode === "reliability"
+                                    ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/40 dark:border-blue-800 dark:text-blue-300"
+                                    : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400"
+                                }`}
+                        >
+                            Reliability Only
+                        </button>
                     </div>
 
-                    {/* Defect list */}
-                    <div className="max-h-[60vh] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                        {filtered_codes.length === 0 ? (
-                            <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                                No defects found matching &quot;{search_term}&quot;
+                    {/* Custom Selection Header */}
+                    <div className="p-3 pb-0">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                                Custom Selection
                             </div>
+                            {mode !== "all" && (
+                                <button
+                                    onClick={reset_filter}
+                                    className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                >
+                                    <RotateCcw className="h-3 w-3" />
+                                    Reset
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="relative mb-2">
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                            <input
+                                type="text"
+                                placeholder="Search defect codes..."
+                                value={search_term}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-9 pr-3 py-1.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Defect List */}
+                    <div className="overflow-y-auto flex-1 p-1 max-h-[300px]">
+                        {filtered_codes.length === 0 ? (
+                            <div className="p-4 text-center text-sm text-zinc-500">No defects found</div>
                         ) : (
-                            <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                                {filtered_codes.map(([code, description]) => {
-                                    const included = is_included(code);
-                                    return (
-                                        <button
-                                            key={code}
-                                            onClick={() => toggle_defect(code)}
-                                            className={`w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${!included ? "opacity-60 bg-gray-50/50 dark:bg-gray-800/50" : ""
+                            filtered_codes.map(([code, description]) => {
+                                const included = is_included(code);
+                                return (
+                                    <button
+                                        key={code}
+                                        onClick={() => toggle_defect(code)}
+                                        className={`w-full flex items-start gap-3 p-2 rounded-lg text-left transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 ${!included ? "opacity-50 grayscale" : ""
+                                            }`}
+                                    >
+                                        <div
+                                            className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${included
+                                                    ? "bg-blue-600 border-blue-600 text-white"
+                                                    : "bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600"
                                                 }`}
                                         >
-                                            <div
-                                                className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${included
-                                                    ? "bg-blue-600 border-blue-600 text-white"
-                                                    : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-                                                    }`}
-                                            >
-                                                {included && <Check className="h-3 w-3" />}
+                                            {included && <Check className="h-3 w-3" />}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-mono text-xs font-bold text-zinc-900 dark:text-white bg-zinc-100 dark:bg-zinc-700 px-1 rounded">
+                                                    {code}
+                                                </span>
                                             </div>
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex items-baseline gap-2">
-                                                    <span className="font-mono text-sm font-semibold text-gray-900 dark:text-white">
-                                                        {code}
-                                                    </span>
-                                                    <span className="text-sm text-gray-600 dark:text-gray-300 truncate">
-                                                        {description || "No description"}
-                                                    </span>
-                                                </div>
+                                            <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 leading-snug">
+                                                {description || "No description"}
                                             </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                                        </div>
+                                    </button>
+                                );
+                            })
                         )}
                     </div>
 
-                    {/* Footer Actions */}
-                    <div className="flex items-center justify-between text-sm pt-2 border-t border-gray-100 dark:border-gray-700">
-                        <span className="text-gray-500 dark:text-gray-400">
-                            {filtered_codes.length} defects shown
-                        </span>
-                        <div className="flex gap-4">
-                            <button
-                                onClick={() => {
-                                    filtered_codes.forEach(([code]) => {
-                                        if (!is_included(code)) toggle_defect(code);
-                                    });
-                                }}
-                                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
-                            >
-                                Select All Shown
-                            </button>
-                            <button
-                                onClick={() => {
-                                    filtered_codes.forEach(([code]) => {
-                                        if (is_included(code)) toggle_defect(code);
-                                    });
-                                }}
-                                className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
-                            >
-                                Deselect All Shown
-                            </button>
-                        </div>
+                    {/* Bulk Actions */}
+                    <div className="p-2 border-t border-zinc-100 dark:border-zinc-800 flex justify-between gap-2">
+                        <button
+                            onClick={() => {
+                                filtered_codes.forEach(([code]) => {
+                                    if (!is_included(code)) toggle_defect(code);
+                                });
+                            }}
+                            className="flex-1 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md"
+                        >
+                            Select All
+                        </button>
+                        <button
+                            onClick={() => {
+                                filtered_codes.forEach(([code]) => {
+                                    if (is_included(code)) toggle_defect(code);
+                                });
+                            }}
+                            className="flex-1 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md"
+                        >
+                            Deselect All
+                        </button>
                     </div>
                 </div>
-            </Modal>
+            )}
         </div>
     );
 }

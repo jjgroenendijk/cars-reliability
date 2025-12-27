@@ -94,7 +94,7 @@ export default function HomePage() {
               License Plate Lookup
             </Link>
             <Link
-              href="/brands"
+              href="/statistics"
               className="inline-flex items-center justify-center px-8 py-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-semibold rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors gap-2"
             >
               <Car className="h-5 w-5" />

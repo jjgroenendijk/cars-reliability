@@ -1,0 +1,462 @@
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
+import type { BrandStats, ModelStats, Rankings, PerYearStats } from "@/app/lib/types";
+import { ReliabilityTable, type Column } from "@/app/components/reliability_table";
+import { DefectFilterPanel } from "@/app/components/defect_filter_panel";
+import FilterBar from "@/app/components/filter_bar";
+import ReliabilityChart from "@/app/components/reliability_chart";
+import { useDefectFilter } from "@/app/lib/defect_filter_context";
+import { timestamp_format, pascal_case_format } from "@/app/lib/data_load";
+import { ArrowPathIcon, ExclamationTriangleIcon, InformationCircleIcon, TrophyIcon } from "@heroicons/react/24/outline";
+
+interface Metadata {
+    age_range?: { min: number; max: number };
+    counts?: {
+        consumer_vehicles: number;
+        commercial_vehicles: number;
+    };
+}
+
+// -- Brand Types --
+interface BrandStatsFiltered extends BrandStats {
+    filtered_defects?: number;
+    filtered_defects_per_vehicle_year?: number | null;
+}
+
+// -- Model Types --
+interface ModelStatsFiltered extends ModelStats {
+    filtered_defects?: number;
+    filtered_defects_per_vehicle_year?: number | null;
+}
+
+// -- Columns --
+const BRAND_COLUMNS_FULL: Column<BrandStatsFiltered>[] = [
+    { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
+    { key: "vehicle_count", label: "Vehicles" },
+    { key: "total_inspections", label: "Inspections" },
+    { key: "avg_defects_per_inspection", label: "Defects/Inspection" },
+    { key: "avg_age_years", label: "Avg. Age" },
+    { key: "filtered_defects_per_vehicle_year", label: "Defects/Year" },
+];
+
+const BRAND_COLUMNS_FILTERED: Column<BrandStatsFiltered>[] = [
+    { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
+    { key: "vehicle_count", label: "Vehicles" },
+    { key: "total_inspections", label: "Inspections" },
+    { key: "avg_defects_per_inspection", label: "Defects/Inspection" },
+];
+
+const MODEL_COLUMNS_FULL: Column<ModelStatsFiltered>[] = [
+    { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
+    { key: "handelsbenaming", label: "Model", format: (v) => pascal_case_format(String(v)) },
+    { key: "vehicle_count", label: "Vehicles" },
+    { key: "total_inspections", label: "Inspections" },
+    { key: "avg_defects_per_inspection", label: "Defects/Inspection" },
+    { key: "avg_age_years", label: "Avg. Age" },
+    { key: "filtered_defects_per_vehicle_year", label: "Defects/Year" },
+];
+
+const MODEL_COLUMNS_FILTERED: Column<ModelStatsFiltered>[] = [
+    { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
+    { key: "handelsbenaming", label: "Model", format: (v) => pascal_case_format(String(v)) },
+    { key: "vehicle_count", label: "Vehicles" },
+    { key: "total_inspections", label: "Inspections" },
+    { key: "avg_defects_per_inspection", label: "Defects/Inspection" },
+];
+
+/** Aggregate per-year stats for a given age range */
+function aggregateAgeRange(
+    per_year_stats: Record<string, PerYearStats> | undefined,
+    minAge: number,
+    maxAge: number
+): PerYearStats | null {
+    if (!per_year_stats) return null;
+
+    let total_vehicles = 0;
+    let total_inspections = 0;
+    let total_defects = 0;
+
+    for (let age = minAge; age <= maxAge; age++) {
+        const yearStats = per_year_stats[String(age)];
+        if (yearStats) {
+            total_vehicles += yearStats.vehicle_count;
+            total_inspections += yearStats.total_inspections;
+            total_defects += yearStats.total_defects;
+        }
+    }
+
+    if (total_inspections === 0) return null;
+
+    return {
+        vehicle_count: total_vehicles,
+        total_inspections,
+        total_defects,
+        avg_defects_per_inspection: Math.round((total_defects / total_inspections) * 10000) / 10000,
+    };
+}
+
+export default function StatisticsPage() {
+    const [viewMode, setViewMode] = useState<"brands" | "models">("brands");
+
+    const [brand_stats, setBrandStats] = useState<BrandStats[]>([]);
+    const [model_stats, setModelStats] = useState<ModelStats[]>([]);
+
+    const [metadata, setMetadata] = useState<Metadata>({});
+    const [generated_at, setGeneratedAt] = useState<string>("");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Filters
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+    const [vehicleType, setVehicleType] = useState<"consumer" | "commercial">("consumer");
+
+    // New Filters
+    const [selectedFuels, setSelectedFuels] = useState<string[]>([]);
+    const [minPrice, setMinPrice] = useState(0);
+    const [maxPrice, setMaxPrice] = useState(100000); // 100k+
+
+    // Sliders
+    const defaultMin = 4;
+    const defaultMax = 20;
+    const [ageRange, setAgeRange] = useState<[number, number]>([defaultMin, defaultMax]);
+    const [minFleetSize, setMinFleetSize] = useState(100);
+
+    const { brand_breakdowns, model_breakdowns, calculate_filtered_defects, mode } = useDefectFilter();
+
+    // Derive age bounds from metadata
+    const minAge = metadata.age_range?.min ?? 0;
+    const maxAge = metadata.age_range?.max ?? 30;
+    const isAgeFilterActive = ageRange[0] > minAge || ageRange[1] < maxAge;
+
+    useEffect(() => {
+        async function data_fetch() {
+            try {
+                const base_path = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+                const [brand_response, model_response, rankings_response, metadata_response] = await Promise.all([
+                    fetch(`${base_path}/data/brand_stats.json`),
+                    fetch(`${base_path}/data/model_stats.json`),
+                    fetch(`${base_path}/data/rankings.json`),
+                    fetch(`${base_path}/data/metadata.json`),
+                ]);
+
+                if (!brand_response.ok || !model_response.ok) {
+                    throw new Error("Could not load statistics data");
+                }
+
+                const brands: BrandStats[] = await brand_response.json();
+                const models: ModelStats[] = await model_response.json();
+
+                setBrandStats(brands);
+                setModelStats(models);
+
+                if (rankings_response.ok) {
+                    const rankings: Rankings = await rankings_response.json();
+                    setGeneratedAt(rankings.generated_at);
+                }
+
+                if (metadata_response.ok) {
+                    const meta: Metadata = await metadata_response.json();
+                    setMetadata(meta);
+                    if (meta.age_range) {
+                        // Keep user default if meaningful, else adapt? Keeping fixed default for now.
+                    }
+                }
+            } catch (err) {
+                setError(err instanceof Error ? err.message : "Unknown error");
+            } finally {
+                setLoading(false);
+            }
+        }
+        data_fetch();
+    }, []);
+
+    // Calculate max fleet size based on current view/usage (ignoring price/fuel for stability)
+    const maxFleetSizeAvailable = useMemo(() => {
+        const data = viewMode === "brands" ? brand_stats : model_stats;
+        const relevantData = data.filter((item) => item.vehicle_type_group === vehicleType);
+        if (relevantData.length === 0) return 1000;
+        // Since meaningful aggregation is needed to get REAL fleet size per brand,
+        // using the max of fragmented rows might underreport. 
+        // We really should aggregate first.
+        const counts = new Map<string, number>();
+        for (const item of relevantData) {
+            const key = viewMode === "brands" ? item.merk : `${item.merk} ${(item as ModelStats).handelsbenaming}`;
+            counts.set(key, (counts.get(key) || 0) + item.vehicle_count);
+        }
+        if (counts.size === 0) return 1000;
+        return Math.max(...Array.from(counts.values()));
+    }, [brand_stats, model_stats, viewMode, vehicleType]);
+
+
+    // -- Main Aggegration & Filtering Pipeline --
+    const processed_data = useMemo(() => {
+        // 1. Select Source
+        const rawData = viewMode === "brands" ? brand_stats : model_stats;
+
+        // 2. Filter Rows (Fuel, Price, Usage)
+        let filtered = rawData.filter((item) => item.vehicle_type_group === vehicleType);
+
+        if (selectedFuels.length > 0) {
+            filtered = filtered.filter((item) => selectedFuels.includes(item.primary_fuel));
+        }
+
+        filtered = filtered.filter((item) => {
+            const p = item.price_segment;
+            if (maxPrice >= 100000) return p >= minPrice;
+            return p >= minPrice && p <= maxPrice;
+        });
+
+        if (selectedBrands.length > 0) {
+            filtered = filtered.filter((item) => selectedBrands.includes(item.merk));
+        }
+
+        // 3. Aggregate Rows by Key (Brand or Brand+Model)
+        const groupBy = (item: BrandStats | ModelStats) => viewMode === "brands" ? item.merk : `${item.merk} ${(item as ModelStats).handelsbenaming}`;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const aggregatedMap = new Map<string, any>();
+
+        for (const item of filtered) {
+            const key = groupBy(item);
+            if (!aggregatedMap.has(key)) {
+                // Deep clone per_year_stats to enable merging
+                aggregatedMap.set(key, {
+                    ...item,
+                    per_year_stats: JSON.parse(JSON.stringify(item.per_year_stats))
+                });
+            } else {
+                const existing = aggregatedMap.get(key);
+                existing.vehicle_count += item.vehicle_count;
+                existing.total_inspections += item.total_inspections;
+                existing.total_defects += item.total_defects;
+                existing.total_vehicle_years += item.total_vehicle_years;
+
+                // Merge Per Year Stats
+                for (const [age, stats] of Object.entries(item.per_year_stats)) {
+                    if (!existing.per_year_stats[age]) {
+                        existing.per_year_stats[age] = { ...stats };
+                    } else {
+                        const eStats = existing.per_year_stats[age];
+                        const iStats = stats;
+                        eStats.vehicle_count += iStats.vehicle_count;
+                        eStats.total_inspections += iStats.total_inspections;
+                        eStats.total_defects += iStats.total_defects;
+                    }
+                }
+            }
+        }
+
+        let results = Array.from(aggregatedMap.values());
+
+        // 4. Calculate Derived Metrics (Pre-Defect Filter)
+        results = results.map(item => ({
+            ...item,
+            avg_defects_per_inspection: item.total_inspections > 0 ? item.total_defects / item.total_inspections : 0,
+            defects_per_vehicle_year: item.total_vehicle_years > 0 ? item.total_defects / item.total_vehicle_years : 0,
+        }));
+
+        // 5. Apply Defect Filters (Ratio Approach) & Age Range
+        results = results.map(item => {
+            // A. Defect Filter Ratio
+            let defectRatio = 1.0;
+            if (mode !== "all") {
+                const key = viewMode === "brands" ? item.merk : `${item.merk}|${item.handelsbenaming}`;
+                const breakdown = viewMode === "brands" ? brand_breakdowns[key] : model_breakdowns[key];
+
+                if (breakdown) {
+                    const totalInBreakdown = Object.values(breakdown).reduce((a, b) => a + b, 0);
+                    const filteredInBreakdown = calculate_filtered_defects(breakdown);
+                    if (totalInBreakdown > 0) {
+                        defectRatio = filteredInBreakdown / totalInBreakdown;
+                    }
+                }
+            }
+
+            // B. Age Range Aggregation
+            let finalDefects = 0;
+            let finalInspections = 0;
+
+            if (isAgeFilterActive) {
+                const aggregated = aggregateAgeRange(item.per_year_stats, ageRange[0], ageRange[1]);
+                if (aggregated) {
+                    finalDefects = aggregated.total_defects;
+                    finalInspections = aggregated.total_inspections;
+                }
+            } else {
+                finalDefects = item.total_defects;
+                finalInspections = item.total_inspections; // Using inspections as proxy for vehicle years in global view if simpler, or total_vehicle_years
+                // For consistency with Age Range, we'll use total_vehicle_years for global rate
+            }
+
+            // Apply Defect Ratio to specific range defects
+            const filteredDefects = finalDefects * defectRatio;
+
+            // Calculate Final Rate
+            // Denominator: If Age Filter active, use range inspections (~ vehicle years). If not, use total_vehicle_years.
+            const denominator = isAgeFilterActive ? finalInspections : item.total_vehicle_years;
+            const finalRate = denominator > 0 ? filteredDefects / denominator : null;
+
+            return {
+                ...item,
+                filtered_defects: Math.round(filteredDefects),
+                filtered_defects_per_vehicle_year: finalRate,
+                // If age filter is active, update displayed counts to match range
+                vehicle_count: isAgeFilterActive ? (aggregateAgeRange(item.per_year_stats, ageRange[0], ageRange[1])?.vehicle_count || 0) : item.vehicle_count,
+                total_inspections: isAgeFilterActive ? finalInspections : item.total_inspections,
+            };
+        });
+
+        // 6. Filter by Fleet Size & Validity
+        results = results.filter(item =>
+            item.vehicle_count >= minFleetSize &&
+            item.filtered_defects_per_vehicle_year !== null
+        );
+
+        // 7. Search Filter
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            results = results.filter((item) => {
+                if (viewMode === "brands") return item.merk.toLowerCase().includes(q);
+                return (
+                    item.merk.toLowerCase().includes(q) || item.handelsbenaming.toLowerCase().includes(q)
+                );
+            });
+        }
+
+        // 8. Sort
+        return results.sort((a, b) => (a.filtered_defects_per_vehicle_year || 0) - (b.filtered_defects_per_vehicle_year || 0));
+
+    }, [brand_stats, model_stats, viewMode, vehicleType, selectedBrands, selectedFuels, minPrice, maxPrice, minFleetSize, searchQuery, ageRange, isAgeFilterActive, mode, brand_breakdowns, model_breakdowns, calculate_filtered_defects]);
+
+
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-8">
+                <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl mb-4">
+                    <ExclamationTriangleIcon className="w-8 h-8 mx-auto mb-2" />
+                    <h2 className="text-xl font-bold">Error Loading Data</h2>
+                    <p>{error}</p>
+                </div>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="px-6 py-2 bg-zinc-900 text-zinc-50 rounded-lg hover:bg-zinc-800 transition-colors"
+                >
+                    Retry
+                    <ArrowPathIcon className="w-4 h-4 inline-block ml-2" />
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            <div className="space-y-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                        Reliability Statistics
+                    </h1>
+                    <p className="text-lg text-zinc-600 dark:text-zinc-400 mt-2 max-w-2xl">
+                        Comprehensive analysis of vehicle reliability based on millions of RDW inspection records.
+                    </p>
+                </div>
+
+                {/* Main Filter Bar */}
+                <FilterBar
+                    viewMode={viewMode}
+                    setViewMode={setViewMode}
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    vehicleType={vehicleType}
+                    setVehicleType={setVehicleType}
+                    availableBrands={brand_stats}
+                    selectedBrands={selectedBrands}
+                    setSelectedBrands={setSelectedBrands}
+                    selectedFuels={selectedFuels}
+                    setSelectedFuels={setSelectedFuels}
+                    minPrice={minPrice}
+                    maxPrice={maxPrice}
+                    setMinPrice={setMinPrice}
+                    setMaxPrice={setMaxPrice}
+                    ageRange={ageRange}
+                    setAgeRange={setAgeRange}
+                    minFleetSize={minFleetSize}
+                    setMinFleetSize={setMinFleetSize}
+                    maxFleetSizeAvailable={maxFleetSizeAvailable}
+                    defectFilterComponent={<DefectFilterPanel />}
+                />
+            </div>
+
+            {
+                loading ? (
+                    <div className="animate-pulse space-y-8">
+                        <div className="h-96 bg-zinc-100 dark:bg-zinc-800 rounded-3xl" />
+                        <div className="space-y-4">
+                            {[1, 2, 3].map(i => <div key={i} className="h-16 bg-zinc-100 dark:bg-zinc-800 rounded-xl" />)}
+                        </div>
+                    </div>
+                ) : processed_data.length > 0 ? (
+                    <>
+                        {/* Chart */}
+                        <div className="bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm p-1 rounded-3xl border border-zinc-200 dark:border-zinc-800">
+                            <ReliabilityChart
+                                data={processed_data.slice(0, 15)}
+                                metric="filtered_defects_per_vehicle_year"
+                            />
+                        </div>
+
+                        {/* Table */}
+                        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                            <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
+                                <h2 className="text-lg font-semibold flex items-center gap-2">
+                                    <TrophyIcon className="w-5 h-5 text-yellow-500" />
+                                    Rankings
+                                </h2>
+                                <span className="text-sm text-zinc-500">
+                                    Found {processed_data.length} {viewMode}
+                                </span>
+                            </div>
+                            <ReliabilityTable
+                                data={processed_data}
+                                columns={
+                                    viewMode === "brands"
+                                        ? (isAgeFilterActive ? BRAND_COLUMNS_FILTERED : BRAND_COLUMNS_FULL)
+                                        : (isAgeFilterActive ? MODEL_COLUMNS_FILTERED : MODEL_COLUMNS_FULL)
+                                }
+                                defaultSortKey="filtered_defects_per_vehicle_year"
+                                defaultSortDirection="asc"
+                                filterKey={viewMode === "brands" ? "merk" : "handelsbenaming"}
+                                externalSearchValue={searchQuery}
+                                hideSearchInput={true}
+                            />
+                        </div>
+                    </>
+                ) : (
+                    <div className="text-center py-24 bg-zinc-50 dark:bg-zinc-800/50 rounded-3xl border border-dashed border-zinc-300 dark:border-zinc-700">
+                        <InformationCircleIcon className="w-12 h-12 mx-auto text-zinc-400 mb-4" />
+                        <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">No results found</h3>
+                        <p className="text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto mt-2">
+                            Try adjusting your filters.
+                        </p>
+                        <button
+                            onClick={() => {
+                                setSelectedFuels([]);
+                                setMinPrice(0);
+                                setMaxPrice(100000);
+                                setAgeRange([defaultMin, defaultMax]);
+                                setSearchQuery("");
+                            }}
+                            className="mt-6 text-blue-600 dark:text-blue-400 font-medium hover:underline"
+                        >
+                            Clear filters
+                        </button>
+                    </div>
+                )
+            }
+
+            <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                <p>Data: RDW Open Data {generated_at && `| Updated: ${timestamp_format(generated_at)}`}</p>
+            </div>
+        </div >
+    );
+}

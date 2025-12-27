@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   Home,
-  Award,
   Car,
   Fuel,
   Search,
@@ -13,7 +12,8 @@ import {
   Github,
   Menu,
   X,
-  AlertTriangle
+  AlertTriangle,
+  BarChart3
 } from "lucide-react";
 
 interface NavLink {
@@ -24,8 +24,7 @@ interface NavLink {
 
 const NAV_LINKS: NavLink[] = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/brands", label: "Brands", icon: Award },
-  { href: "/models", label: "Models", icon: Car },
+  { href: "/statistics", label: "Statistics", icon: BarChart3 },
   { href: "/fuels", label: "Fuel Types", icon: Fuel },
   { href: "/defects", label: "Defects", icon: AlertTriangle },
   { href: "/lookup", label: "Lookup", icon: Search },
