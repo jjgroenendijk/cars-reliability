@@ -114,6 +114,7 @@ def aggregate_brand_stats(
                 pl.col("kenteken").n_unique().alias("vehicle_count"),
                 pl.len().alias("total_inspections"),
                 pl.col("defect_count").sum().cast(pl.Float64).alias("total_defects"),
+                pl.col("defect_count").std().round(4).alias("std_defects_per_inspection"),
                 pl.col("age_at_inspection").mean().round(2).alias("avg_age_years"),
                 pl.col("age_at_inspection").sum().cast(pl.Float64).alias("total_vehicle_years"),
             ]
@@ -174,6 +175,7 @@ def aggregate_model_stats(
                 pl.col("kenteken").n_unique().alias("vehicle_count"),
                 pl.len().alias("total_inspections"),
                 pl.col("defect_count").sum().cast(pl.Float64).alias("total_defects"),
+                pl.col("defect_count").std().round(4).alias("std_defects_per_inspection"),
                 pl.col("age_at_inspection").mean().round(2).alias("avg_age_years"),
                 pl.col("age_at_inspection").sum().cast(pl.Float64).alias("total_vehicle_years"),
             ]
@@ -219,6 +221,50 @@ def aggregate_model_stats(
 
     return result, min_age, max_age
 
+def _aggregate_stats_for_ranking(stats_list: list[dict], group_keys: list[str]) -> list[dict]:
+    """Aggregate stats list by group keys for ranking purposes.
+
+    Combines segmented data (e.g. by fuel/price) into a single entry per group.
+    """
+    aggregated: dict[str, dict] = {}
+
+    for item in stats_list:
+        # Create unique key based on group columns
+        key_parts = [str(item.get(k, "")) for k in group_keys]
+        key = "|".join(key_parts)
+
+        if key not in aggregated:
+            aggregated[key] = {k: item.get(k, "") for k in group_keys}
+            aggregated[key].update(
+                {
+                    "vehicle_count": 0,
+                    "total_inspections": 0,
+                    "total_defects": 0.0,
+                    "total_vehicle_years": 0.0,
+                }
+            )
+
+        # Accumulate metrics
+        aggregated[key]["vehicle_count"] += item.get("vehicle_count", 0)
+        aggregated[key]["total_inspections"] += item.get("total_inspections", 0)
+        aggregated[key]["total_defects"] += item.get("total_defects", 0.0)
+        aggregated[key]["total_vehicle_years"] += item.get("total_vehicle_years", 0.0)
+
+    # Convert back to list and calculate derived metrics
+    result = []
+    for item in aggregated.values():
+        total_vehicle_years = item["total_vehicle_years"]
+        if total_vehicle_years > 0:
+            item["defects_per_vehicle_year"] = (
+                item["total_defects"] / total_vehicle_years
+            )
+        else:
+            item["defects_per_vehicle_year"] = 0.0
+
+        result.append(item)
+
+    return result
+
 
 def generate_rankings(brand_stats: list[dict], model_stats: list[dict]) -> dict:
     """Generate top/bottom rankings for brands and models."""
@@ -253,17 +299,31 @@ def generate_rankings(brand_stats: list[dict], model_stats: list[dict]) -> dict:
             result.append(entry)
         return result
 
+    # Filter for consumer vehicles only before aggregation
+    consumer_brand_stats = [
+        item for item in brand_stats if item.get("vehicle_type_group") == "consumer"
+    ]
+    consumer_model_stats = [
+        item for item in model_stats if item.get("vehicle_type_group") == "consumer"
+    ]
+
+    # Aggregate stats to avoid duplicates from segmentation
+    aggregated_brands = _aggregate_stats_for_ranking(consumer_brand_stats, ["merk"])
+    aggregated_models = _aggregate_stats_for_ranking(
+        consumer_model_stats, ["merk", "handelsbenaming"]
+    )
+
     most_reliable_brands = format_ranking(
-        brand_stats, threshold=THRESHOLD_BRAND_RANKING, reverse=False
+        aggregated_brands, threshold=THRESHOLD_BRAND_RANKING, reverse=False
     )
     least_reliable_brands = format_ranking(
-        brand_stats, threshold=THRESHOLD_BRAND_RANKING, reverse=True
+        aggregated_brands, threshold=THRESHOLD_BRAND_RANKING, reverse=True
     )
     most_reliable_models = format_ranking(
-        model_stats, threshold=THRESHOLD_MODEL_RANKING, reverse=False
+        aggregated_models, threshold=THRESHOLD_MODEL_RANKING, reverse=False
     )
     least_reliable_models = format_ranking(
-        model_stats, threshold=THRESHOLD_MODEL_RANKING, reverse=True
+        aggregated_models, threshold=THRESHOLD_MODEL_RANKING, reverse=True
     )
 
     return {
