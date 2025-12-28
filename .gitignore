@@ -41,3 +41,4 @@ docs/articles/
 # Playwright
 web/playwright-report/
 web/test-results/
+.agent
