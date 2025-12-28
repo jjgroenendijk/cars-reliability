@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import type { SortConfig, SortDirection } from "@/app/lib/types";
 import { percentage_format, number_format } from "@/app/lib/data_load";
 
@@ -93,14 +94,14 @@ export function ReliabilityTable<T extends object>({
 
   function sort_indicator_render(key: string) {
     if (sortConfig.key !== key) {
-      return <span className="text-gray-300 dark:text-gray-600 ml-1">-</span>;
+      return <ArrowUpDown className="w-4 h-4 text-gray-300 dark:text-gray-600 ml-1" />;
     }
     return (
       <span className="ml-1">
         {sortConfig.direction === "asc" ? (
-          <span aria-label="Sorted ascending">[A]</span>
+          <ArrowUp className="w-4 h-4" aria-label="Sorted ascending" />
         ) : (
-          <span aria-label="Sorted descending">[Z]</span>
+          <ArrowDown className="w-4 h-4" aria-label="Sorted descending" />
         )}
       </span>
     );
@@ -161,7 +162,7 @@ export function ReliabilityTable<T extends object>({
                   key={String(column.key)}
                   scope="col"
                   className={`
-                    px-6 py-4 text-left text-lg font-semibold text-gray-900 dark:text-white tracking-wide
+                    px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400 tracking-wider
                     ${column.sortable !== false ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 select-none transition-colors" : ""}
                     ${column.className ?? ""}
                   `}

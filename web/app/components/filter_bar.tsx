@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MagnifyingGlassIcon, FunnelIcon } from "@heroicons/react/24/outline";
+import { Search, Filter } from "lucide-react";
 import { BrandFilter } from "./brand_filter";
 import type { BrandStats } from "@/app/lib/types";
 
@@ -10,8 +10,10 @@ interface FilterBarProps {
     setViewMode: (mode: "brands" | "models") => void;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
-    vehicleType: "consumer" | "commercial";
-    setVehicleType: (type: "consumer" | "commercial") => void;
+    showConsumer: boolean;
+    setShowConsumer: (show: boolean) => void;
+    showCommercial: boolean;
+    setShowCommercial: (show: boolean) => void;
     // Brand Filter
     availableBrands: BrandStats[];
     selectedBrands: string[];
@@ -32,9 +34,20 @@ interface FilterBarProps {
     maxFleetSizeAvailable: number;
     // Defect Filter Slot
     defectFilterComponent?: React.ReactNode;
+    // Standard Deviation Toggle
+    showStdDev: boolean;
+    setShowStdDev: (show: boolean) => void;
 }
 
 const FUEL_TYPES = ["Petrol", "Diesel", "Hybrid", "EV", "LPG", "Other"];
+const FUEL_DISPLAY_NAMES: Record<string, string> = {
+    "Petrol": "Petrol",
+    "Diesel": "Diesel",
+    "Hybrid": "Hybrid",
+    "EV": "Electric",
+    "LPG": "LPG",
+    "Other": "Other",
+};
 const PRICE_STEP = 5000;
 const MAX_PRICE_LIMIT = 100000;
 
@@ -43,8 +56,10 @@ export default function FilterBar({
     setViewMode,
     searchQuery,
     setSearchQuery,
-    vehicleType,
-    setVehicleType,
+    showConsumer,
+    setShowConsumer,
+    showCommercial,
+    setShowCommercial,
     availableBrands,
     selectedBrands,
     setSelectedBrands,
@@ -60,6 +75,8 @@ export default function FilterBar({
     setMinFleetSize,
     maxFleetSizeAvailable,
     defectFilterComponent,
+    showStdDev,
+    setShowStdDev,
 }: FilterBarProps) {
     const [showMoreFilters, setShowMoreFilters] = useState(false);
 
@@ -79,7 +96,7 @@ export default function FilterBar({
 
                     {/* 1. Search Bar (Primary) */}
                     <div className="relative w-full lg:w-64 flex-shrink-0">
-                        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                         <input
                             type="text"
                             placeholder={`Search ${viewMode}...`}
@@ -92,7 +109,7 @@ export default function FilterBar({
                     <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-700 hidden lg:block" />
 
                     {/* 2. Primary Filters Group */}
-                    <div className="flex items-center gap-2 w-full lg:w-auto overflow-x-auto no-scrollbar">
+                    <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
 
                         {/* Brand Filter */}
                         {viewMode === "brands" || viewMode === "models" ? (
@@ -136,21 +153,23 @@ export default function FilterBar({
                     {/* 3. More Filters & Actions */}
                     <div className="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-end">
 
-                        {/* Quick Fuel Toggles (Visible if space permits or moved to 'More') */}
-                        <div className="hidden xl:flex items-center gap-1">
-                            {FUEL_TYPES.slice(0, 3).map((fuel) => (
-                                <button
-                                    key={fuel}
-                                    onClick={() => toggleFuel(fuel)}
-                                    className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${selectedFuels.includes(fuel)
-                                        ? "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800"
-                                        : "bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-800/50 dark:text-zinc-400 dark:border-zinc-700 hover:border-zinc-300"
-                                        }`}
-                                >
-                                    {fuel}
-                                </button>
-                            ))}
-                        </div>
+                        {/* Quick Fuel Toggles (Hidden when expanded filters are shown) */}
+                        {!showMoreFilters && (
+                            <div className="hidden xl:flex items-center gap-1">
+                                {FUEL_TYPES.slice(0, 4).map((fuel) => (
+                                    <button
+                                        key={fuel}
+                                        onClick={() => toggleFuel(fuel)}
+                                        className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${selectedFuels.includes(fuel)
+                                            ? "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800"
+                                            : "bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-800/50 dark:text-zinc-400 dark:border-zinc-700 hover:border-zinc-300"
+                                            }`}
+                                    >
+                                        {FUEL_DISPLAY_NAMES[fuel] || fuel}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
 
                         <button
                             onClick={() => setShowMoreFilters(!showMoreFilters)}
@@ -159,7 +178,7 @@ export default function FilterBar({
                                 : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300"
                                 }`}
                         >
-                            <FunnelIcon className="w-4 h-4" />
+                            <Filter className="w-4 h-4" />
                             <span>Filters</span>
                         </button>
                     </div>
@@ -168,17 +187,40 @@ export default function FilterBar({
                 {/* Expanded Filters Section */}
                 {showMoreFilters && (
                     <div className="pt-4 mt-2 border-t border-zinc-100 dark:border-zinc-800 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in slide-in-from-top-2 duration-200">
-                        {/* Usage Dropdown (Moved here for compactness) */}
+                        {/* Usage Checkboxes */}
                         <div className="space-y-3">
                             <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Vehicle Usage</label>
-                            <select
-                                value={vehicleType}
-                                onChange={(e) => setVehicleType(e.target.value as "consumer" | "commercial")}
-                                className="w-full bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="consumer">Personal Cars</option>
-                                <option value="commercial">Commercial</option>
-                            </select>
+                            <div className="flex flex-col gap-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={showConsumer}
+                                        onChange={(e) => setShowConsumer(e.target.checked)}
+                                        className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 dark:bg-zinc-700"
+                                    />
+                                    <span className="text-sm text-zinc-700 dark:text-zinc-300">Personal Cars</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={showCommercial}
+                                        onChange={(e) => setShowCommercial(e.target.checked)}
+                                        className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 dark:bg-zinc-700"
+                                    />
+                                    <span className="text-sm text-zinc-700 dark:text-zinc-300">Commercial Vehicles</span>
+                                </label>
+                            </div>
+                            <div className="pt-2 border-t border-zinc-100 dark:border-zinc-700">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={showStdDev}
+                                        onChange={(e) => setShowStdDev(e.target.checked)}
+                                        className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 dark:bg-zinc-700"
+                                    />
+                                    <span className="text-sm text-zinc-700 dark:text-zinc-300">Show Std. Dev.</span>
+                                </label>
+                            </div>
                         </div>
 
                         {/* Fuel (Full List) */}
@@ -194,47 +236,49 @@ export default function FilterBar({
                                             : "bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-800/50 dark:text-zinc-400 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
                                             }`}
                                     >
-                                        {fuel}
+                                        {FUEL_DISPLAY_NAMES[fuel] || fuel}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Price Filter */}
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Price Range</label>
-                                <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                                    {minPrice >= MAX_PRICE_LIMIT ? "€100k+" : `€${(minPrice / 1000).toFixed(0)}k`} - {maxPrice >= MAX_PRICE_LIMIT ? "€100k+" : `€${(maxPrice / 1000).toFixed(0)}k`}
-                                </span>
+                        {/* Price Filter (Only for Models view) */}
+                        {viewMode === "models" && (
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Price Range</label>
+                                    <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                                        {minPrice >= MAX_PRICE_LIMIT ? "€100k+" : `€${(minPrice / 1000).toFixed(0)}k`} - {maxPrice >= MAX_PRICE_LIMIT ? "€100k+" : `€${(maxPrice / 1000).toFixed(0)}k`}
+                                    </span>
+                                </div>
+                                <div className="px-1 flex gap-4 items-center">
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max={MAX_PRICE_LIMIT}
+                                        step={PRICE_STEP}
+                                        value={minPrice}
+                                        onChange={(e) => {
+                                            const val = Math.min(Number(e.target.value), maxPrice - PRICE_STEP);
+                                            setMinPrice(val);
+                                        }}
+                                        className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                    />
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max={MAX_PRICE_LIMIT}
+                                        step={PRICE_STEP}
+                                        value={maxPrice}
+                                        onChange={(e) => {
+                                            const val = Math.max(Number(e.target.value), minPrice + PRICE_STEP);
+                                            setMaxPrice(val);
+                                        }}
+                                        className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                    />
+                                </div>
                             </div>
-                            <div className="px-1 flex gap-4 items-center">
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max={MAX_PRICE_LIMIT}
-                                    step={PRICE_STEP}
-                                    value={minPrice}
-                                    onChange={(e) => {
-                                        const val = Math.min(Number(e.target.value), maxPrice - PRICE_STEP);
-                                        setMinPrice(val);
-                                    }}
-                                    className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                                />
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max={MAX_PRICE_LIMIT}
-                                    step={PRICE_STEP}
-                                    value={maxPrice}
-                                    onChange={(e) => {
-                                        const val = Math.max(Number(e.target.value), minPrice + PRICE_STEP);
-                                        setMaxPrice(val);
-                                    }}
-                                    className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                                />
-                            </div>
-                        </div>
+                        )}
 
                         {/* Age & Fleet */}
                         <div className="space-y-6">

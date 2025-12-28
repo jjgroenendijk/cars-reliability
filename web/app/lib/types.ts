@@ -39,6 +39,7 @@ export interface BrandStats {
   total_reliability_defects?: number;
   total_vehicle_years: number;
   avg_defects_per_inspection: number | null;
+  std_defects_per_inspection?: number | null;
   avg_age_years: number | null;
   defects_per_vehicle_year: number | null;
   reliability_defects_per_vehicle_year: number | null;
@@ -66,6 +67,7 @@ export interface ModelStats {
   total_reliability_defects?: number;
   total_vehicle_years: number;
   avg_defects_per_inspection: number | null;
+  std_defects_per_inspection?: number | null;
   avg_age_years: number | null;
   defects_per_vehicle_year: number | null;
   reliability_defects_per_vehicle_year: number | null;

@@ -30,10 +30,22 @@ export function BrandFilter({ brands, selectedBrands, setSelectedBrands }: Brand
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    // Aggregate brands to ensure uniqueness and sum vehicle counts
+    const uniqueBrands = useMemo(() => {
+        const brandMap = new Map<string, number>();
+        for (const brand of brands) {
+            brandMap.set(brand.merk, (brandMap.get(brand.merk) || 0) + brand.vehicle_count);
+        }
+        return Array.from(brandMap.entries()).map(([merk, count]) => ({
+            merk,
+            vehicle_count: count,
+        }));
+    }, [brands]);
+
     // Sort brands by vehicle count (Popularity)
     const sortedBrands = useMemo(() => {
-        return [...brands].sort((a, b) => b.vehicle_count - a.vehicle_count);
-    }, [brands]);
+        return [...uniqueBrands].sort((a, b) => b.vehicle_count - a.vehicle_count);
+    }, [uniqueBrands]);
 
     // Filter by search term
     const filteredBrands = useMemo(() => {

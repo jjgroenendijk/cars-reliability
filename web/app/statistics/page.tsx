@@ -5,10 +5,9 @@ import type { BrandStats, ModelStats, Rankings, PerYearStats } from "@/app/lib/t
 import { ReliabilityTable, type Column } from "@/app/components/reliability_table";
 import { DefectFilterPanel } from "@/app/components/defect_filter_panel";
 import FilterBar from "@/app/components/filter_bar";
-import ReliabilityChart from "@/app/components/reliability_chart";
 import { useDefectFilter } from "@/app/lib/defect_filter_context";
 import { timestamp_format, pascal_case_format } from "@/app/lib/data_load";
-import { ArrowPathIcon, ExclamationTriangleIcon, InformationCircleIcon, TrophyIcon } from "@heroicons/react/24/outline";
+import { RefreshCw, AlertTriangle, Info, Trophy } from "lucide-react";
 
 interface Metadata {
     age_range?: { min: number; max: number };
@@ -35,16 +34,16 @@ const BRAND_COLUMNS_FULL: Column<BrandStatsFiltered>[] = [
     { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
     { key: "vehicle_count", label: "Vehicles" },
     { key: "total_inspections", label: "Inspections" },
-    { key: "avg_defects_per_inspection", label: "Defects/Inspection" },
-    { key: "avg_age_years", label: "Avg. Age" },
-    { key: "filtered_defects_per_vehicle_year", label: "Defects/Year" },
+    { key: "avg_defects_per_inspection", label: "Defects / Inspection" },
+    { key: "avg_age_years", label: "Avg Age" },
+    { key: "filtered_defects_per_vehicle_year", label: "Defects / Year" },
 ];
 
 const BRAND_COLUMNS_FILTERED: Column<BrandStatsFiltered>[] = [
     { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
     { key: "vehicle_count", label: "Vehicles" },
     { key: "total_inspections", label: "Inspections" },
-    { key: "avg_defects_per_inspection", label: "Defects/Inspection" },
+    { key: "avg_defects_per_inspection", label: "Defects / Inspection" },
 ];
 
 const MODEL_COLUMNS_FULL: Column<ModelStatsFiltered>[] = [
@@ -52,9 +51,9 @@ const MODEL_COLUMNS_FULL: Column<ModelStatsFiltered>[] = [
     { key: "handelsbenaming", label: "Model", format: (v) => pascal_case_format(String(v)) },
     { key: "vehicle_count", label: "Vehicles" },
     { key: "total_inspections", label: "Inspections" },
-    { key: "avg_defects_per_inspection", label: "Defects/Inspection" },
-    { key: "avg_age_years", label: "Avg. Age" },
-    { key: "filtered_defects_per_vehicle_year", label: "Defects/Year" },
+    { key: "avg_defects_per_inspection", label: "Defects / Inspection" },
+    { key: "avg_age_years", label: "Avg Age" },
+    { key: "filtered_defects_per_vehicle_year", label: "Defects / Year" },
 ];
 
 const MODEL_COLUMNS_FILTERED: Column<ModelStatsFiltered>[] = [
@@ -62,7 +61,7 @@ const MODEL_COLUMNS_FILTERED: Column<ModelStatsFiltered>[] = [
     { key: "handelsbenaming", label: "Model", format: (v) => pascal_case_format(String(v)) },
     { key: "vehicle_count", label: "Vehicles" },
     { key: "total_inspections", label: "Inspections" },
-    { key: "avg_defects_per_inspection", label: "Defects/Inspection" },
+    { key: "avg_defects_per_inspection", label: "Defects / Inspection" },
 ];
 
 /** Aggregate per-year stats for a given age range */
@@ -98,6 +97,7 @@ function aggregateAgeRange(
 
 export default function StatisticsPage() {
     const [viewMode, setViewMode] = useState<"brands" | "models">("brands");
+    const [showStdDev, setShowStdDev] = useState(false);
 
     const [brand_stats, setBrandStats] = useState<BrandStats[]>([]);
     const [model_stats, setModelStats] = useState<ModelStats[]>([]);
@@ -110,7 +110,8 @@ export default function StatisticsPage() {
     // Filters
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-    const [vehicleType, setVehicleType] = useState<"consumer" | "commercial">("consumer");
+    const [showConsumer, setShowConsumer] = useState(true);
+    const [showCommercial, setShowCommercial] = useState(false);
 
     // New Filters
     const [selectedFuels, setSelectedFuels] = useState<string[]>([]);
@@ -175,7 +176,11 @@ export default function StatisticsPage() {
     // Calculate max fleet size based on current view/usage (ignoring price/fuel for stability)
     const maxFleetSizeAvailable = useMemo(() => {
         const data = viewMode === "brands" ? brand_stats : model_stats;
-        const relevantData = data.filter((item) => item.vehicle_type_group === vehicleType);
+        const relevantData = data.filter((item) => {
+            if (showConsumer && item.vehicle_type_group === "consumer") return true;
+            if (showCommercial && item.vehicle_type_group === "commercial") return true;
+            return false;
+        });
         if (relevantData.length === 0) return 1000;
         // Since meaningful aggregation is needed to get REAL fleet size per brand,
         // using the max of fragmented rows might underreport. 
@@ -187,7 +192,7 @@ export default function StatisticsPage() {
         }
         if (counts.size === 0) return 1000;
         return Math.max(...Array.from(counts.values()));
-    }, [brand_stats, model_stats, viewMode, vehicleType]);
+    }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial]);
 
 
     // -- Main Aggegration & Filtering Pipeline --
@@ -196,7 +201,11 @@ export default function StatisticsPage() {
         const rawData = viewMode === "brands" ? brand_stats : model_stats;
 
         // 2. Filter Rows (Fuel, Price, Usage)
-        let filtered = rawData.filter((item) => item.vehicle_type_group === vehicleType);
+        let filtered = rawData.filter((item) => {
+            if (showConsumer && item.vehicle_type_group === "consumer") return true;
+            if (showCommercial && item.vehicle_type_group === "commercial") return true;
+            return false;
+        });
 
         if (selectedFuels.length > 0) {
             filtered = filtered.filter((item) => selectedFuels.includes(item.primary_fuel));
@@ -327,14 +336,35 @@ export default function StatisticsPage() {
         // 8. Sort
         return results.sort((a, b) => (a.filtered_defects_per_vehicle_year || 0) - (b.filtered_defects_per_vehicle_year || 0));
 
-    }, [brand_stats, model_stats, viewMode, vehicleType, selectedBrands, selectedFuels, minPrice, maxPrice, minFleetSize, searchQuery, ageRange, isAgeFilterActive, mode, brand_breakdowns, model_breakdowns, calculate_filtered_defects]);
+    }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial, selectedBrands, selectedFuels, minPrice, maxPrice, minFleetSize, searchQuery, ageRange, isAgeFilterActive, mode, brand_breakdowns, model_breakdowns, calculate_filtered_defects]);
 
+
+    // Memoize columns at top level to avoid conditional hook errors
+    const tableColumns = useMemo(() => {
+        const baseCols = viewMode === "brands"
+            ? (isAgeFilterActive ? BRAND_COLUMNS_FILTERED : BRAND_COLUMNS_FULL)
+            : (isAgeFilterActive ? MODEL_COLUMNS_FILTERED : MODEL_COLUMNS_FULL);
+
+        if (!showStdDev) return baseCols;
+
+        const cols = [...baseCols];
+        const insertIndex = cols.findIndex(c => c.key === "avg_defects_per_inspection") + 1;
+
+        if (insertIndex > 0) {
+            cols.splice(insertIndex, 0, {
+                key: "std_defects_per_inspection",
+                label: "Std. Dev.",
+                format: (v: unknown) => v ? Number(v).toFixed(4) : "-"
+            } as any);
+        }
+        return cols;
+    }, [viewMode, isAgeFilterActive, showStdDev]);
 
     if (error) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-8">
                 <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl mb-4">
-                    <ExclamationTriangleIcon className="w-8 h-8 mx-auto mb-2" />
+                    <AlertTriangle className="w-8 h-8 mx-auto mb-2" />
                     <h2 className="text-xl font-bold">Error Loading Data</h2>
                     <p>{error}</p>
                 </div>
@@ -343,7 +373,7 @@ export default function StatisticsPage() {
                     className="px-6 py-2 bg-zinc-900 text-zinc-50 rounded-lg hover:bg-zinc-800 transition-colors"
                 >
                     Retry
-                    <ArrowPathIcon className="w-4 h-4 inline-block ml-2" />
+                    <RefreshCw className="w-4 h-4 inline-block ml-2" />
                 </button>
             </div>
         );
@@ -367,8 +397,10 @@ export default function StatisticsPage() {
                     setViewMode={setViewMode}
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
-                    vehicleType={vehicleType}
-                    setVehicleType={setVehicleType}
+                    showConsumer={showConsumer}
+                    setShowConsumer={setShowConsumer}
+                    showCommercial={showCommercial}
+                    setShowCommercial={setShowCommercial}
                     availableBrands={brand_stats}
                     selectedBrands={selectedBrands}
                     setSelectedBrands={setSelectedBrands}
@@ -384,6 +416,8 @@ export default function StatisticsPage() {
                     setMinFleetSize={setMinFleetSize}
                     maxFleetSizeAvailable={maxFleetSizeAvailable}
                     defectFilterComponent={<DefectFilterPanel />}
+                    showStdDev={showStdDev}
+                    setShowStdDev={setShowStdDev}
                 />
             </div>
 
@@ -397,19 +431,13 @@ export default function StatisticsPage() {
                     </div>
                 ) : processed_data.length > 0 ? (
                     <>
-                        {/* Chart */}
-                        <div className="bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm p-1 rounded-3xl border border-zinc-200 dark:border-zinc-800">
-                            <ReliabilityChart
-                                data={processed_data.slice(0, 15)}
-                                metric="filtered_defects_per_vehicle_year"
-                            />
-                        </div>
+
 
                         {/* Table */}
                         <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
                             <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
                                 <h2 className="text-lg font-semibold flex items-center gap-2">
-                                    <TrophyIcon className="w-5 h-5 text-yellow-500" />
+                                    <Trophy className="w-5 h-5 text-yellow-500" />
                                     Rankings
                                 </h2>
                                 <span className="text-sm text-zinc-500">
@@ -418,11 +446,7 @@ export default function StatisticsPage() {
                             </div>
                             <ReliabilityTable
                                 data={processed_data}
-                                columns={
-                                    viewMode === "brands"
-                                        ? (isAgeFilterActive ? BRAND_COLUMNS_FILTERED : BRAND_COLUMNS_FULL)
-                                        : (isAgeFilterActive ? MODEL_COLUMNS_FILTERED : MODEL_COLUMNS_FULL)
-                                }
+                                columns={tableColumns}
                                 defaultSortKey="filtered_defects_per_vehicle_year"
                                 defaultSortDirection="asc"
                                 filterKey={viewMode === "brands" ? "merk" : "handelsbenaming"}
@@ -433,7 +457,7 @@ export default function StatisticsPage() {
                     </>
                 ) : (
                     <div className="text-center py-24 bg-zinc-50 dark:bg-zinc-800/50 rounded-3xl border border-dashed border-zinc-300 dark:border-zinc-700">
-                        <InformationCircleIcon className="w-12 h-12 mx-auto text-zinc-400 mb-4" />
+                        <Info className="w-12 h-12 mx-auto text-zinc-400 mb-4" />
                         <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">No results found</h3>
                         <p className="text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto mt-2">
                             Try adjusting your filters.
