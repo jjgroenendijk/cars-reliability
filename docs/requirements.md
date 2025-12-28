@@ -114,7 +114,7 @@ Note: The `gekentekende_voertuigen` dataset is NOT filtered by `INSPECTION_DAYS_
 - Age-filtered views (e.g., cars 5-15 years old)
 - Dynamic defect type filtering: Users can filter defects by category (reliability vs. wear-and-tear) or select individual defect types on the brands and models pages (NOT on the home page), with reliability metrics recalculating in real-time for those views
 - Commercial vs. Personal Vehicle filtering: Users can filter on commercial vehicles or personal vehicles. Defaults to personal vehicles only. The configuration section should have a filter for this.
-- Standard Deviation Toggle: Configuration section must have a checkbox (disabled by default) to toggle the display of "Std. Dev." column for the "Defects / Inspection" metric. This applies to both Brand and Model views.
+- Standard Deviation Toggle: Configuration section must have a checkbox (disabled by default) to toggle the display of standard deviation columns for both "Defects / Inspection" and "Defects / Year" metrics. The columns are labeled "Std. Dev. (Inspection)" and "Std. Dev. (Year)" respectively. This applies to both Brand and Model views.
 - Fuel type breakdown page with filtering:
   - Vehicle age range (min and max)
   - Minimum fleet size

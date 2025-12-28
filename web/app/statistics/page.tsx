@@ -135,11 +135,12 @@ export default function StatisticsPage() {
         async function data_fetch() {
             try {
                 const base_path = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+                const t = Date.now();
                 const [brand_response, model_response, rankings_response, metadata_response] = await Promise.all([
-                    fetch(`${base_path}/data/brand_stats.json`),
-                    fetch(`${base_path}/data/model_stats.json`),
-                    fetch(`${base_path}/data/rankings.json`),
-                    fetch(`${base_path}/data/metadata.json`),
+                    fetch(`${base_path}/data/brand_stats.json?t=${t}`),
+                    fetch(`${base_path}/data/model_stats.json?t=${t}`),
+                    fetch(`${base_path}/data/rankings.json?t=${t}`),
+                    fetch(`${base_path}/data/metadata.json?t=${t}`),
                 ]);
 
                 if (!brand_response.ok || !model_response.ok) {
@@ -161,7 +162,8 @@ export default function StatisticsPage() {
                     const meta: Metadata = await metadata_response.json();
                     setMetadata(meta);
                     if (meta.age_range) {
-                        // Keep user default if meaningful, else adapt? Keeping fixed default for now.
+                        // Initialize age range to full data range so filtered view is not active by default
+                        setAgeRange([meta.age_range.min, meta.age_range.max]);
                     }
                 }
             } catch (err) {
@@ -241,6 +243,24 @@ export default function StatisticsPage() {
                 existing.total_defects += item.total_defects;
                 existing.total_vehicle_years += item.total_vehicle_years;
 
+                // Accumulate sums for rate-based standard deviation
+                if (item.sum_defects_per_vehicle_year_rates != null) {
+                    existing.sum_defects_per_vehicle_year_rates = (existing.sum_defects_per_vehicle_year_rates || 0) + item.sum_defects_per_vehicle_year_rates;
+                }
+                if (item.sum_sq_defects_per_vehicle_year_rates != null) {
+                    existing.sum_sq_defects_per_vehicle_year_rates = (existing.sum_sq_defects_per_vehicle_year_rates || 0) + item.sum_sq_defects_per_vehicle_year_rates;
+                }
+
+                // Accumulate SumSq for defects per inspection
+                if (item.sum_sq_defect_counts != null) {
+                    existing.sum_sq_defect_counts = (existing.sum_sq_defect_counts || 0) + item.sum_sq_defect_counts;
+                }
+
+                // Std dev cannot be accurately recalculated when merging aggregated data unless we use the accumulated sums
+                // Set to null initially; will be recalculated in derived metrics if sums are available
+                existing.std_defects_per_inspection = null;
+                existing.std_defects_per_vehicle_year = null;
+
                 // Merge Per Year Stats
                 for (const [age, stats] of Object.entries(item.per_year_stats)) {
                     if (!existing.per_year_stats[age]) {
@@ -259,11 +279,55 @@ export default function StatisticsPage() {
         let results = Array.from(aggregatedMap.values());
 
         // 4. Calculate Derived Metrics (Pre-Defect Filter)
-        results = results.map(item => ({
-            ...item,
-            avg_defects_per_inspection: item.total_inspections > 0 ? item.total_defects / item.total_inspections : 0,
-            defects_per_vehicle_year: item.total_vehicle_years > 0 ? item.total_defects / item.total_vehicle_years : 0,
-        }));
+        // 4. Calculate Derived Metrics (Pre-Defect Filter)
+        results = results.map(item => {
+            // Calculate Std Dev for Defects per Vehicle Year (from rates)
+            let std_defects_per_vehicle_year = item.std_defects_per_vehicle_year;
+
+            // If we have accumulated sums (from aggregation), recalculate std dev
+            if (item.total_inspections > 1 && item.sum_defects_per_vehicle_year_rates != null && item.sum_sq_defects_per_vehicle_year_rates != null) {
+                const N = item.total_inspections;
+                const sumX = item.sum_defects_per_vehicle_year_rates;
+                const sumX2 = item.sum_sq_defects_per_vehicle_year_rates;
+
+                // Var = E[X^2] - (E[X])^2
+                // Var = (sumX2 / N) - (sumX / N)^2
+                const mean = sumX / N;
+                const variance = (sumX2 / N) - (mean * mean);
+
+                // Use max(0, variance) to handle floating point epsilon errors yielding negative zero
+                std_defects_per_vehicle_year = Math.sqrt(Math.max(0, variance));
+            }
+
+            // Calculate Std Dev for Defects per Inspection
+            let std_defects_per_inspection = item.std_defects_per_inspection;
+            if (item.total_inspections > 1 && item.sum_sq_defect_counts != null) {
+                const N = item.total_inspections;
+                const sumX = item.total_defects; // Sum of defects
+                const sumX2 = item.sum_sq_defect_counts;
+
+                // Var = (sumX2 - (sumX^2 / N)) / (N - 1) for sample variance? 
+                // Wait, Polars uses sample std dev by default (ddof=1).
+                // But the formula (sumX2/N) - (mean^2) is for Population variance (ddof=0).
+
+                // For consistence with Polars std():
+                // Polars default std() is sample standard deviation.
+                // Var = ( Sum(X^2) - (Sum(X)^2 / N) ) / (N-1)
+
+                const numerator = sumX2 - ((sumX * sumX) / N);
+                const variance = numerator / (N - 1);
+
+                std_defects_per_inspection = Math.sqrt(Math.max(0, variance));
+            }
+
+            return {
+                ...item,
+                avg_defects_per_inspection: item.total_inspections > 0 ? item.total_defects / item.total_inspections : 0,
+                defects_per_vehicle_year: item.total_vehicle_years > 0 ? item.total_defects / item.total_vehicle_years : 0,
+                std_defects_per_vehicle_year: std_defects_per_vehicle_year,
+                std_defects_per_inspection: std_defects_per_inspection,
+            };
+        });
 
         // 5. Apply Defect Filters (Ratio Approach) & Age Range
         results = results.map(item => {
@@ -351,11 +415,24 @@ export default function StatisticsPage() {
         const insertIndex = cols.findIndex(c => c.key === "avg_defects_per_inspection") + 1;
 
         if (insertIndex > 0) {
+            // Insert std dev for defects/inspection
             cols.splice(insertIndex, 0, {
                 key: "std_defects_per_inspection",
-                label: "Std. Dev.",
-                format: (v: unknown) => v ? Number(v).toFixed(4) : "-"
+                label: "Std. Dev. (Inspection)",
+                format: (v: unknown) => (typeof v === 'number') ? Number(v).toFixed(4) : "-"
             } as any);
+
+            // Insert std dev for defects/year - only in FULL mode (not when age filter is active)
+            if (!isAgeFilterActive) {
+                const yearColIndex = cols.findIndex(c => c.key === "filtered_defects_per_vehicle_year");
+                if (yearColIndex > 0) {
+                    cols.splice(yearColIndex + 1, 0, {
+                        key: "std_defects_per_vehicle_year",
+                        label: "Std. Dev. / Year",
+                        format: (v: unknown) => (typeof v === 'number') ? Number(v).toFixed(4) : "-"
+                    } as any);
+                }
+            }
         }
         return cols;
     }, [viewMode, isAgeFilterActive, showStdDev]);

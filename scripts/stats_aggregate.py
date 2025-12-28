@@ -114,9 +114,16 @@ def aggregate_brand_stats(
                 pl.col("kenteken").n_unique().alias("vehicle_count"),
                 pl.len().alias("total_inspections"),
                 pl.col("defect_count").sum().cast(pl.Float64).alias("total_defects"),
-                pl.col("defect_count").std().round(4).alias("std_defects_per_inspection"),
+                pl.col("defect_count").std().fill_nan(None).round(4).alias("std_defects_per_inspection"),
                 pl.col("age_at_inspection").mean().round(2).alias("avg_age_years"),
                 pl.col("age_at_inspection").sum().cast(pl.Float64).alias("total_vehicle_years"),
+                # Std dev of defects per vehicle year (defect_count / age)
+                (pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1)).std().fill_nan(None).round(4).alias("std_defects_per_vehicle_year"),
+                # Sum and SumSq for frontend aggregation
+                (pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1)).sum().cast(pl.Float64).alias("sum_defects_per_vehicle_year_rates"),
+                ((pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1)) ** 2).sum().cast(pl.Float64).alias("sum_sq_defects_per_vehicle_year_rates"),
+                # Sum Sq for defects per inspection (frontend aggregation)
+                pl.col("defect_count").pow(2).sum().cast(pl.Float64).alias("sum_sq_defect_counts"),
             ]
         )
         .filter(pl.col("vehicle_count") >= THRESHOLD_BRAND)
@@ -175,9 +182,16 @@ def aggregate_model_stats(
                 pl.col("kenteken").n_unique().alias("vehicle_count"),
                 pl.len().alias("total_inspections"),
                 pl.col("defect_count").sum().cast(pl.Float64).alias("total_defects"),
-                pl.col("defect_count").std().round(4).alias("std_defects_per_inspection"),
+                pl.col("defect_count").std().fill_nan(None).round(4).alias("std_defects_per_inspection"),
                 pl.col("age_at_inspection").mean().round(2).alias("avg_age_years"),
                 pl.col("age_at_inspection").sum().cast(pl.Float64).alias("total_vehicle_years"),
+                # Std dev of defects per vehicle year (defect_count / age)
+                (pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1)).std().fill_nan(None).round(4).alias("std_defects_per_vehicle_year"),
+                # Sum and SumSq for frontend aggregation
+                (pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1)).sum().cast(pl.Float64).alias("sum_defects_per_vehicle_year_rates"),
+                ((pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1)) ** 2).sum().cast(pl.Float64).alias("sum_sq_defects_per_vehicle_year_rates"),
+                # Sum Sq for defects per inspection (frontend aggregation)
+                pl.col("defect_count").pow(2).sum().cast(pl.Float64).alias("sum_sq_defect_counts"),
             ]
         )
         .filter(pl.col("vehicle_count") >= THRESHOLD_MODEL)
