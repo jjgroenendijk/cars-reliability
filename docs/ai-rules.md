@@ -91,21 +91,15 @@ Run these from indicated directory. All are safe to auto-run.
 
 Base URL: `https://opendata.rdw.nl/resource/{id}.json`
 
-| Dataset | ID | Incremental Date Field |
-|---------|----|-----------------------|
-| Gekentekende Voertuigen | `m9d7-ebf2` | `datum_tenaamstelling` |
-| Meldingen Keuringsinstantie | `sgfe-77wx` | `meld_datum_door_keuringsinstantie` |
-| Geconstateerde Gebreken | `a34c-vvps` | `meld_datum_door_keuringsinstantie` |
-| Gebreken | `hx2c-gt7k` | `ingangsdatum_gebrek` |
-| Brandstof | `8ys7-d773` | (none - full download + merge) |
+All datasets are downloaded in full weekly (Sunday midnight UTC).
 
-## Feature Flags
-
-GitHub repo variables (Settings > Secrets and variables > Actions > Variables):
-
-| Variable | Description |
-|----------|-------------|
-| `INSPECTION_DAYS_LIMIT` | When set (e.g., `365`), limits Stage 1 to past N days of inspections |
+| Dataset | ID |
+|---------|-----|
+| Gekentekende Voertuigen | `m9d7-ebf2` |
+| Meldingen Keuringsinstantie | `sgfe-77wx` |
+| Geconstateerde Gebreken | `a34c-vvps` |
+| Gebreken | `hx2c-gt7k` |
+| Brandstof | `8ys7-d773` |
 
 ## Documentation
 

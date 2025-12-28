@@ -12,9 +12,7 @@ All field names from RDW datasets are preserved as-is throughout the pipeline. W
 
 ## RDW Datasets
 
-Date filtering: when `INSPECTION_DAYS_LIMIT` is set, Stage 1 adds `meld_datum_door_keuringsinstantie >= <YYYYMMDD>` to both `sgfe-77wx` and `a34c-vvps` queries.
-
-Current raw snapshot: `data/raw/*` refreshed on 2025-12-10 with `INSPECTION_DAYS_LIMIT=30` (past 30 days). Includes 10,661,997 vehicles, 701,592 inspections, 716,015 defect rows, 1,005 defect reference rows, and 16,598,354 fuel rows. All columns listed below are present in the raw JSON. Full multi-year history is still not downloaded.
+Stage 1 downloads all available data from RDW weekly (Sunday midnight UTC). Datasets are cached and reused within the same week unless cache validation fails.
 
 ### Gekentekende Voertuigen (`m9d7-ebf2`)
 
