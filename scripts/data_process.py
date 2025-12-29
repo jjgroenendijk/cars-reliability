@@ -64,11 +64,11 @@ def _determine_primary_fuel(brandstof_lf: pl.LazyFrame) -> pl.LazyFrame:
             .when(pl.col("has_electric") & (pl.col("has_benzine") | pl.col("has_diesel")))
             .then(pl.lit("Hybrid"))
             .when(pl.col("has_electric"))
-            .then(pl.lit("EV"))
+            .then(pl.lit("Elektriciteit"))
             .when(pl.col("has_diesel"))
             .then(pl.lit("Diesel"))
             .when(pl.col("has_benzine"))
-            .then(pl.lit("Petrol"))
+            .then(pl.lit("Benzine"))
             .otherwise(pl.lit("Other"))
             .alias("primary_fuel"),
         ]
@@ -253,6 +253,14 @@ def main() -> None:
     max_fleet_size_model = max(m["vehicle_count"] for m in model_stats) if model_stats else 0
     max_fleet_size = max(max_fleet_size_brand, max_fleet_size_model)
 
+    # Calculate inspections range from stats
+    min_inspections_brand = min(b["total_inspections"] for b in brand_stats) if brand_stats else 0
+    max_inspections_brand = max(b["total_inspections"] for b in brand_stats) if brand_stats else 0
+    min_inspections_model = min(m["total_inspections"] for m in model_stats) if model_stats else 0
+    max_inspections_model = max(m["total_inspections"] for m in model_stats) if model_stats else 0
+    min_inspections = min(min_inspections_brand, min_inspections_model)
+    max_inspections = max(max_inspections_brand, max_inspections_model)
+
     # Extract unique fuel types from data
     fuel_types = sorted(inspections_df["primary_fuel"].unique().to_list())
 
@@ -268,6 +276,7 @@ def main() -> None:
             "price": {"min": 0, "max": max_price},
             "fleet": {"min": 0, "max": max_fleet_size},
             "age": {"min": min_age, "max": max_age},
+            "inspections": {"min": min_inspections, "max": max_inspections},
         },
         "fuel_types": fuel_types,
         "counts": {

@@ -33,6 +33,12 @@ flowchart LR
 
 **Pipeline discipline**: Stages run sequentially. Stage N must succeed before Stage N+1 runs.
 
+**Re-run requirement**: After modifying `data_process.py` or any script that changes JSON output, always re-run the pipeline:
+```bash
+cd scripts && uv run data_process.py
+cp ../data/processed/*.json ../web/public/data/
+```
+
 ## Project Structure
 
 - `scripts/` — Stage 1-2: Python data pipeline
