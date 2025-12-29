@@ -7,7 +7,7 @@ export const DEFAULTS = {
     /** Age filter defaults (years since first registration) */
     age: {
         min: 4,
-        max: 20,
+        max: 30,
     },
     /** Fleet size filter defaults */
     fleet: {

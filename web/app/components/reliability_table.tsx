@@ -11,6 +11,8 @@ export interface Column<T> {
   sortable?: boolean;
   format?: (value: unknown, row: T) => string;
   className?: string;
+  headerClassName?: string;
+  cellClassName?: string;
 }
 
 interface ReliabilityTableProps<T extends object> {
@@ -182,6 +184,7 @@ export function ReliabilityTable<T extends object>({
                     px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap
                     ${column.sortable !== false ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 select-none transition-colors" : ""}
                     ${column.className ?? ""}
+                    ${column.headerClassName ?? ""}
                   `}
                   onClick={() =>
                     column.sortable !== false && sort_toggle(String(column.key))
@@ -215,7 +218,7 @@ export function ReliabilityTable<T extends object>({
                   {columns.map((column) => (
                     <td
                       key={String(column.key)}
-                      className={`px-3 py-2 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap ${column.className ?? ""}`}
+                      className={`px-3 py-2 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap ${column.className ?? ""} ${column.cellClassName ?? ""}`}
                     >
                       {cell_value_format(column, row[column.key], row)}
                     </td>

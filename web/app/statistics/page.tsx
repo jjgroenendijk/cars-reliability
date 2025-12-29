@@ -74,7 +74,6 @@ function StatisticsContent() {
     // 3. Process Data (Depends on Data + State)
     const {
         processed_data: finalData,
-        isAgeFilterActive
     } = useStatisticsProcessing({
         brand_stats: fetchedBrands,
         model_stats: fetchedModels,
@@ -92,7 +91,9 @@ function StatisticsContent() {
         if (metadata?.ranges) {
             state.setMaxPrice(metadata.ranges.price.max);
             state.setMaxFleetSize(metadata.ranges.fleet.max);
-            state.setAgeRange([metadata.ranges.age.min, metadata.ranges.age.max]);
+            const min_age = Math.max(DEFAULTS.age.min, metadata.ranges.age.min);
+            const max_age = Math.min(DEFAULTS.age.max, metadata.ranges.age.max);
+            state.setAgeRange([min_age, max_age]);
         } else if (metadata?.age_range) {
             state.setAgeRange([metadata.age_range.min, metadata.age_range.max]);
         }
@@ -101,9 +102,9 @@ function StatisticsContent() {
 
     // Memoize columns
     const tableColumns = useMemo(() => {
+        const numeric_cell_class = "font-mono tabular-nums";
         const baseCols = columns_build(state.viewMode, {
-            showStdDev: state.showStdDev,
-            isAgeFilterActive
+            showStdDev: state.showStdDev
         });
 
         const cols = [...baseCols];
@@ -112,12 +113,13 @@ function StatisticsContent() {
             cols.splice(2, 0, {
                 key: "avg_catalog_price",
                 label: "Avg. Price",
-                format: (v: unknown) => (typeof v === 'number') ? `€ ${Number(v).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")}` : "-"
+                format: (v: unknown) => (typeof v === 'number') ? `€ ${Number(v).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")}` : "-",
+                cellClassName: numeric_cell_class
             });
         }
 
         return cols;
-    }, [state.viewMode, isAgeFilterActive, state.showStdDev, state.showCatalogPrice]);
+    }, [state.viewMode, state.showStdDev, state.showCatalogPrice]);
 
     if (isError) {
         return (
@@ -227,7 +229,8 @@ function StatisticsContent() {
                                     Rankings
                                 </h2>
                                 <span className="text-sm text-zinc-500">
-                                    Found {finalData.length} {state.viewMode}
+                                    Found <span className="font-mono tabular-nums">{finalData.length}</span>{" "}
+                                    {state.viewMode}
                                 </span>
                             </div>
                             <ReliabilityTable
@@ -278,7 +281,15 @@ function StatisticsContent() {
             }
 
             <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                <p>Data: RDW Open Data {generated_at && `| Updated: ${timestamp_format(generated_at)}`}</p>
+                <p>
+                    Data: RDW Open Data
+                    {generated_at && (
+                        <>
+                            {" | Updated: "}
+                            <span className="font-mono tabular-nums">{timestamp_format(generated_at)}</span>
+                        </>
+                    )}
+                </p>
             </div>
         </div >
     );

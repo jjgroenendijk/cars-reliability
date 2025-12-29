@@ -25,7 +25,9 @@ export function TablePagination({
     return (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400">
             <div>
-                Showing {startItem} to {endItem} of {totalItems} results
+                Showing <span className="font-mono tabular-nums">{startItem}</span> to{" "}
+                <span className="font-mono tabular-nums">{endItem}</span> of{" "}
+                <span className="font-mono tabular-nums">{totalItems}</span> results
             </div>
 
             <div className="flex items-center gap-1">
@@ -45,7 +47,10 @@ export function TablePagination({
                 >
                     <ChevronLeft className="w-4 h-4" />
                 </button>
-                <span className="px-3 py-1">Page {currentPage} of {totalPages}</span>
+                <span className="px-3 py-1">
+                    Page <span className="font-mono tabular-nums">{currentPage}</span> of{" "}
+                    <span className="font-mono tabular-nums">{totalPages}</span>
+                </span>
                 <button
                     onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
