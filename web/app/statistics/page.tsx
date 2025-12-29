@@ -11,11 +11,10 @@ import { columns_build } from "@/app/lib/statistics_config";
 import { useStatisticsData } from "@/app/hooks/useStatisticsData";
 import { useStatisticsProcessing } from "@/app/hooks/useStatisticsProcessing";
 import { useUrlSync } from "@/app/hooks/useUrlSync";
+import { TablePagination } from "@/app/components/table_pagination";
+import { DEFAULTS } from "@/app/lib/defaults";
 
 export default function StatisticsPage() {
-    const defaultMin = 4;
-    const defaultMax = 20;
-
     // Defect Context
     const { brand_breakdowns, model_breakdowns, calculate_filtered_defects, mode } = useDefectFilter();
 
@@ -31,9 +30,7 @@ export default function StatisticsPage() {
 
     // 2. Init State & URL Sync (Depends on metadata for defaults)
     const state = useUrlSync({
-        metadata: metadata || {},
-        defaultMin,
-        defaultMax
+        metadata: metadata || {}
     });
 
     // 3. Process Data (Depends on Data + State)
@@ -46,7 +43,8 @@ export default function StatisticsPage() {
         metadata: metadata || {},
         filterState: {
             ...state,
-            maxPriceAvailable: state.maxPriceAvailable
+            maxPriceAvailable: state.maxPriceAvailable,
+            maxInspectionsAvailable: state.maxInspectionsAvailable
         },
         defectFilter: { brand_breakdowns, model_breakdowns, calculate_filtered_defects, mode }
     });
@@ -160,6 +158,12 @@ export default function StatisticsPage() {
                     setMaxFleetSize={state.setMaxFleetSize}
                     maxFleetSizeAvailable={state.maxFleetSizeAvailable}
                     minFleetSizeAvailable={metadata.ranges?.fleet.min ?? 0}
+                    minInspections={state.minInspections}
+                    maxInspections={state.maxInspections}
+                    setMinInspections={state.setMinInspections}
+                    setMaxInspections={state.setMaxInspections}
+                    minInspectionsAvailable={metadata.ranges?.inspections?.min ?? 0}
+                    maxInspectionsAvailable={state.maxInspectionsAvailable}
                     defectFilterComponent={<DefectFilterPanel />}
                     showStdDev={state.showStdDev}
                     setShowStdDev={state.setShowStdDev}
@@ -171,6 +175,7 @@ export default function StatisticsPage() {
                     setShowCatalogPrice={state.setShowCatalogPrice}
                     pageSize={state.pageSize}
                     setPageSize={state.setPageSize}
+                    availableFuelTypes={metadata.fuel_types ?? []}
                 />
             </div>
 
@@ -184,6 +189,17 @@ export default function StatisticsPage() {
                     </div>
                 ) : finalData.length > 0 ? (
                     <>
+                        {/* Pagination above table */}
+                        {state.pageSize && (
+                            <TablePagination
+                                currentPage={state.currentPage}
+                                totalPages={Math.ceil(finalData.length / state.pageSize)}
+                                totalItems={finalData.length}
+                                pageSize={state.pageSize}
+                                onPageChange={state.setCurrentPage}
+                            />
+                        )}
+
                         {/* Table */}
                         <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
                             <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
@@ -207,6 +223,17 @@ export default function StatisticsPage() {
                                 onPageChange={state.setCurrentPage}
                             />
                         </div>
+
+                        {/* Pagination below table */}
+                        {state.pageSize && (
+                            <TablePagination
+                                currentPage={state.currentPage}
+                                totalPages={Math.ceil(finalData.length / state.pageSize)}
+                                totalItems={finalData.length}
+                                pageSize={state.pageSize}
+                                onPageChange={state.setCurrentPage}
+                            />
+                        )}
                     </>
                 ) : (
                     <div className="text-center py-24 bg-zinc-50 dark:bg-zinc-800/50 rounded-3xl border border-dashed border-zinc-300 dark:border-zinc-700">
@@ -218,9 +245,9 @@ export default function StatisticsPage() {
                         <button
                             onClick={() => {
                                 state.setSelectedFuels([]);
-                                state.setMinPrice(0);
-                                state.setMaxPrice(100000);
-                                state.setAgeRange([defaultMin, defaultMax]);
+                                state.setMinPrice(DEFAULTS.price.min);
+                                state.setMaxPrice(DEFAULTS.price.max);
+                                state.setAgeRange([DEFAULTS.age.min, DEFAULTS.age.max]);
                                 state.setSearchQuery("");
                             }}
                             className="mt-6 text-blue-600 dark:text-blue-400 font-medium hover:underline"
