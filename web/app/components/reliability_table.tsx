@@ -25,6 +25,10 @@ interface ReliabilityTableProps<T extends object> {
   externalSearchValue?: string;
   /** If true, the internal search input is hidden */
   hideSearchInput?: boolean;
+  // Pagination
+  pageSize?: number;
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
 }
 
 export function ReliabilityTable<T extends object>({
@@ -37,6 +41,9 @@ export function ReliabilityTable<T extends object>({
   emptyMessage = "Geen gegevens beschikbaar",
   externalSearchValue,
   hideSearchInput = false,
+  pageSize,
+  currentPage = 1,
+  onPageChange,
 }: ReliabilityTableProps<T>) {
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: defaultSortKey ? String(defaultSortKey) : "",
@@ -83,6 +90,12 @@ export function ReliabilityTable<T extends object>({
 
     return result;
   }, [data, sortConfig, filterKey, filterValue]);
+
+  // Pagination logic
+  const totalPages = pageSize ? Math.ceil(sortedAndFilteredData.length / pageSize) : 1;
+  const paginatedData = pageSize
+    ? sortedAndFilteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+    : sortedAndFilteredData;
 
   function sort_toggle(key: string) {
     setSortConfig((current) => ({
@@ -154,7 +167,7 @@ export function ReliabilityTable<T extends object>({
       )}
 
       <div className="overflow-x-auto rounded-lg">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 table-auto w-full">
           <thead className="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
             <tr>
               {columns.map((column) => (
@@ -162,7 +175,7 @@ export function ReliabilityTable<T extends object>({
                   key={String(column.key)}
                   scope="col"
                   className={`
-                    px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400 tracking-wider
+                    px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap
                     ${column.sortable !== false ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 select-none transition-colors" : ""}
                     ${column.className ?? ""}
                   `}
@@ -170,7 +183,7 @@ export function ReliabilityTable<T extends object>({
                     column.sortable !== false && sort_toggle(String(column.key))
                   }
                 >
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-1">
                     {column.label}
                     {column.sortable !== false &&
                       sort_indicator_render(String(column.key))}
@@ -180,7 +193,7 @@ export function ReliabilityTable<T extends object>({
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-            {sortedAndFilteredData.length === 0 ? (
+            {paginatedData.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length}
@@ -190,7 +203,7 @@ export function ReliabilityTable<T extends object>({
                 </td>
               </tr>
             ) : (
-              sortedAndFilteredData.map((row, rowIndex) => (
+              paginatedData.map((row, rowIndex) => (
                 <tr
                   key={rowIndex}
                   className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -198,7 +211,7 @@ export function ReliabilityTable<T extends object>({
                   {columns.map((column) => (
                     <td
                       key={String(column.key)}
-                      className={`px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap ${column.className ?? ""}`}
+                      className={`px-3 py-2 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap ${column.className ?? ""}`}
                     >
                       {cell_value_format(column, row[column.key], row)}
                     </td>
@@ -210,8 +223,35 @@ export function ReliabilityTable<T extends object>({
         </table>
       </div>
 
-      <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-        {sortedAndFilteredData.length} of {data.length} results
+      <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400">
+        <div>
+          Showing {pageSize ? Math.min((currentPage - 1) * pageSize + 1, sortedAndFilteredData.length) : 1} to{" "}
+          {pageSize ? Math.min(currentPage * pageSize, sortedAndFilteredData.length) : sortedAndFilteredData.length} of{" "}
+          {sortedAndFilteredData.length} results
+        </div>
+
+        {pageSize && totalPages > 1 && onPageChange && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-1">
+              {/* Quick page jumper logic can be added here, for now simple counter */}
+              <span className="px-2">Page {currentPage} of {totalPages}</span>
+            </div>
+            <button
+              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
