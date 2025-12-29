@@ -1,28 +1,30 @@
 "use client";
 
-interface AgeRangeSliderProps {
-    minAge: number;
-    maxAge: number;
+interface PriceRangeSliderProps {
+    minPrice: number;
+    maxPrice: number;
+    step?: number;
     value: [number, number];
     onChange: (value: [number, number]) => void;
 }
 
 /**
- * Dual-handle range slider for vehicle age selection.
+ * Dual-handle range slider for price selection.
  * Uses native HTML inputs styled with CSS.
  */
-export function AgeRangeSlider({
-    minAge,
-    maxAge,
+export function PriceRangeSlider({
+    minPrice,
+    maxPrice,
+    step = 5000,
     value,
     onChange,
-}: AgeRangeSliderProps) {
+}: PriceRangeSliderProps) {
     const [minValue, maxValue] = value;
 
     const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let newMin = parseInt(e.target.value, 10);
         if (!isNaN(newMin)) {
-            newMin = Math.max(minAge, Math.min(newMin, maxValue));
+            newMin = Math.max(minPrice, Math.min(newMin, maxValue));
             onChange([newMin, maxValue]);
         }
     };
@@ -30,38 +32,46 @@ export function AgeRangeSlider({
     const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let newMax = parseInt(e.target.value, 10);
         if (!isNaN(newMax)) {
-            newMax = Math.max(minValue, Math.min(newMax, maxAge));
+            newMax = Math.max(minValue, Math.min(newMax, maxPrice));
             onChange([minValue, newMax]);
         }
     };
 
     // Calculate percentage for track fill
-    const minPercent = Math.max(0, Math.min(100, ((minValue - minAge) / (maxAge - minAge)) * 100));
-    const maxPercent = Math.max(0, Math.min(100, ((maxValue - minAge) / (maxAge - minAge)) * 100));
+    const minPercent = Math.max(0, Math.min(100, ((minValue - minPrice) / (maxPrice - minPrice)) * 100));
+    const maxPercent = Math.max(0, Math.min(100, ((maxValue - minPrice) / (maxPrice - minPrice)) * 100));
+
+    // Format helper
+    const formatPrice = (p: number) => {
+        if (p >= 1000) return `€${(p / 1000).toFixed(0)}k`;
+        return `€${p}`;
+    };
 
     return (
         <div>
             <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Vehicle Age</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Price Range</label>
                 <div className="flex items-center gap-2">
+                    <span className="text-zinc-400 text-xs">€</span>
                     <input
                         type="number"
-                        min={minAge}
+                        min={minPrice}
                         max={maxValue}
+                        step={step}
                         value={minValue}
                         onChange={handleMinChange}
-                        className="w-12 px-1 py-0.5 text-xs text-center bg-zinc-100 dark:bg-zinc-800 border-none rounded focus:ring-1 focus:ring-blue-500"
+                        className="w-16 px-1 py-0.5 text-xs text-center bg-zinc-100 dark:bg-zinc-800 border-none rounded focus:ring-1 focus:ring-blue-500"
                     />
                     <span className="text-zinc-400 text-xs">-</span>
                     <input
                         type="number"
                         min={minValue}
-                        max={maxAge}
+                        max={maxPrice}
+                        step={step}
                         value={maxValue}
                         onChange={handleMaxChange}
-                        className="w-12 px-1 py-0.5 text-xs text-center bg-zinc-100 dark:bg-zinc-800 border-none rounded focus:ring-1 focus:ring-blue-500"
+                        className="w-16 px-1 py-0.5 text-xs text-center bg-zinc-100 dark:bg-zinc-800 border-none rounded focus:ring-1 focus:ring-blue-500"
                     />
-                    <span className="text-xs text-zinc-500">years</span>
                 </div>
             </div>
 
@@ -79,8 +89,9 @@ export function AgeRangeSlider({
                 {/* Min slider */}
                 <input
                     type="range"
-                    min={minAge}
-                    max={maxAge}
+                    min={minPrice}
+                    max={maxPrice}
+                    step={step}
                     value={minValue}
                     onChange={handleMinChange}
                     className="absolute w-full h-1.5 top-1/2 -translate-y-1/2 appearance-none bg-transparent pointer-events-none
@@ -92,8 +103,9 @@ export function AgeRangeSlider({
                 {/* Max slider */}
                 <input
                     type="range"
-                    min={minAge}
-                    max={maxAge}
+                    min={minPrice}
+                    max={maxPrice}
+                    step={step}
                     value={maxValue}
                     onChange={handleMaxChange}
                     className="absolute w-full h-1.5 top-1/2 -translate-y-1/2 appearance-none bg-transparent pointer-events-none
@@ -105,8 +117,8 @@ export function AgeRangeSlider({
             </div>
             {/* Labels */}
             <div className="flex justify-between text-[10px] text-zinc-400 px-0.5">
-                <span>{minAge} yr</span>
-                <span>{maxAge} yr</span>
+                <span>{formatPrice(minPrice)}</span>
+                <span>{formatPrice(maxPrice)}</span>
             </div>
         </div>
     );

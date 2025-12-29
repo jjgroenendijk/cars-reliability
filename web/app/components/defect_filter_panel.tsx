@@ -62,8 +62,8 @@ export function DefectFilterPanel() {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${isOpen || mode !== "all"
-                        ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300"
-                        : "bg-zinc-100 border-transparent text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300"
+                    : "bg-zinc-100 border-transparent text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
                     }`}
             >
                 <span>Defects</span>
@@ -73,7 +73,7 @@ export function DefectFilterPanel() {
                     </span>
                 )}
                 {mode === "reliability" && (
-                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 rounded">Rel</span>
+                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 rounded">Reliability</span>
                 )}
                 <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
             </button>
@@ -86,8 +86,8 @@ export function DefectFilterPanel() {
                         <button
                             onClick={() => mode_set("all")}
                             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors border ${mode === "all"
-                                    ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/40 dark:border-blue-800 dark:text-blue-300"
-                                    : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400"
+                                ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/40 dark:border-blue-800 dark:text-blue-300"
+                                : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400"
                                 }`}
                         >
                             All Defects
@@ -95,8 +95,8 @@ export function DefectFilterPanel() {
                         <button
                             onClick={() => mode_set("reliability")}
                             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors border ${mode === "reliability"
-                                    ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/40 dark:border-blue-800 dark:text-blue-300"
-                                    : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400"
+                                ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/40 dark:border-blue-800 dark:text-blue-300"
+                                : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400"
                                 }`}
                         >
                             Reliability Only
@@ -148,8 +148,8 @@ export function DefectFilterPanel() {
                                     >
                                         <div
                                             className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${included
-                                                    ? "bg-blue-600 border-blue-600 text-white"
-                                                    : "bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600"
+                                                ? "bg-blue-600 border-blue-600 text-white"
+                                                : "bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600"
                                                 }`}
                                         >
                                             {included && <Check className="h-3 w-3" />}
