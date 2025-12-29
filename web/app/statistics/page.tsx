@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import type { BrandStats, ModelStats, Rankings, PerYearStats } from "@/app/lib/types";
+import type { BrandStats, ModelStats, Rankings, PerYearStats, Metadata } from "@/app/lib/types";
 import { ReliabilityTable, type Column } from "@/app/components/reliability_table";
 import { DefectFilterPanel } from "@/app/components/defect_filter_panel";
 import FilterBar from "@/app/components/filter_bar";
@@ -9,13 +9,7 @@ import { useDefectFilter } from "@/app/lib/defect_filter_context";
 import { timestamp_format, pascal_case_format } from "@/app/lib/data_load";
 import { RefreshCw, AlertTriangle, Info, Trophy } from "lucide-react";
 
-interface Metadata {
-    age_range?: { min: number; max: number };
-    counts?: {
-        consumer_vehicles: number;
-        commercial_vehicles: number;
-    };
-}
+
 
 // -- Brand Types --
 interface BrandStatsFiltered extends BrandStats {
@@ -107,7 +101,7 @@ export default function StatisticsPage() {
     const [brand_stats, setBrandStats] = useState<BrandStats[]>([]);
     const [model_stats, setModelStats] = useState<ModelStats[]>([]);
 
-    const [metadata, setMetadata] = useState<Metadata>({});
+    const [metadata, setMetadata] = useState<Partial<Metadata>>({});
     const [generated_at, setGeneratedAt] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -159,15 +153,7 @@ export default function StatisticsPage() {
                 setBrandStats(brands);
                 setModelStats(models);
 
-                // Initialize max price from models
-                let maxP = 0;
-                for (const m of models) {
-                    if (m.price_segment > maxP) maxP = m.price_segment;
-                }
-                if (maxP > 0) {
-                    const roundedMax = Math.ceil(maxP / 5000) * 5000;
-                    setMaxPrice(roundedMax);
-                }
+
 
                 if (rankings_response.ok) {
                     const rankings: Rankings = await rankings_response.json();
@@ -177,8 +163,17 @@ export default function StatisticsPage() {
                 if (metadata_response.ok) {
                     const meta: Metadata = await metadata_response.json();
                     setMetadata(meta);
-                    if (meta.age_range) {
-                        // Initialize age range to full data range so filtered view is not active by default
+
+                    if (meta.ranges) {
+                        // Set dynamic max values from metadata
+                        setMaxPrice(meta.ranges.price.max);
+                        // Fleet size max is usually very large, we can default to it or a slightly lower usable cap if UI demands
+                        // But user requested dynamic max, so let's use it.
+                        setMaxFleetSize(meta.ranges.fleet.max);
+
+                        setAgeRange([meta.ranges.age.min, meta.ranges.age.max]);
+                    } else if (meta.age_range) {
+                        // Fallback for old metadata format
                         setAgeRange([meta.age_range.min, meta.age_range.max]);
                     }
                 }
@@ -193,34 +188,14 @@ export default function StatisticsPage() {
 
     // Calculate max fleet size based on current view/usage (ignoring price/fuel for stability)
     const maxFleetSizeAvailable = useMemo(() => {
-        const data = viewMode === "brands" ? brand_stats : model_stats;
-        const relevantData = data.filter((item) => {
-            if (showConsumer && item.vehicle_type_group === "consumer") return true;
-            if (showCommercial && item.vehicle_type_group === "commercial") return true;
-            return false;
-        });
-        if (relevantData.length === 0) return 1000;
-        // Since meaningful aggregation is needed to get REAL fleet size per brand,
-        // using the max of fragmented rows might underreport. 
-        // We really should aggregate first.
-        const counts = new Map<string, number>();
-        for (const item of relevantData) {
-            const key = viewMode === "brands" ? item.merk : `${item.merk} ${(item as ModelStats).handelsbenaming}`;
-            counts.set(key, (counts.get(key) || 0) + item.vehicle_count);
-        }
-        if (counts.size === 0) return 1000;
-        return Math.max(...Array.from(counts.values()));
-    }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial]);
+        if (metadata.ranges?.fleet) return metadata.ranges.fleet.max;
+        return 500000; // Fallback
+    }, [metadata]);
 
     const maxPriceAvailable = useMemo(() => {
-        if (model_stats.length === 0) return 100000;
-        let max = 0;
-        for (const m of model_stats) {
-            if (m.price_segment > max) max = m.price_segment;
-        }
-        // Round up to nearest 5k
-        return Math.ceil(max / 5000) * 5000;
-    }, [model_stats]);
+        if (metadata.ranges?.price) return metadata.ranges.price.max;
+        return 100000; // Fallback
+    }, [metadata]);
 
 
     // -- Main Aggegration & Filtering Pipeline --
@@ -240,7 +215,10 @@ export default function StatisticsPage() {
         }
 
         filtered = filtered.filter((item) => {
-            const p = item.price_segment;
+            let p = 0;
+            if (item.sum_catalog_price && item.count_with_price && item.count_with_price > 0) {
+                p = item.sum_catalog_price / item.count_with_price;
+            }
             // Treat max value as infinity
             if (maxPrice >= maxPriceAvailable) return p >= minPrice;
             return p >= minPrice && p <= maxPrice;
@@ -552,10 +530,13 @@ export default function StatisticsPage() {
                     maxFleetSize={maxFleetSize}
                     setMaxFleetSize={setMaxFleetSize}
                     maxFleetSizeAvailable={maxFleetSizeAvailable}
+                    minFleetSizeAvailable={metadata.ranges?.fleet.min ?? 0}
                     defectFilterComponent={<DefectFilterPanel />}
                     showStdDev={showStdDev}
                     setShowStdDev={setShowStdDev}
-                    maxAgeAvailable={maxAge}
+                    minAgeAvailable={metadata.ranges?.age.min ?? 0}
+                    maxAgeAvailable={metadata.ranges?.age.max ?? 30}
+                    minPriceAvailable={metadata.ranges?.price.min ?? 0}
                     maxPriceAvailable={maxPriceAvailable}
                     showCatalogPrice={showCatalogPrice}
                     setShowCatalogPrice={setShowCatalogPrice}

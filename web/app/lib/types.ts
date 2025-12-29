@@ -32,7 +32,7 @@ export interface BrandStats {
   merk: string;
   vehicle_type_group: string;
   primary_fuel: string;
-  price_segment: number;
+  avg_catalog_price?: number | null;
   vehicle_count: number;
   total_inspections: number;
   total_defects: number;
@@ -66,7 +66,7 @@ export interface ModelStats {
   handelsbenaming: string;
   vehicle_type_group: string;
   primary_fuel: string;
-  price_segment: number;
+  avg_catalog_price?: number | null;
   vehicle_count: number;
   total_inspections: number;
   total_defects: number;
@@ -220,3 +220,27 @@ export interface VehicleLookupResult {
   defect_descriptions: Map<string, string>;
   error?: string;
 }
+
+export interface Range {
+  min: number;
+  max: number;
+}
+
+export interface Metadata {
+  generated_at: string;
+  ranges?: {
+    price: Range;
+    fleet: Range;
+    age: Range;
+  };
+  // Deprecated age_range for backward compat if needed during transition
+  age_range?: {
+    min: number;
+    max: number;
+  };
+  counts?: {
+    consumer_vehicles: number;
+    commercial_vehicles: number;
+  };
+}
+

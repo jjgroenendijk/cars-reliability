@@ -43,9 +43,14 @@ interface FilterBarProps {
     showStdDev: boolean;
     setShowStdDev: (show: boolean) => void;
     // Dynamic Age Max
+    // Dynamic Age
+    minAgeAvailable: number;
     maxAgeAvailable: number;
-    // Dynamic Price Max
+    // Dynamic Price
+    minPriceAvailable: number;
     maxPriceAvailable: number;
+    // Dynamic Fleet
+    minFleetSizeAvailable: number;
     // Catalog Price Toggle
     showCatalogPrice: boolean;
     setShowCatalogPrice: (show: boolean) => void;
@@ -90,8 +95,11 @@ export default function FilterBar({
     defectFilterComponent,
     showStdDev,
     setShowStdDev,
+    minAgeAvailable,
     maxAgeAvailable,
+    minPriceAvailable,
     maxPriceAvailable,
+    minFleetSizeAvailable,
     showCatalogPrice,
     setShowCatalogPrice,
 }: FilterBarProps) {
@@ -288,6 +296,7 @@ export default function FilterBar({
                                     maxFleetSize={maxFleetSize}
                                     setMaxFleetSize={setMaxFleetSize}
                                     maxAvailable={maxFleetSizeAvailable}
+                                    minAvailable={minFleetSizeAvailable}
                                 />
                             </div>
                         </div>

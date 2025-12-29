@@ -8,6 +8,7 @@ interface FleetSizeSliderProps {
     maxFleetSize: number;
     setMaxFleetSize: (size: number) => void;
     maxAvailable: number;
+    minAvailable?: number;
 }
 
 
@@ -21,12 +22,13 @@ export function FleetSizeSlider({
     setMinFleetSize,
     maxFleetSize,
     setMaxFleetSize,
-    maxAvailable
+    maxAvailable,
+    minAvailable = 0,
 }: FleetSizeSliderProps) {
     // Generate dynamic steps: 0, 10, 50, 100, 500, 1000...
     const steps = useMemo(() => {
-        const s = [0];
-        let current = 10;
+        const s = [minAvailable];
+        let current = Math.max(10, minAvailable + 10);
         let multiplier = 5;
 
         // Determine effective max to generating steps up to.
@@ -118,7 +120,7 @@ export function FleetSizeSlider({
                 <div className="flex items-center gap-2">
                     <input
                         type="number"
-                        min="0"
+                        min={minAvailable}
                         max={maxFleetSize}
                         value={minFleetSize}
                         onChange={handleMinInputChange}
