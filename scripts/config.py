@@ -57,7 +57,7 @@ PRIMARY_FUEL_TYPES = {
 # Minimum file sizes in bytes for cache validation
 MIN_CACHE_SIZES = {
     "voertuigen": 500_000_000,  # ~500 MB
-    "meldingen": 500_000_000,  # ~500 MB
+    "meldingen": 300_000_000,  # ~300 MB
     "geconstateerde_gebreken": 100_000_000,  # ~100 MB
     "gebreken": 10_000,  # ~10 KB (small reference table)
     "brandstof": 50_000_000,  # ~50 MB
