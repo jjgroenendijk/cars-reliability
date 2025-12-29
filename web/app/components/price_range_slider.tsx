@@ -21,6 +21,21 @@ export function PriceRangeSlider({
 }: PriceRangeSliderProps) {
     const [minValue, maxValue] = value;
 
+    // Logarithmic scale helpers
+    const minLog = Math.log(Math.max(1, minPrice));
+    const maxLog = Math.log(Math.max(1, maxPrice));
+    const scale = (maxLog - minLog) / 100;
+
+    const toLog = (val: number) => {
+        if (val <= 0) return 0;
+        return (Math.log(val) - minLog) / scale;
+    };
+
+    const fromLog = (percent: number) => {
+        if (percent <= 0) return minPrice;
+        return Math.round(Math.exp(minLog + (percent * scale)));
+    };
+
     const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let newMin = parseInt(e.target.value, 10);
         if (!isNaN(newMin)) {
@@ -37,12 +52,27 @@ export function PriceRangeSlider({
         }
     };
 
-    // Calculate percentage for track fill
-    const minPercent = Math.max(0, Math.min(100, ((minValue - minPrice) / (maxPrice - minPrice)) * 100));
-    const maxPercent = Math.max(0, Math.min(100, ((maxValue - minPrice) / (maxPrice - minPrice)) * 100));
+    const handleRangeMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const percent = parseFloat(e.target.value);
+        const val = fromLog(percent);
+        const newMin = Math.max(minPrice, Math.min(val, maxValue));
+        onChange([newMin, maxValue]);
+    };
+
+    const handleRangeMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const percent = parseFloat(e.target.value);
+        const val = fromLog(percent);
+        const newMax = Math.max(minValue, Math.min(val, maxPrice));
+        onChange([minValue, newMax]);
+    };
+
+    // Calculate percentages for sliders
+    const minSliderVal = toLog(minValue);
+    const maxSliderVal = toLog(maxValue);
 
     // Format helper
     const formatPrice = (p: number) => {
+        if (p >= 1000000) return `€${(p / 1000000).toFixed(1)}M`;
         if (p >= 1000) return `€${(p / 1000).toFixed(0)}k`;
         return `€${p}`;
     };
@@ -60,7 +90,7 @@ export function PriceRangeSlider({
                         step={step}
                         value={minValue}
                         onChange={handleMinChange}
-                        className="w-16 px-1 py-0.5 text-xs text-center bg-zinc-100 dark:bg-zinc-800 border-none rounded focus:ring-1 focus:ring-blue-500"
+                        className="w-20 px-1 py-0.5 text-xs text-center bg-zinc-100 dark:bg-zinc-800 border-none rounded focus:ring-1 focus:ring-blue-500"
                     />
                     <span className="text-zinc-400 text-xs">-</span>
                     <input
@@ -70,7 +100,7 @@ export function PriceRangeSlider({
                         step={step}
                         value={maxValue}
                         onChange={handleMaxChange}
-                        className="w-16 px-1 py-0.5 text-xs text-center bg-zinc-100 dark:bg-zinc-800 border-none rounded focus:ring-1 focus:ring-blue-500"
+                        className="w-20 px-1 py-0.5 text-xs text-center bg-zinc-100 dark:bg-zinc-800 border-none rounded focus:ring-1 focus:ring-blue-500"
                     />
                 </div>
             </div>
@@ -82,18 +112,18 @@ export function PriceRangeSlider({
                 <div
                     className="absolute top-1/2 -translate-y-1/2 h-1.5 bg-blue-500 rounded-full"
                     style={{
-                        left: `${minPercent}%`,
-                        width: `${maxPercent - minPercent}%`,
+                        left: `${minSliderVal}%`,
+                        width: `${maxSliderVal - minSliderVal}%`,
                     }}
                 />
                 {/* Min slider */}
                 <input
                     type="range"
-                    min={minPrice}
-                    max={maxPrice}
-                    step={step}
-                    value={minValue}
-                    onChange={handleMinChange}
+                    min={0}
+                    max={100}
+                    step={0.1}
+                    value={minSliderVal}
+                    onChange={handleRangeMinChange}
                     className="absolute w-full h-1.5 top-1/2 -translate-y-1/2 appearance-none bg-transparent pointer-events-none
             [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none
             [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full
@@ -103,11 +133,11 @@ export function PriceRangeSlider({
                 {/* Max slider */}
                 <input
                     type="range"
-                    min={minPrice}
-                    max={maxPrice}
-                    step={step}
-                    value={maxValue}
-                    onChange={handleMaxChange}
+                    min={0}
+                    max={100}
+                    step={0.1}
+                    value={maxSliderVal}
+                    onChange={handleRangeMaxChange}
                     className="absolute w-full h-1.5 top-1/2 -translate-y-1/2 appearance-none bg-transparent pointer-events-none
             [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none
             [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full
