@@ -46,6 +46,8 @@ export interface BrandStats {
   sum_defects_per_vehicle_year_rates?: number | null;
   sum_sq_defects_per_vehicle_year_rates?: number | null;
   sum_sq_defect_counts?: number | null;
+  sum_catalog_price?: number | null;
+  count_with_price?: number;
   reliability_defects_per_vehicle_year: number | null;
   fuel_breakdown: FuelBreakdown;
   /** Per-year statistics keyed by age (e.g., "4", "5", "10") */
@@ -78,6 +80,8 @@ export interface ModelStats {
   sum_defects_per_vehicle_year_rates?: number | null;
   sum_sq_defects_per_vehicle_year_rates?: number | null;
   sum_sq_defect_counts?: number | null;
+  sum_catalog_price?: number | null;
+  count_with_price?: number;
   reliability_defects_per_vehicle_year: number | null;
   fuel_breakdown: FuelBreakdown;
   /** Per-year statistics keyed by age (e.g., "4", "5", "10") */

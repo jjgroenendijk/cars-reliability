@@ -124,6 +124,10 @@ def aggregate_brand_stats(
                 ((pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1)) ** 2).sum().cast(pl.Float64).alias("sum_sq_defects_per_vehicle_year_rates"),
                 # Sum Sq for defects per inspection (frontend aggregation)
                 pl.col("defect_count").pow(2).sum().cast(pl.Float64).alias("sum_sq_defect_counts"),
+                # Sum Catalog Price (frontend aggregation)
+                pl.col("catalogusprijs").sum().cast(pl.Float64).alias("sum_catalog_price"),
+                # Count records with price (frontend aggregation denominator)
+                pl.col("catalogusprijs").filter(pl.col("catalogusprijs") > 0).count().alias("count_with_price"),
             ]
         )
         .filter(pl.col("vehicle_count") >= THRESHOLD_BRAND)
@@ -133,6 +137,9 @@ def aggregate_brand_stats(
                 .round(4)
                 .alias("avg_defects_per_inspection"),
                 (pl.col("total_defects") / pl.col("total_vehicle_years"))
+                .fill_nan(0.0)
+                .fill_null(0.0)
+                .map_elements(lambda x: 0.0 if x == float("inf") else x, return_dtype=pl.Float64)
                 .round(6)
                 .alias("defects_per_vehicle_year"),
                 pl.col("total_vehicle_years").round(4),
@@ -192,15 +199,25 @@ def aggregate_model_stats(
                 ((pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1)) ** 2).sum().cast(pl.Float64).alias("sum_sq_defects_per_vehicle_year_rates"),
                 # Sum Sq for defects per inspection (frontend aggregation)
                 pl.col("defect_count").pow(2).sum().cast(pl.Float64).alias("sum_sq_defect_counts"),
+                # Sum Catalog Price (frontend aggregation)
+                pl.col("catalogusprijs").sum().cast(pl.Float64).alias("sum_catalog_price"),
+                # Count records with price (frontend aggregation denominator)
+                pl.col("catalogusprijs").filter(pl.col("catalogusprijs") > 0).count().alias("count_with_price"),
             ]
         )
-        .filter(pl.col("vehicle_count") >= THRESHOLD_MODEL)
+        .with_columns(
+            pl.col("vehicle_count").sum().over(["merk", "handelsbenaming"]).alias("total_model_count")
+        )
+        .filter(pl.col("total_model_count") >= THRESHOLD_MODEL)
         .with_columns(
             [
                 (pl.col("total_defects") / pl.col("total_inspections"))
                 .round(4)
                 .alias("avg_defects_per_inspection"),
                 (pl.col("total_defects") / pl.col("total_vehicle_years"))
+                .fill_nan(0.0)
+                .fill_null(0.0)
+                .map_elements(lambda x: 0.0 if x == float("inf") else x, return_dtype=pl.Float64)
                 .round(6)
                 .alias("defects_per_vehicle_year"),
                 pl.col("total_vehicle_years").round(4),

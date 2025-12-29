@@ -103,7 +103,7 @@ def compute_inspection_stats(
                     .str.strip_chars()
                     .alias("handelsbenaming"),
                     "datum_eerste_toelating",
-                    "catalogusprijs",
+                    pl.col("catalogusprijs").cast(pl.Float64).fill_null(0).alias("catalogusprijs"),
                     # Map vehicle type to user-facing groups
                     pl.when(pl.col("voertuigsoort") == "Personenauto")
                     .then(pl.lit("consumer"))

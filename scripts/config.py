@@ -14,7 +14,7 @@ DIR_PROCESSED = DIR_DATA / "processed"
 
 # === Thresholds for Statistical Significance ===
 THRESHOLD_BRAND = 100
-THRESHOLD_MODEL = 50
+THRESHOLD_MODEL = 1
 THRESHOLD_AGE_BRACKET = 30  # Minimum vehicles per year for per-year stats
 
 # === Ranking Thresholds (Home Page Top 10) ===
