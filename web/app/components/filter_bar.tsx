@@ -54,6 +54,9 @@ interface FilterBarProps {
     // Catalog Price Toggle
     showCatalogPrice: boolean;
     setShowCatalogPrice: (show: boolean) => void;
+    // Pagination
+    pageSize: number;
+    setPageSize: (size: number) => void;
 }
 
 const FUEL_TYPES = ["Petrol", "Diesel", "Hybrid", "EV", "LPG", "Other"];
@@ -102,6 +105,8 @@ export default function FilterBar({
     minFleetSizeAvailable,
     showCatalogPrice,
     setShowCatalogPrice,
+    pageSize,
+    setPageSize,
 }: FilterBarProps) {
     const [showMoreFilters, setShowMoreFilters] = useState(false);
 
@@ -234,6 +239,25 @@ export default function FilterBar({
                                             <span className="text-sm text-zinc-700 dark:text-zinc-300">Show Catalog Price</span>
                                         </label>
                                     )}
+
+                                    {/* Page Size Selector */}
+                                    <div className="pt-2">
+                                        <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-1">Items per page</label>
+                                        <select
+                                            value={pageSize === 999999 ? "All" : pageSize}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setPageSize(val === "All" ? 999999 : Number(val));
+                                            }}
+                                            className="w-full text-xs px-2 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                        >
+                                            <option value={50}>50</option>
+                                            <option value={100}>100</option>
+                                            <option value={500}>500</option>
+                                            <option value={1000}>1000</option>
+                                            <option value="All">All</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
