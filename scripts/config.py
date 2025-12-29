@@ -18,7 +18,7 @@ THRESHOLD_MODEL = 1
 THRESHOLD_AGE_BRACKET = 30  # Minimum vehicles per year for per-year stats
 
 # === Ranking Thresholds (Home Page Top 10) ===
-THRESHOLD_BRAND_RANKING = 500
+THRESHOLD_BRAND_RANKING = 2000
 THRESHOLD_MODEL_RANKING = 100
 
 # === Download Settings ===

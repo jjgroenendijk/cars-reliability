@@ -11,34 +11,39 @@ test.describe('Statistics Page', () => {
     });
 
     test('should display filter bar and dropdowns', async ({ page }) => {
-        // Debug: Check for error message
-        const errorAlert = page.locator('.text-red-600, .bg-red-50').first();
-        if (await errorAlert.isVisible()) {
-            console.log('Error Alert Found:', await errorAlert.innerText());
-        }
-
-        page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
-
-        // Brands dropdown
         const brandsButton = page.getByRole('button', { name: 'Brands' }).first();
-        try {
-            await expect(brandsButton).toBeVisible({ timeout: 15000 });
-        } catch (e) {
-            console.log('Brands button not visible. Page content:');
-            console.log(await page.content());
-            throw e;
-        }
+        await expect(brandsButton).toBeVisible({ timeout: 15000 });
 
-        // Open brands dropdown
         await brandsButton.click();
         await expect(page.getByPlaceholder('Search brands...').first()).toBeVisible();
 
-        // Defects dropdown
         const defectsButton = page.getByRole('button', { name: 'Defects' });
         await expect(defectsButton).toBeVisible();
 
-        // Open defects dropdown
         await defectsButton.click();
         await expect(page.getByPlaceholder('Search defect codes...')).toBeVisible();
+    });
+
+    test('switching to models updates search placeholder and URL', async ({ page }) => {
+        await expect(page.getByPlaceholder('Search brands...').first()).toBeVisible({ timeout: 15000 });
+
+        await page.getByRole('button', { name: 'Models' }).click();
+        await expect(page).toHaveURL(/.*view=models/);
+        await expect(page.getByPlaceholder('Search models...').first()).toBeVisible();
+    });
+
+    test('filters panel shows additional controls', async ({ page }) => {
+        const filtersButton = page.getByRole('button', { name: 'Filters' });
+        await expect(filtersButton).toBeVisible();
+
+        await filtersButton.click();
+        await expect(page.getByText('Vehicle Usage')).toBeVisible();
+        await expect(page.getByText('Fuel Type')).toBeVisible();
+        await expect(page.getByText('Items per page')).toBeVisible();
+    });
+
+    test('shows rankings table', async ({ page }) => {
+        await expect(page.getByRole('heading', { name: 'Rankings' })).toBeVisible({ timeout: 15000 });
+        await expect(page.getByRole('table')).toBeVisible();
     });
 });

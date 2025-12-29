@@ -2,17 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import type { Rankings, RankingEntry, BrandStats } from "@/app/lib/types";
+import type { Rankings, RankingEntry } from "@/app/lib/types";
 import { timestamp_format, pascal_case_format } from "@/app/lib/data_load";
 import { Search, Car, AlertCircle, Calendar, ArrowRight } from "lucide-react";
-import { DEFAULTS } from "@/app/lib/defaults";
-
-
 
 export default function HomePage() {
   const [rankings, setRankings] = useState<Rankings | null>(null);
-  const [brandStats, setBrandStats] = useState<BrandStats[]>([]);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,19 +17,14 @@ export default function HomePage() {
     async function data_fetch() {
       try {
         const base_path = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-        const [rankings_res, brand_res] = await Promise.all([
-          fetch(`${base_path}/data/rankings.json`),
-          fetch(`${base_path}/data/brand_stats.json`),
-        ]);
+        const rankings_res = await fetch(`${base_path}/data/rankings.json`);
 
-        if (!rankings_res.ok || !brand_res.ok) {
+        if (!rankings_res.ok) {
           throw new Error("Could not load data");
         }
 
         const rankings_data: Rankings = await rankings_res.json();
         setRankings(rankings_data);
-        const brand_data: BrandStats[] = await brand_res.json();
-        setBrandStats(brand_data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
@@ -77,19 +67,6 @@ export default function HomePage() {
     );
   }
 
-  // Use rankings directly
-  const display_rankings = rankings;
-  const brand_fleet_map = brandStats.reduce((acc, stat) => {
-    acc.set(stat.merk, (acc.get(stat.merk) ?? 0) + stat.vehicle_count);
-    return acc;
-  }, new Map<string, number>());
-  const min_brand_fleet = DEFAULTS.rankings.brand_min_fleet;
-  const most_reliable_brands = display_rankings.most_reliable_brands
-    .filter((entry) => (brand_fleet_map.get(entry.merk) ?? 0) >= min_brand_fleet)
-    .slice(0, 10);
-  const least_reliable_brands = display_rankings.least_reliable_brands
-    .filter((entry) => (brand_fleet_map.get(entry.merk) ?? 0) >= min_brand_fleet)
-    .slice(0, 10);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -130,42 +107,46 @@ export default function HomePage() {
         <RankingCard
           title="Most Reliable Brands"
           subtitle="Lowest defects per year"
-          entries={most_reliable_brands}
+          entries={rankings.most_reliable_brands}
           link_href="/brands"
           link_text="View all brands"
           highlight_color="green"
+          test_id="ranking-most-reliable-brands"
         />
 
         {/* Least Reliable Brands */}
         <RankingCard
           title="Least Reliable Brands"
           subtitle="Highest defects per year"
-          entries={least_reliable_brands}
+          entries={rankings.least_reliable_brands}
           link_href="/brands"
           link_text="View all brands"
           highlight_color="red"
+          test_id="ranking-least-reliable-brands"
         />
 
         {/* Most Reliable Models */}
         <RankingCard
           title="Most Reliable Models"
           subtitle="Lowest defects per year"
-          entries={display_rankings.most_reliable_models.slice(0, 10)}
+          entries={rankings.most_reliable_models.slice(0, 10)}
           link_href="/models"
           link_text="View all models"
           highlight_color="green"
           show_model
+          test_id="ranking-most-reliable-models"
         />
 
         {/* Least Reliable Models */}
         <RankingCard
           title="Least Reliable Models"
           subtitle="Highest defects per year"
-          entries={display_rankings.least_reliable_models.slice(0, 10)}
+          entries={rankings.least_reliable_models.slice(0, 10)}
           link_href="/models"
           link_text="View all models"
           highlight_color="red"
           show_model
+          test_id="ranking-least-reliable-models"
         />
       </div>
 
@@ -188,7 +169,7 @@ export default function HomePage() {
             <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                <span>Last updated: {timestamp_format(display_rankings.generated_at)}</span>
+                <span>Last updated: {timestamp_format(rankings.generated_at)}</span>
               </div>
               <Link
                 href="/about"
@@ -213,6 +194,7 @@ interface RankingCardProps {
   link_text: string;
   highlight_color: "green" | "red";
   show_model?: boolean;
+  test_id?: string;
 }
 
 function RankingCard({
@@ -223,11 +205,15 @@ function RankingCard({
   link_text,
   highlight_color,
   show_model = false,
+  test_id,
 }: RankingCardProps) {
   const isGreen = highlight_color === "green";
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow">
+    <div
+      className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow"
+      data-testid={test_id}
+    >
       <div className={`px-6 py-5 border-b border-gray-100 dark:border-gray-800 ${isGreen ? 'bg-green-50/50 dark:bg-green-900/10' : 'bg-red-50/50 dark:bg-red-900/10'}`}>
         <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
           {title}
@@ -244,6 +230,7 @@ function RankingCard({
           entries.map((entry, index) => (
             <div
               key={index}
+              data-testid="ranking-entry"
               className="px-6 py-3.5 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
             >
               <div className="flex items-center gap-4">

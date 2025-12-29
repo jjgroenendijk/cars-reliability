@@ -26,8 +26,4 @@ export const DEFAULTS = {
     },
     /** Pagination */
     pageSize: 50,
-    /** Homepage ranking thresholds */
-    rankings: {
-        brand_min_fleet: 2000,
-    },
 };
