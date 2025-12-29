@@ -123,7 +123,7 @@ export function percentage_format(value: number): string {
  * @returns Formatted number string
  */
 export function number_format(value: number): string {
-  return value.toLocaleString("nl-NL");
+  return value.toLocaleString("nl-NL").replace(/\./g, " ");
 }
 
 /**

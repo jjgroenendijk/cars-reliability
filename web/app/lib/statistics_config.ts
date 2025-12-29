@@ -35,8 +35,10 @@ function format_decimal(value: unknown, precision: number = 2): string {
 /** Build table columns based on view mode */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function columns_build(viewMode: "brands" | "models", config?: ColumnConfig): Column<any>[] {
-    const numeric_cell_class = "font-mono tabular-nums";
-    const std_dev_cell_class = "font-mono tabular-nums text-zinc-500 dark:text-zinc-400";
+    const numeric_cell_class = "font-mono tabular-nums text-right";
+    const numeric_header_class = "text-right";
+    const std_dev_cell_class = "font-mono tabular-nums text-right text-zinc-500 dark:text-zinc-400";
+    const std_dev_header_class = "text-right";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cols: Column<any>[] = [
         { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
@@ -47,35 +49,39 @@ export function columns_build(viewMode: "brands" | "models", config?: ColumnConf
     }
 
     cols.push(
-        { key: "vehicle_count", label: "Vehicles", cellClassName: numeric_cell_class },
-        { key: "total_inspections", label: "Inspections", cellClassName: numeric_cell_class },
+        { key: "vehicle_count", label: "Vehicles", cellClassName: numeric_cell_class, headerClassName: numeric_header_class },
+        { key: "total_inspections", label: "Inspections", cellClassName: numeric_cell_class, headerClassName: numeric_header_class },
         {
             key: "avg_defects_per_inspection",
-            label: "Defects / Inspection",
+            label: "Defects /\nInspection",
             format: (v) => format_decimal(v, 2),
-            cellClassName: numeric_cell_class
+            cellClassName: numeric_cell_class,
+            headerClassName: `${numeric_header_class} whitespace-normal text-[11px] leading-4`
         },
         ...(config?.showStdDev
             ? [{
                 key: "std_defects_per_inspection",
-                label: "Std Dev (Inspection)",
+                label: "Std Dev\nInspection",
                 format: (v) => format_decimal(v, 2),
-                cellClassName: std_dev_cell_class
+                cellClassName: std_dev_cell_class,
+                headerClassName: `${std_dev_header_class} whitespace-normal text-[11px] leading-4`
             } as Column<any>]
             : []),
-        { key: "avg_age_years", label: "Avg Age", cellClassName: numeric_cell_class },
+        { key: "avg_age_years", label: "Avg Age", cellClassName: numeric_cell_class, headerClassName: numeric_header_class },
         {
             key: "filtered_defects_per_vehicle_year",
-            label: "Defects / Year",
+            label: "Defects /\nYear",
             format: (v) => format_decimal(v, 2),
-            cellClassName: numeric_cell_class
+            cellClassName: numeric_cell_class,
+            headerClassName: `${numeric_header_class} whitespace-normal text-[11px] leading-4`
         },
         ...(config?.showStdDev
             ? [{
                 key: "std_defects_per_vehicle_year",
-                label: "Std Dev (Year)",
+                label: "Std Dev\nYear",
                 format: (v) => format_decimal(v, 2),
-                cellClassName: std_dev_cell_class
+                cellClassName: std_dev_cell_class,
+                headerClassName: `${std_dev_header_class} whitespace-normal text-[11px] leading-4`
             } as Column<any>]
             : []),
     );

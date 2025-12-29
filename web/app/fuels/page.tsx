@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { timestamp_format } from "@/app/lib/data_load";
 import FilterBar from "@/app/components/filter_bar";
 import { DefectFilterPanel } from "@/app/components/defect_filter_panel";
@@ -22,8 +22,8 @@ export default function FuelsPage() {
   const [maxPrice, setMaxPrice] = useState(DEFAULTS.price.max);
   const [minFleetSize, setMinFleetSize] = useState(DEFAULTS.fleet.min);
   const [maxFleetSize, setMaxFleetSize] = useState(5000);
-  const [minInspections, setMinInspections] = useState(0);
-  const [maxInspections, setMaxInspections] = useState(1000000);
+  const [minInspections, setMinInspections] = useState(DEFAULTS.inspections.min);
+  const [maxInspections, setMaxInspections] = useState(DEFAULTS.inspections.max);
   const [showCatalogPrice, setShowCatalogPrice] = useState(false);
 
   const filterState = {
@@ -45,6 +45,7 @@ export default function FuelsPage() {
     brand_stats,
     processed_data,
     generated_at,
+    metadata,
     loading,
     error,
     ageRange,
@@ -53,6 +54,18 @@ export default function FuelsPage() {
     sort_indicator
   } = useFuelData(filterState);
 
+  const min_inspections_available = metadata?.ranges?.inspections?.min ?? DEFAULTS.inspections.min;
+  const max_inspections_available = metadata?.ranges?.inspections?.max ?? DEFAULTS.inspections.max;
+
+  useEffect(() => {
+    if (!metadata?.ranges?.inspections) return;
+    if (minInspections === DEFAULTS.inspections.min) {
+      setMinInspections(metadata.ranges.inspections.min);
+    }
+    if (maxInspections === DEFAULTS.inspections.max) {
+      setMaxInspections(metadata.ranges.inspections.max);
+    }
+  }, [metadata]);
 
 
   if (error) {
@@ -118,8 +131,8 @@ export default function FuelsPage() {
           maxInspections={maxInspections}
           setMinInspections={setMinInspections}
           setMaxInspections={setMaxInspections}
-          minInspectionsAvailable={0}
-          maxInspectionsAvailable={1000000}
+          minInspectionsAvailable={min_inspections_available}
+          maxInspectionsAvailable={max_inspections_available}
           defectFilterComponent={<DefectFilterPanel />}
           showStdDev={showStdDev}
           setShowStdDev={setShowStdDev}

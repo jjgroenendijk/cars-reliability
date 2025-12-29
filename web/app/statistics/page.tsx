@@ -94,6 +94,12 @@ function StatisticsContent() {
             const min_age = Math.max(DEFAULTS.age.min, metadata.ranges.age.min);
             const max_age = Math.min(DEFAULTS.age.max, metadata.ranges.age.max);
             state.setAgeRange([min_age, max_age]);
+            if (state.minInspections === DEFAULTS.inspections.min) {
+                state.setMinInspections(metadata.ranges.inspections.min);
+            }
+            if (state.maxInspections === DEFAULTS.inspections.max) {
+                state.setMaxInspections(metadata.ranges.inspections.max);
+            }
         } else if (metadata?.age_range) {
             state.setAgeRange([metadata.age_range.min, metadata.age_range.max]);
         }
@@ -102,7 +108,7 @@ function StatisticsContent() {
 
     // Memoize columns
     const tableColumns = useMemo(() => {
-        const numeric_cell_class = "font-mono tabular-nums";
+        const numeric_cell_class = "font-mono tabular-nums text-right";
         const baseCols = columns_build(state.viewMode, {
             showStdDev: state.showStdDev
         });
@@ -114,7 +120,8 @@ function StatisticsContent() {
                 key: "avg_catalog_price",
                 label: "Avg. Price",
                 format: (v: unknown) => (typeof v === 'number') ? `€ ${Number(v).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")}` : "-",
-                cellClassName: numeric_cell_class
+                cellClassName: numeric_cell_class,
+                headerClassName: "text-right"
             });
         }
 

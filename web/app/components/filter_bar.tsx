@@ -202,7 +202,7 @@ export default function FilterBar({
 
                 {/* Expanded Filters Section */}
                 {showMoreFilters && (
-                    <div className="pt-4 mt-2 border-t border-zinc-100 dark:border-zinc-800 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in slide-in-from-top-2 duration-200">
+                    <div className="pt-4 mt-2 border-t border-zinc-100 dark:border-zinc-800 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[auto_auto_1fr_1fr] gap-8 lg:gap-12 animate-in slide-in-from-top-2 duration-200">
                         {/* Usage Checkboxes */}
                         <div className="space-y-3">
                             <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Vehicle Usage</label>
@@ -295,9 +295,10 @@ export default function FilterBar({
                             </div>
                         </div>
 
-                        {/* Price Filter (Only for Models view) */}
-                        {viewMode === "models" && (
-                            <div className="space-y-3">
+                        {/* Sliders Column 1: Price & Age */}
+                        <div className="space-y-6">
+                            {/* Price Filter (Only for Models view) */}
+                            {viewMode === "models" && (
                                 <div className="px-1">
                                     <RangeSlider
                                         label="Price Range"
@@ -312,52 +313,46 @@ export default function FilterBar({
                                         inputWidth="w-20"
                                     />
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {/* Age, Fleet & Inspections */}
+                            <div className="px-1">
+                                <RangeSlider
+                                    label="Vehicle Age"
+                                    min={minAgeAvailable}
+                                    max={maxAgeAvailable}
+                                    value={ageRange}
+                                    onChange={setAgeRange}
+                                    unit="years"
+                                    inputWidth="w-12"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Sliders Column 2: Fleet & Inspections */}
                         <div className="space-y-6">
-                            <div className="space-y-2">
-                                <div className="px-1">
-                                    <RangeSlider
-                                        label="Vehicle Age"
-                                        min={minAgeAvailable}
-                                        max={maxAgeAvailable}
-                                        value={ageRange}
-                                        onChange={setAgeRange}
-                                        unit="years"
-                                        inputWidth="w-12"
-                                    />
-                                </div>
-                            </div>
+                            <RangeSlider
+                                label="Fleet Size"
+                                min={minFleetSizeAvailable}
+                                max={maxFleetSizeAvailable}
+                                value={[minFleetSize, maxFleetSize]}
+                                onChange={([min, max]) => {
+                                    setMinFleetSize(min);
+                                    setMaxFleetSize(max);
+                                }}
+                                inputWidth="w-20"
+                            />
 
-                            <div className="space-y-2">
-                                <RangeSlider
-                                    label="Fleet Size"
-                                    min={minFleetSizeAvailable}
-                                    max={maxFleetSizeAvailable}
-                                    value={[minFleetSize, maxFleetSize]}
-                                    onChange={([min, max]) => {
-                                        setMinFleetSize(min);
-                                        setMaxFleetSize(max);
-                                    }}
-                                    inputWidth="w-20"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <RangeSlider
-                                    label="Inspections"
-                                    min={minInspectionsAvailable}
-                                    max={maxInspectionsAvailable}
-                                    value={[minInspections, maxInspections]}
-                                    onChange={([min, max]) => {
-                                        setMinInspections(min);
-                                        setMaxInspections(max);
-                                    }}
-                                    inputWidth="w-20"
-                                />
-                            </div>
+                            <RangeSlider
+                                label="Inspections"
+                                min={minInspectionsAvailable}
+                                max={maxInspectionsAvailable}
+                                value={[minInspections, maxInspections]}
+                                onChange={([min, max]) => {
+                                    setMinInspections(min);
+                                    setMaxInspections(max);
+                                }}
+                                inputWidth="w-20"
+                            />
                         </div>
                     </div>
                 )}

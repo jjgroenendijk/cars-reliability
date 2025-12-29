@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import type { BrandStats, ModelStats, Rankings, FuelBreakdown } from "@/app/lib/types";
+import type { BrandStats, ModelStats, Rankings, FuelBreakdown, Metadata } from "@/app/lib/types";
 import { DEFAULTS } from "@/app/lib/defaults";
 
 export interface BrandFuelData {
@@ -15,10 +15,6 @@ export interface BrandFuelData {
 
 type SortKey = "merk" | "vehicle_count" | "electric_pct" | "diesel_pct" | "petrol_pct";
 type SortDir = "asc" | "desc";
-
-interface Metadata {
-    age_range?: { min: number; max: number };
-}
 
 interface FilterState {
     viewMode: "brands" | "models";
@@ -57,6 +53,7 @@ export function useFuelData(filterState: FilterState) {
     const [brand_stats, setBrandStats] = useState<BrandStats[]>([]);
     const [model_stats, setModelStats] = useState<ModelStats[]>([]);
     const [generated_at, setGeneratedAt] = useState<string>("");
+    const [metadata, setMetadata] = useState<Metadata | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [ageRange, setAgeRange] = useState<[number, number]>([DEFAULTS.age.min, DEFAULTS.age.max]);
@@ -93,8 +90,10 @@ export function useFuelData(filterState: FilterState) {
 
                 if (metadata_res.ok) {
                     const meta: Metadata = await metadata_res.json();
-                    if (meta.age_range) {
-                        setAgeRange([meta.age_range.min, meta.age_range.max]);
+                    setMetadata(meta);
+                    const age_range = meta.ranges?.age ?? meta.age_range;
+                    if (age_range) {
+                        setAgeRange([age_range.min, age_range.max]);
                     }
                 }
             } catch (err) {
@@ -111,6 +110,8 @@ export function useFuelData(filterState: FilterState) {
         minPrice, maxPrice, selectedBrands, searchQuery,
         minFleetSize, maxFleetSize, minInspections, maxInspections
     } = filterState;
+
+    const max_inspections_available = metadata?.ranges?.inspections?.max ?? DEFAULTS.inspections.max;
 
     // Main Aggregation & Filtering Pipeline
     const processed_data = useMemo((): BrandFuelData[] => {
@@ -134,7 +135,7 @@ export function useFuelData(filterState: FilterState) {
 
         filtered = filtered.filter((item) => {
             const insp = item.total_inspections;
-            if (maxInspections >= DEFAULTS.inspections.max) return insp >= minInspections;
+            if (maxInspections >= max_inspections_available) return insp >= minInspections;
             return insp >= minInspections && insp <= maxInspections;
         });
 
@@ -206,7 +207,7 @@ export function useFuelData(filterState: FilterState) {
 
         return results;
 
-    }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial, selectedFuels, minPrice, maxPrice, selectedBrands, searchQuery, minFleetSize, maxFleetSize, sort_key, sort_dir]);
+    }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial, selectedFuels, minPrice, maxPrice, selectedBrands, searchQuery, minFleetSize, maxFleetSize, minInspections, maxInspections, max_inspections_available, sort_key, sort_dir]);
 
     function column_click(key: SortKey) {
         if (sort_key === key) {
@@ -226,6 +227,7 @@ export function useFuelData(filterState: FilterState) {
         brand_stats,
         processed_data,
         generated_at,
+        metadata,
         loading,
         error,
         ageRange,

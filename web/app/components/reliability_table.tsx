@@ -191,7 +191,9 @@ export function ReliabilityTable<T extends object>({
                   }
                 >
                   <span className="flex items-center gap-1">
-                    {column.label}
+                    <span className="whitespace-pre-line leading-tight">
+                      {column.label}
+                    </span>
                     {column.sortable !== false &&
                       sort_indicator_render(String(column.key))}
                   </span>
@@ -218,7 +220,7 @@ export function ReliabilityTable<T extends object>({
                   {columns.map((column) => (
                     <td
                       key={String(column.key)}
-                      className={`px-3 py-2 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap ${column.className ?? ""} ${column.cellClassName ?? ""}`}
+                      className={`px-3 py-2 text-xs text-gray-900 dark:text-gray-100 whitespace-nowrap ${column.className ?? ""} ${column.cellClassName ?? ""}`}
                     >
                       {cell_value_format(column, row[column.key], row)}
                     </td>

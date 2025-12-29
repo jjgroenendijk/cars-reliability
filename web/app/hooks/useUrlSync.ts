@@ -119,7 +119,7 @@ export function useUrlSync({ metadata }: UseUrlSyncProps) {
     // Sync to URL
     const createQueryString = useCallback(
         (params: Record<string, string | number | boolean | undefined>) => {
-            const newSearchParams = new URLSearchParams(searchParams?.toString());
+            const newSearchParams = new URLSearchParams();
 
             for (const [key, value] of Object.entries(params)) {
                 if (value === undefined || value === null || value === "") {
@@ -130,7 +130,7 @@ export function useUrlSync({ metadata }: UseUrlSyncProps) {
             }
             return newSearchParams.toString();
         },
-        [searchParams]
+        []
     );
 
     useEffect(() => {

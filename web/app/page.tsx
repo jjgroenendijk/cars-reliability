@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import type { Rankings, RankingEntry, BrandStats, ModelStats } from "@/app/lib/types";
+import type { Rankings, RankingEntry, BrandStats } from "@/app/lib/types";
 import { timestamp_format, pascal_case_format } from "@/app/lib/data_load";
 import { Search, Car, AlertCircle, Calendar, ArrowRight } from "lucide-react";
+import { DEFAULTS } from "@/app/lib/defaults";
 
 
 
 export default function HomePage() {
   const [rankings, setRankings] = useState<Rankings | null>(null);
+  const [brandStats, setBrandStats] = useState<BrandStats[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,14 +22,19 @@ export default function HomePage() {
     async function data_fetch() {
       try {
         const base_path = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-        const rankings_res = await fetch(`${base_path}/data/rankings.json`);
+        const [rankings_res, brand_res] = await Promise.all([
+          fetch(`${base_path}/data/rankings.json`),
+          fetch(`${base_path}/data/brand_stats.json`),
+        ]);
 
-        if (!rankings_res.ok) {
+        if (!rankings_res.ok || !brand_res.ok) {
           throw new Error("Could not load data");
         }
 
         const rankings_data: Rankings = await rankings_res.json();
         setRankings(rankings_data);
+        const brand_data: BrandStats[] = await brand_res.json();
+        setBrandStats(brand_data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
@@ -72,6 +79,17 @@ export default function HomePage() {
 
   // Use rankings directly
   const display_rankings = rankings;
+  const brand_fleet_map = brandStats.reduce((acc, stat) => {
+    acc.set(stat.merk, (acc.get(stat.merk) ?? 0) + stat.vehicle_count);
+    return acc;
+  }, new Map<string, number>());
+  const min_brand_fleet = DEFAULTS.rankings.brand_min_fleet;
+  const most_reliable_brands = display_rankings.most_reliable_brands
+    .filter((entry) => (brand_fleet_map.get(entry.merk) ?? 0) >= min_brand_fleet)
+    .slice(0, 10);
+  const least_reliable_brands = display_rankings.least_reliable_brands
+    .filter((entry) => (brand_fleet_map.get(entry.merk) ?? 0) >= min_brand_fleet)
+    .slice(0, 10);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -112,7 +130,7 @@ export default function HomePage() {
         <RankingCard
           title="Most Reliable Brands"
           subtitle="Lowest defects per year"
-          entries={display_rankings.most_reliable_brands.slice(0, 10)}
+          entries={most_reliable_brands}
           link_href="/brands"
           link_text="View all brands"
           highlight_color="green"
@@ -122,7 +140,7 @@ export default function HomePage() {
         <RankingCard
           title="Least Reliable Brands"
           subtitle="Highest defects per year"
-          entries={display_rankings.least_reliable_brands.slice(0, 10)}
+          entries={least_reliable_brands}
           link_href="/brands"
           link_text="View all brands"
           highlight_color="red"

@@ -7,6 +7,7 @@
 > [!CAUTION]
 > **All frontend data and constants MUST derive from backend JSON.**
 > Never hardcode values (filter ranges, fuel types, age brackets, thresholds, labels, etc.) in frontend code. The Python pipeline calculates dynamic values (min/max ranges, lists, thresholds) and writes them to `metadata.json` or other processed JSON files. Frontend must always read from these files.
+> If a frontend default cannot be derived from backend JSON, define it in `web/app/lib/defaults.ts` (and nowhere else).
 
 ## Architecture
 
