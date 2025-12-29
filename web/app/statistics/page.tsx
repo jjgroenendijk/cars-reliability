@@ -43,6 +43,7 @@ const BRAND_COLUMNS_FILTERED: Column<BrandStatsFiltered>[] = [
     { key: "vehicle_count", label: "Vehicles" },
     { key: "total_inspections", label: "Inspections" },
     { key: "avg_defects_per_inspection", label: "Defects / Inspection" },
+    { key: "filtered_defects_per_vehicle_year", label: "Defects / Year" },
 ];
 
 const MODEL_COLUMNS_FULL: Column<ModelStatsFiltered>[] = [
@@ -61,6 +62,7 @@ const MODEL_COLUMNS_FILTERED: Column<ModelStatsFiltered>[] = [
     { key: "vehicle_count", label: "Vehicles" },
     { key: "total_inspections", label: "Inspections" },
     { key: "avg_defects_per_inspection", label: "Defects / Inspection" },
+    { key: "filtered_defects_per_vehicle_year", label: "Defects / Year" },
 ];
 
 /** Aggregate per-year stats for a given age range */
