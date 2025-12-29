@@ -232,6 +232,7 @@ export interface Metadata {
     price: Range;
     fleet: Range;
     age: Range;
+    inspections: Range;
   };
   fuel_types?: string[];
   // Deprecated age_range for backward compat if needed during transition
