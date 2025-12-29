@@ -80,10 +80,8 @@ jobs:
         uses: astral-sh/setup-uv@v4
         with:
           version: "latest"
+          python-version: ${{ env.PYTHON_VERSION }}
           enable-cache: false
-
-      - name: Set up Python
-        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: cd scripts && uv sync --frozen
@@ -131,26 +129,18 @@ jobs:
   process:
     runs-on: ubuntu-latest
     needs: [download]
-    timeout-minutes: 30
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Calculate cache keys
-        id: cache-key
-        run: |
-          WEEK=$(date +'%Y-W%V')
-          echo "voertuigen-key=parquet-voertuigen-$WEEK" >> $GITHUB_OUTPUT
-          echo "meldingen-key=parquet-meldingen-$WEEK" >> $GITHUB_OUTPUT
-          echo "geconstateerde-key=parquet-geconstateerde_gebreken-$WEEK" >> $GITHUB_OUTPUT
-          echo "gebreken-key=parquet-gebreken-$WEEK" >> $GITHUB_OUTPUT
-          echo "brandstof-key=parquet-brandstof-$WEEK" >> $GITHUB_OUTPUT
+      - name: Get week number
+        id: date
+        run: echo "week=$(date +'%Y-W%V')" >> $GITHUB_OUTPUT
 
       - name: Restore voertuigen cache
         uses: actions/cache/restore@v4
         with:
           path: data/parquet/voertuigen.parquet
-          key: ${{ steps.cache-key.outputs.voertuigen-key }}
+          key: parquet-voertuigen-${{ steps.date.outputs.week }}
           restore-keys: parquet-voertuigen-
           fail-on-cache-miss: true
 
@@ -158,7 +148,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: data/parquet/meldingen.parquet
-          key: ${{ steps.cache-key.outputs.meldingen-key }}
+          key: parquet-meldingen-${{ steps.date.outputs.week }}
           restore-keys: parquet-meldingen-
           fail-on-cache-miss: true
 
@@ -166,7 +156,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: data/parquet/geconstateerde_gebreken.parquet
-          key: ${{ steps.cache-key.outputs.geconstateerde-key }}
+          key: parquet-geconstateerde_gebreken-${{ steps.date.outputs.week }}
           restore-keys: parquet-geconstateerde_gebreken-
           fail-on-cache-miss: true
 
@@ -174,7 +164,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: data/parquet/gebreken.parquet
-          key: ${{ steps.cache-key.outputs.gebreken-key }}
+          key: parquet-gebreken-${{ steps.date.outputs.week }}
           restore-keys: parquet-gebreken-
           fail-on-cache-miss: true
 
@@ -182,7 +172,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: data/parquet/brandstof.parquet
-          key: ${{ steps.cache-key.outputs.brandstof-key }}
+          key: parquet-brandstof-${{ steps.date.outputs.week }}
           restore-keys: parquet-brandstof-
           fail-on-cache-miss: true
 
@@ -202,10 +192,8 @@ jobs:
         uses: astral-sh/setup-uv@v4
         with:
           version: "latest"
+          python-version: ${{ env.PYTHON_VERSION }}
           enable-cache: false
-
-      - name: Set up Python
-        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: cd scripts && uv sync --frozen
@@ -222,7 +210,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs: [process]
-    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -264,7 +251,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [build]
-    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
