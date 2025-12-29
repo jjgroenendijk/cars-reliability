@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect } from "react";
+import { Suspense, useMemo, useEffect } from "react";
 import { ReliabilityTable } from "@/app/components/reliability_table";
 import { DefectFilterPanel } from "@/app/components/defect_filter_panel";
 import FilterBar from "@/app/components/filter_bar";
@@ -14,7 +14,45 @@ import { useUrlSync } from "@/app/hooks/useUrlSync";
 import { TablePagination } from "@/app/components/table_pagination";
 import { DEFAULTS } from "@/app/lib/defaults";
 
+/**
+ * Loading fallback for the statistics page while URL params are being read.
+ */
+function StatisticsLoading() {
+    return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            <div className="space-y-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                        Reliability Statistics
+                    </h1>
+                    <p className="text-lg text-zinc-600 dark:text-zinc-400 mt-2 max-w-2xl">
+                        Comprehensive analysis of vehicle reliability based on millions of RDW inspection records.
+                    </p>
+                </div>
+            </div>
+            <div className="animate-pulse space-y-8">
+                <div className="h-20 bg-zinc-100 dark:bg-zinc-800 rounded-2xl" />
+                <div className="h-96 bg-zinc-100 dark:bg-zinc-800 rounded-3xl" />
+            </div>
+        </div>
+    );
+}
+
+/**
+ * Main statistics page wrapped in Suspense for useSearchParams support.
+ */
 export default function StatisticsPage() {
+    return (
+        <Suspense fallback={<StatisticsLoading />}>
+            <StatisticsContent />
+        </Suspense>
+    );
+}
+
+/**
+ * Statistics page content with URL sync and data processing.
+ */
+function StatisticsContent() {
     // Defect Context
     const { brand_breakdowns, model_breakdowns, calculate_filtered_defects, mode } = useDefectFilter();
 
