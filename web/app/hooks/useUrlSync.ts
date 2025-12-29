@@ -1,14 +1,13 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { Metadata } from "@/app/lib/types";
+import { DEFAULTS } from "@/app/lib/defaults";
 
 interface UseUrlSyncProps {
     metadata: Partial<Metadata>;
-    defaultMin: number;
-    defaultMax: number;
 }
 
-export function useUrlSync({ metadata, defaultMin, defaultMax }: UseUrlSyncProps) {
+export function useUrlSync({ metadata }: UseUrlSyncProps) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -17,28 +16,35 @@ export function useUrlSync({ metadata, defaultMin, defaultMax }: UseUrlSyncProps
     const [viewMode, setViewMode] = useState<"brands" | "models">("brands");
     const [showStdDev, setShowStdDev] = useState(false);
     const [showCatalogPrice, setShowCatalogPrice] = useState(false);
-    const [pageSize, setPageSize] = useState(50);
+    const [pageSize, setPageSize] = useState(DEFAULTS.pageSize);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
     const [showConsumer, setShowConsumer] = useState(true);
     const [showCommercial, setShowCommercial] = useState(false);
     const [selectedFuels, setSelectedFuels] = useState<string[]>([]);
-    const [minPrice, setMinPrice] = useState(0);
-    const [maxPrice, setMaxPrice] = useState(100000);
-    const [ageRange, setAgeRange] = useState<[number, number]>([defaultMin, defaultMax]);
-    const [minFleetSize, setMinFleetSize] = useState(1000);
-    const [maxFleetSize, setMaxFleetSize] = useState(500000);
+    const [minPrice, setMinPrice] = useState(DEFAULTS.price.min);
+    const [maxPrice, setMaxPrice] = useState(DEFAULTS.price.max);
+    const [ageRange, setAgeRange] = useState<[number, number]>([DEFAULTS.age.min, DEFAULTS.age.max]);
+    const [minFleetSize, setMinFleetSize] = useState(DEFAULTS.fleet.min);
+    const [maxFleetSize, setMaxFleetSize] = useState(DEFAULTS.fleet.max);
+    const [minInspections, setMinInspections] = useState(DEFAULTS.inspections.min);
+    const [maxInspections, setMaxInspections] = useState(DEFAULTS.inspections.max);
 
     // Derived max values for sync logic
     const maxFleetSizeAvailable = useMemo(() => {
         if (metadata.ranges?.fleet) return metadata.ranges.fleet.max;
-        return 500000;
+        return DEFAULTS.fleet.max;
     }, [metadata]);
 
     const maxPriceAvailable = useMemo(() => {
         if (metadata.ranges?.price) return metadata.ranges.price.max;
-        return 100000;
+        return DEFAULTS.price.max;
+    }, [metadata]);
+
+    const maxInspectionsAvailable = useMemo(() => {
+        if (metadata.ranges?.inspections) return metadata.ranges.inspections.max;
+        return DEFAULTS.inspections.max;
     }, [metadata]);
 
     // Hydrate from URL
@@ -69,6 +75,12 @@ export function useUrlSync({ metadata, defaultMin, defaultMax }: UseUrlSyncProps
 
         const pFleetMax = searchParams.get("fleetMax");
         if (pFleetMax) setMaxFleetSize(Number(pFleetMax));
+
+        const pInspMin = searchParams.get("inspMin");
+        if (pInspMin) setMinInspections(Number(pInspMin));
+
+        const pInspMax = searchParams.get("inspMax");
+        if (pInspMax) setMaxInspections(Number(pInspMax));
 
         const pSearch = searchParams.get("q");
         if (pSearch) setSearchQuery(pSearch);
@@ -102,7 +114,7 @@ export function useUrlSync({ metadata, defaultMin, defaultMax }: UseUrlSyncProps
     // Reset pagination on filter change
     useEffect(() => {
         setCurrentPage(1);
-    }, [viewMode, searchQuery, selectedBrands, selectedFuels, minPrice, maxPrice, ageRange, minFleetSize, maxFleetSize, showConsumer, showCommercial]);
+    }, [viewMode, searchQuery, selectedBrands, selectedFuels, minPrice, maxPrice, ageRange, minFleetSize, maxFleetSize, minInspections, maxInspections, showConsumer, showCommercial]);
 
     // Sync to URL
     const createQueryString = useCallback(
@@ -129,23 +141,28 @@ export function useUrlSync({ metadata, defaultMin, defaultMax }: UseUrlSyncProps
             if (selectedBrands.length > 0) params.brands = selectedBrands.join(",");
             if (selectedFuels.length > 0) params.fuels = selectedFuels.join(",");
 
-            if (minPrice > 0) params.minPrice = minPrice;
+            if (minPrice > DEFAULTS.price.min) params.minPrice = minPrice;
             if (maxPrice < maxPriceAvailable) params.maxPrice = maxPrice;
 
-            const currentMinAge = metadata.ranges?.age.min ?? defaultMin;
-            const currentMaxAge = metadata.ranges?.age.max ?? defaultMax;
+            const currentMinAge = metadata.ranges?.age.min ?? DEFAULTS.age.min;
+            const currentMaxAge = metadata.ranges?.age.max ?? DEFAULTS.age.max;
             if (ageRange[0] !== currentMinAge) params.ageMin = ageRange[0];
             if (ageRange[1] !== currentMaxAge) params.ageMax = ageRange[1];
 
-            const currentMinFleet = metadata.ranges?.fleet.min ?? 1000;
+            const currentMinFleet = metadata.ranges?.fleet.min ?? DEFAULTS.fleet.min;
             const currentMaxFleet = maxFleetSizeAvailable;
             if (minFleetSize !== currentMinFleet) params.fleetMin = minFleetSize;
             if (maxFleetSize !== currentMaxFleet) params.fleetMax = maxFleetSize;
 
+            const currentMinInsp = metadata.ranges?.inspections?.min ?? DEFAULTS.inspections.min;
+            const currentMaxInsp = maxInspectionsAvailable;
+            if (minInspections !== currentMinInsp) params.inspMin = minInspections;
+            if (maxInspections !== currentMaxInsp) params.inspMax = maxInspections;
+
             if (searchQuery) params.q = searchQuery;
             if (showStdDev) params.stdDev = "true";
             if (showCatalogPrice) params.catPrice = "true";
-            if (pageSize !== 50) params.pageSize = pageSize;
+            if (pageSize !== DEFAULTS.pageSize) params.pageSize = pageSize;
             if (currentPage !== 1) params.page = currentPage;
 
             const queryString = createQueryString(params);
@@ -160,10 +177,10 @@ export function useUrlSync({ metadata, defaultMin, defaultMax }: UseUrlSyncProps
         return () => clearTimeout(timer);
     }, [
         viewMode, selectedBrands, selectedFuels, minPrice, maxPrice,
-        ageRange, minFleetSize, maxFleetSize, searchQuery,
+        ageRange, minFleetSize, maxFleetSize, minInspections, maxInspections, searchQuery,
         showStdDev, showCatalogPrice, pageSize, currentPage,
-        pathname, router, createQueryString, defaultMin, defaultMax,
-        maxPriceAvailable, maxFleetSizeAvailable, metadata
+        pathname, router, createQueryString,
+        maxPriceAvailable, maxFleetSizeAvailable, maxInspectionsAvailable, metadata
     ]);
 
 
@@ -184,7 +201,10 @@ export function useUrlSync({ metadata, defaultMin, defaultMax }: UseUrlSyncProps
         ageRange, setAgeRange,
         minFleetSize, setMinFleetSize,
         maxFleetSize, setMaxFleetSize,
+        minInspections, setMinInspections,
+        maxInspections, setMaxInspections,
         maxFleetSizeAvailable,
-        maxPriceAvailable
+        maxPriceAvailable,
+        maxInspectionsAvailable
     };
 }

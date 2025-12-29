@@ -14,7 +14,10 @@ interface FilterState {
     ageRange: [number, number];
     minFleetSize: number;
     maxFleetSize: number;
+    minInspections: number;
+    maxInspections: number;
     maxPriceAvailable: number;
+    maxInspectionsAvailable: number;
 }
 
 interface UseStatisticsProcessingProps {
@@ -46,7 +49,7 @@ export function useStatisticsProcessing({
     const {
         viewMode, showConsumer, showCommercial, selectedFuels,
         minPrice, maxPrice, selectedBrands, searchQuery,
-        ageRange, minFleetSize, maxFleetSize, maxPriceAvailable
+        ageRange, minFleetSize, maxFleetSize, minInspections, maxInspections, maxPriceAvailable, maxInspectionsAvailable
     } = filterState;
 
     const { brand_breakdowns, model_breakdowns, calculate_filtered_defects, mode } = defectFilter;
@@ -232,12 +235,15 @@ export function useStatisticsProcessing({
             };
         });
 
-        // 6. Filter by Fleet Size & Validity
-        results = results.filter(item =>
-            item.vehicle_count >= minFleetSize &&
-            item.vehicle_count <= maxFleetSize &&
-            item.filtered_defects_per_vehicle_year !== null
-        );
+        // 6. Filter by Fleet Size, Inspections & Validity
+        results = results.filter(item => {
+            const inspOk = item.total_inspections >= minInspections &&
+                (maxInspections >= maxInspectionsAvailable || item.total_inspections <= maxInspections);
+            return item.vehicle_count >= minFleetSize &&
+                item.vehicle_count <= maxFleetSize &&
+                inspOk &&
+                item.filtered_defects_per_vehicle_year !== null;
+        });
 
         // 7. Search Filter
         if (searchQuery) {
@@ -253,7 +259,7 @@ export function useStatisticsProcessing({
         // 8. Sort
         return results.sort((a, b) => (a.filtered_defects_per_vehicle_year || 0) - (b.filtered_defects_per_vehicle_year || 0));
 
-    }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial, selectedFuels, minPrice, maxPrice, minFleetSize, maxFleetSize, searchQuery, ageRange, isAgeFilterActive, mode, brand_breakdowns, model_breakdowns, calculate_filtered_defects, maxPriceAvailable, selectedBrands, metadata, requestAnimationFrame]); // metadata dep added for completeness though used via extracted vars
+    }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial, selectedFuels, minPrice, maxPrice, minFleetSize, maxFleetSize, minInspections, maxInspections, searchQuery, ageRange, isAgeFilterActive, mode, brand_breakdowns, model_breakdowns, calculate_filtered_defects, maxPriceAvailable, maxInspectionsAvailable, selectedBrands, metadata]);
 
     return {
         processed_data: processed_data as (BrandStatsFiltered | ModelStatsFiltered)[],
