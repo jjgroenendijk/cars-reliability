@@ -52,7 +52,6 @@ export default function FuelsPage() {
 
   const [brand_stats, setBrandStats] = useState<BrandStats[]>([]);
   const [model_stats, setModelStats] = useState<ModelStats[]>([]);
-  const [metadata, setMetadata] = useState<Metadata>({});
   const [generated_at, setGeneratedAt] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +72,8 @@ export default function FuelsPage() {
   const defaultMax = 20;
   const [ageRange, setAgeRange] = useState<[number, number]>([defaultMin, defaultMax]);
   const [minFleetSize, setMinFleetSize] = useState(100);
+  const [maxFleetSize, setMaxFleetSize] = useState(5000);
+  const [showCatalogPrice, setShowCatalogPrice] = useState(false);
 
   // Defect context (kept for FilterBar compatibility, though mostly for defects)
   const { } = useDefectFilter();
@@ -109,7 +110,6 @@ export default function FuelsPage() {
 
         if (metadata_res.ok) {
           const meta: Metadata = await metadata_res.json();
-          setMetadata(meta);
           if (meta.age_range) {
             setAgeRange([meta.age_range.min, meta.age_range.max]);
           }
@@ -215,7 +215,7 @@ export default function FuelsPage() {
     });
 
     // Filter by fleet size
-    results = results.filter(item => item.vehicle_count >= minFleetSize);
+    results = results.filter(item => item.vehicle_count >= minFleetSize && item.vehicle_count <= maxFleetSize);
 
     // 5. Sort
     const mult = sort_dir === "asc" ? 1 : -1;
@@ -230,7 +230,7 @@ export default function FuelsPage() {
 
     return results;
 
-  }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial, selectedFuels, minPrice, maxPrice, selectedBrands, searchQuery, minFleetSize, sort_key, sort_dir]);
+  }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial, selectedFuels, minPrice, maxPrice, selectedBrands, searchQuery, minFleetSize, maxFleetSize, sort_key, sort_dir]);
 
 
   function column_click(key: SortKey) {
@@ -302,10 +302,16 @@ export default function FuelsPage() {
           setAgeRange={setAgeRange}
           minFleetSize={minFleetSize}
           setMinFleetSize={setMinFleetSize}
+          maxFleetSize={maxFleetSize}
+          setMaxFleetSize={setMaxFleetSize}
           maxFleetSizeAvailable={maxFleetSizeAvailable}
           defectFilterComponent={<DefectFilterPanel />}
           showStdDev={showStdDev}
           setShowStdDev={setShowStdDev}
+          maxAgeAvailable={30}
+          maxPriceAvailable={100000}
+          showCatalogPrice={showCatalogPrice}
+          setShowCatalogPrice={setShowCatalogPrice}
         />
       </div>
 

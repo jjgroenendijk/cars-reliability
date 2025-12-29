@@ -21,12 +21,16 @@ interface Metadata {
 interface BrandStatsFiltered extends BrandStats {
     filtered_defects?: number;
     filtered_defects_per_vehicle_year?: number | null;
+    std_defects_per_inspection?: number | null;
+    std_defects_per_vehicle_year?: number | null;
 }
 
 // -- Model Types --
 interface ModelStatsFiltered extends ModelStats {
     filtered_defects?: number;
     filtered_defects_per_vehicle_year?: number | null;
+    std_defects_per_inspection?: number | null;
+    std_defects_per_vehicle_year?: number | null;
 }
 
 // -- Columns --
@@ -98,6 +102,7 @@ function aggregateAgeRange(
 export default function StatisticsPage() {
     const [viewMode, setViewMode] = useState<"brands" | "models">("brands");
     const [showStdDev, setShowStdDev] = useState(false);
+    const [showCatalogPrice, setShowCatalogPrice] = useState(false);
 
     const [brand_stats, setBrandStats] = useState<BrandStats[]>([]);
     const [model_stats, setModelStats] = useState<ModelStats[]>([]);
@@ -122,7 +127,8 @@ export default function StatisticsPage() {
     const defaultMin = 4;
     const defaultMax = 20;
     const [ageRange, setAgeRange] = useState<[number, number]>([defaultMin, defaultMax]);
-    const [minFleetSize, setMinFleetSize] = useState(100);
+    const [minFleetSize, setMinFleetSize] = useState(1000);
+    const [maxFleetSize, setMaxFleetSize] = useState(500000);
 
     const { brand_breakdowns, model_breakdowns, calculate_filtered_defects, mode } = useDefectFilter();
 
@@ -152,6 +158,16 @@ export default function StatisticsPage() {
 
                 setBrandStats(brands);
                 setModelStats(models);
+
+                // Initialize max price from models
+                let maxP = 0;
+                for (const m of models) {
+                    if (m.price_segment > maxP) maxP = m.price_segment;
+                }
+                if (maxP > 0) {
+                    const roundedMax = Math.ceil(maxP / 5000) * 5000;
+                    setMaxPrice(roundedMax);
+                }
 
                 if (rankings_response.ok) {
                     const rankings: Rankings = await rankings_response.json();
@@ -196,6 +212,16 @@ export default function StatisticsPage() {
         return Math.max(...Array.from(counts.values()));
     }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial]);
 
+    const maxPriceAvailable = useMemo(() => {
+        if (model_stats.length === 0) return 100000;
+        let max = 0;
+        for (const m of model_stats) {
+            if (m.price_segment > max) max = m.price_segment;
+        }
+        // Round up to nearest 5k
+        return Math.ceil(max / 5000) * 5000;
+    }, [model_stats]);
+
 
     // -- Main Aggegration & Filtering Pipeline --
     const processed_data = useMemo(() => {
@@ -215,7 +241,8 @@ export default function StatisticsPage() {
 
         filtered = filtered.filter((item) => {
             const p = item.price_segment;
-            if (maxPrice >= 100000) return p >= minPrice;
+            // Treat max value as infinity
+            if (maxPrice >= maxPriceAvailable) return p >= minPrice;
             return p >= minPrice && p <= maxPrice;
         });
 
@@ -254,6 +281,16 @@ export default function StatisticsPage() {
                 // Accumulate SumSq for defects per inspection
                 if (item.sum_sq_defect_counts != null) {
                     existing.sum_sq_defect_counts = (existing.sum_sq_defect_counts || 0) + item.sum_sq_defect_counts;
+                }
+
+                // Accumulate Sum Catalog Price
+                if (item.sum_catalog_price != null) {
+                    existing.sum_catalog_price = (existing.sum_catalog_price || 0) + item.sum_catalog_price;
+                }
+
+                // Accumulate Count with Price
+                if (item.count_with_price != null) {
+                    existing.count_with_price = (existing.count_with_price || 0) + item.count_with_price;
                 }
 
                 // Std dev cannot be accurately recalculated when merging aggregated data unless we use the accumulated sums
@@ -320,12 +357,19 @@ export default function StatisticsPage() {
                 std_defects_per_inspection = Math.sqrt(Math.max(0, variance));
             }
 
+            // Calculate Avg Price
+            let avg_catalog_price = null;
+            if (item.sum_catalog_price != null && item.count_with_price && item.count_with_price > 0) {
+                avg_catalog_price = item.sum_catalog_price / item.count_with_price;
+            }
+
             return {
                 ...item,
                 avg_defects_per_inspection: item.total_inspections > 0 ? item.total_defects / item.total_inspections : 0,
                 defects_per_vehicle_year: item.total_vehicle_years > 0 ? item.total_defects / item.total_vehicle_years : 0,
                 std_defects_per_vehicle_year: std_defects_per_vehicle_year,
                 std_defects_per_inspection: std_defects_per_inspection,
+                avg_catalog_price: avg_catalog_price,
             };
         });
 
@@ -383,6 +427,7 @@ export default function StatisticsPage() {
         // 6. Filter by Fleet Size & Validity
         results = results.filter(item =>
             item.vehicle_count >= minFleetSize &&
+            item.vehicle_count <= maxFleetSize &&
             item.filtered_defects_per_vehicle_year !== null
         );
 
@@ -400,7 +445,7 @@ export default function StatisticsPage() {
         // 8. Sort
         return results.sort((a, b) => (a.filtered_defects_per_vehicle_year || 0) - (b.filtered_defects_per_vehicle_year || 0));
 
-    }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial, selectedBrands, selectedFuels, minPrice, maxPrice, minFleetSize, searchQuery, ageRange, isAgeFilterActive, mode, brand_breakdowns, model_breakdowns, calculate_filtered_defects]);
+    }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial, selectedBrands, selectedFuels, minPrice, maxPrice, minFleetSize, maxFleetSize, searchQuery, ageRange, isAgeFilterActive, mode, brand_breakdowns, model_breakdowns, calculate_filtered_defects, maxPriceAvailable]);
 
 
     // Memoize columns at top level to avoid conditional hook errors
@@ -409,33 +454,46 @@ export default function StatisticsPage() {
             ? (isAgeFilterActive ? BRAND_COLUMNS_FILTERED : BRAND_COLUMNS_FULL)
             : (isAgeFilterActive ? MODEL_COLUMNS_FILTERED : MODEL_COLUMNS_FULL);
 
-        if (!showStdDev) return baseCols;
-
+        // Clone cols to avoid mutating constants/previous ref
         const cols = [...baseCols];
-        const insertIndex = cols.findIndex(c => c.key === "avg_defects_per_inspection") + 1;
 
-        if (insertIndex > 0) {
-            // Insert std dev for defects/inspection
-            cols.splice(insertIndex, 0, {
-                key: "std_defects_per_inspection",
-                label: "Std. Dev. (Inspection)",
-                format: (v: unknown) => (typeof v === 'number') ? Number(v).toFixed(4) : "-"
-            } as any);
+        // 1. Add Price Column if enabled (Models only)
+        if (viewMode === "models" && showCatalogPrice) {
+            cols.splice(2, 0, {
+                // @ts-expect-error avg_catalog_price is dynamically added
+                key: "avg_catalog_price",
+                label: "Avg. Price",
+                format: (v: unknown) => (typeof v === 'number') ? `€ ${Number(v).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")}` : "-"
+            });
+        }
 
-            // Insert std dev for defects/year - only in FULL mode (not when age filter is active)
-            if (!isAgeFilterActive) {
-                const yearColIndex = cols.findIndex(c => c.key === "filtered_defects_per_vehicle_year");
-                if (yearColIndex > 0) {
-                    cols.splice(yearColIndex + 1, 0, {
-                        key: "std_defects_per_vehicle_year",
-                        label: "Std. Dev. / Year",
-                        format: (v: unknown) => (typeof v === 'number') ? Number(v).toFixed(4) : "-"
-                    } as any);
+        // 2. Add Std Dev Columns if enabled
+        if (showStdDev) {
+            const insertIndex = cols.findIndex(c => c.key === "avg_defects_per_inspection") + 1;
+
+            if (insertIndex > 0) {
+                // Insert std dev for defects/inspection
+                cols.splice(insertIndex, 0, {
+                    key: "std_defects_per_inspection",
+                    label: "Std. Dev. (Inspection)",
+                    format: (v: unknown) => (typeof v === 'number') ? Number(v).toFixed(4) : "-"
+                });
+
+                // Insert std dev for defects/year - only in FULL mode (not when age filter is active)
+                if (!isAgeFilterActive) {
+                    const yearColIndex = cols.findIndex(c => c.key === "filtered_defects_per_vehicle_year");
+                    if (yearColIndex > 0) {
+                        cols.splice(yearColIndex + 1, 0, {
+                            key: "std_defects_per_vehicle_year",
+                            label: "Std. Dev. / Year",
+                            format: (v: unknown) => (typeof v === 'number') ? Number(v).toFixed(4) : "-"
+                        });
+                    }
                 }
             }
         }
         return cols;
-    }, [viewMode, isAgeFilterActive, showStdDev]);
+    }, [viewMode, isAgeFilterActive, showStdDev, showCatalogPrice]);
 
     if (error) {
         return (
@@ -491,10 +549,16 @@ export default function StatisticsPage() {
                     setAgeRange={setAgeRange}
                     minFleetSize={minFleetSize}
                     setMinFleetSize={setMinFleetSize}
+                    maxFleetSize={maxFleetSize}
+                    setMaxFleetSize={setMaxFleetSize}
                     maxFleetSizeAvailable={maxFleetSizeAvailable}
                     defectFilterComponent={<DefectFilterPanel />}
                     showStdDev={showStdDev}
                     setShowStdDev={setShowStdDev}
+                    maxAgeAvailable={maxAge}
+                    maxPriceAvailable={maxPriceAvailable}
+                    showCatalogPrice={showCatalogPrice}
+                    setShowCatalogPrice={setShowCatalogPrice}
                 />
             </div>
 
@@ -527,7 +591,6 @@ export default function StatisticsPage() {
                                 defaultSortKey="filtered_defects_per_vehicle_year"
                                 defaultSortDirection="asc"
                                 filterKey={viewMode === "brands" ? "merk" : "handelsbenaming"}
-                                externalSearchValue={searchQuery}
                                 hideSearchInput={true}
                             />
                         </div>
