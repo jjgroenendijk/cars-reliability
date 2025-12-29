@@ -75,6 +75,7 @@ Note: The `gekentekende_voertuigen` dataset is NOT filtered by `INSPECTION_DAYS_
 - The method (full download vs. SoQL aggregation) is flexible
 - Weekly refresh schedule (Sundays at midnight UTC)
 - Preserve original RDW field names throughout the pipeline; do not rename them in code. Keep `docs/data_mapping.md` current as the source for field definitions.
+- All minimum and maximum values (e.g., for filters, ranges) MUST be derived dynamically from the original datasets. Hardcoded values must be avoided as much as possible.
 
 ### Download Script Performance
 
@@ -114,6 +115,7 @@ Note: The `gekentekende_voertuigen` dataset is NOT filtered by `INSPECTION_DAYS_
 - Age-filtered views (e.g., cars 5-15 years old)
 - Dynamic defect type filtering: Users can filter defects by category (reliability vs. wear-and-tear) or select individual defect types on the brands and models pages (NOT on the home page), with reliability metrics recalculating in real-time for those views
 - Commercial vs. Personal Vehicle filtering: Users can filter on commercial vehicles or personal vehicles. Defaults to personal vehicles only. The configuration section should have a filter for this.
+- Dynamic Filter Ranges: All filter inputs (sliders, min/max fields) MUST use ranges derived from the actual dataset stats, not hardcoded assumptions.
 - Standard Deviation Toggle: Configuration section must have a checkbox (disabled by default) to toggle the display of standard deviation columns for both "Defects / Inspection" and "Defects / Year" metrics. The columns are labeled "Std. Dev. (Inspection)" and "Std. Dev. (Year)" respectively. This applies to both Brand and Model views.
 - Fuel type breakdown page with filtering:
   - Vehicle age range (min and max)
