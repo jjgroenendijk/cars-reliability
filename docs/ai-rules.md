@@ -2,6 +2,12 @@
 
 > Dense guidance for Claude, Copilot, and other AI assistants.
 
+## Critical Rule
+
+> [!CAUTION]
+> **All frontend data and constants MUST derive from backend JSON.**
+> Never hardcode values (filter ranges, fuel types, age brackets, thresholds, labels, etc.) in frontend code. The Python pipeline calculates dynamic values (min/max ranges, lists, thresholds) and writes them to `metadata.json` or other processed JSON files. Frontend must always read from these files.
+
 ## Architecture
 
 ```mermaid
@@ -27,30 +33,23 @@ flowchart LR
 
 **Pipeline discipline**: Stages run sequentially. Stage N must succeed before Stage N+1 runs.
 
-## Commands
-
-Run these from indicated directory. All are safe to auto-run.
-
-| Action | Command |
-|--------|---------|
-| Install Python deps | `cd scripts && uv sync` |
-| Run Python script | `cd scripts && uv run python script_name.py` |
-| Format Python | `cd scripts && uv run ruff format` |
-| Add Python dep | `cd scripts && uv add package_name` |
-| Install web deps | `cd web && npm install` |
-| Run dev server | `cd web && npm run dev` |
-| Build static site | `cd web && npm run build` |
-| Lint TypeScript | `cd web && npm run lint` |
-
 ## Project Structure
 
-| Path | Purpose |
-|------|---------|
-| `scripts/` | Stage 1-2: Python data pipeline |
-| `web/` | Stage 3: Next.js static site |
-| `data/parquet/` | Raw RDW data (gitignored) |
-| `data/processed/` | JSON for web (gitignored) |
-| `docs/` | All documentation |
+- `scripts/` — Stage 1-2: Python data pipeline
+- `web/` — Stage 3: Next.js static site
+- `data/parquet/` — Raw RDW data (gitignored)
+- `data/processed/` — JSON for web (gitignored)
+- `docs/` — All documentation
+
+### Frontend (`web/app/`)
+
+- `page.tsx` — Homepage
+- `statistics/`, `defects/`, `fuels/`, `lookup/`, `about/` — Route pages
+- `components/` — Reusable UI (sliders, filters, tables, navigation)
+- `hooks/` — Data fetching and processing (`useStatisticsData`, `useDefectData`, `useFuelData`, `useUrlSync`)
+- `lib/types.ts` — TypeScript interfaces for all JSON data
+- `lib/data_load.ts` — JSON fetch utilities
+- `lib/statistics_config.ts` — Table column definitions
 
 ## Tech Stack
 
@@ -64,11 +63,9 @@ Run these from indicated directory. All are safe to auto-run.
 
 ### Naming Convention: `<subject>_<verb>`
 
-| Type | Good | Bad |
-|------|------|-----|
-| Files | `data_download.py`, `stats_calculate.py` | `downloadData.py`, `calculate_stats.py` |
-| Functions | `dataset_fetch()`, `json_save()` | `fetchDataset()`, `saveJson()` |
-| Variables | `brand_stats`, `model_data` | `brandStats`, `data` |
+- **Files**: `data_download.py`, `stats_calculate.py` *(not `downloadData.py`)*
+- **Functions**: `dataset_fetch()`, `json_save()` *(not `fetchDataset()`)*
+- **Variables**: `brand_stats`, `model_data` *(not `brandStats`)*
 
 ### Rules
 
@@ -80,44 +77,44 @@ Run these from indicated directory. All are safe to auto-run.
 
 ## Boundaries
 
-| Always | Ask First | Never |
-|--------|-----------|-------|
-| Preserve RDW column names exactly | Adding new dependencies | Rename/normalize RDW fields |
-| Update `docs/data_mapping.md` when using new fields | Major architecture changes | Commit `.env` or secrets |
-| Run formatter before commit | Modifying CI/CD config | Use mock/invented data |
-| Keep files under 400 LOC | | Print date/time in logs |
+**Always:**
+- Derive frontend values from backend JSON
+- Preserve RDW column names exactly
+- Update `docs/data_mapping.md` when using new fields
+- Run formatter before commit
+- Keep files under 400 LOC
+
+**Ask First:**
+- Adding new dependencies
+- Major architecture changes
+- Modifying CI/CD config
+
+**Never:**
+- Hardcode filter ranges, labels, or thresholds in frontend
+- Rename/normalize RDW fields
+- Commit `.env` or secrets
+- Use mock/invented data
+- Print date/time in logs
 
 ## RDW API
 
 Base URL: `https://opendata.rdw.nl/resource/{id}.json`
 
-| Dataset | ID | Incremental Date Field |
-|---------|----|-----------------------|
-| Gekentekende Voertuigen | `m9d7-ebf2` | `datum_tenaamstelling` |
-| Meldingen Keuringsinstantie | `sgfe-77wx` | `meld_datum_door_keuringsinstantie` |
-| Geconstateerde Gebreken | `a34c-vvps` | `meld_datum_door_keuringsinstantie` |
-| Gebreken | `hx2c-gt7k` | `ingangsdatum_gebrek` |
-| Brandstof | `8ys7-d773` | (none - full download + merge) |
-
-## Feature Flags
-
-GitHub repo variables (Settings > Secrets and variables > Actions > Variables):
-
-| Variable | Description |
-|----------|-------------|
-| `INSPECTION_DAYS_LIMIT` | When set (e.g., `365`), limits Stage 1 to past N days of inspections |
+- **Gekentekende Voertuigen** (`m9d7-ebf2`)
+- **Meldingen Keuringsinstantie** (`sgfe-77wx`)
+- **Geconstateerde Gebreken** (`a34c-vvps`)
+- **Gebreken** (`hx2c-gt7k`)
+- **Brandstof** (`8ys7-d773`)
 
 ## Documentation
 
-| File | Content |
-|------|---------|
-| `docs/ai-rules.md` | This file: AI guidance, architecture, commands |
-| `docs/api-limits.md` | RDW rate limits and pagination |
-| `docs/data_mapping.md` | RDW field names and pipeline output formats |
-| `docs/metrics.md` | Reliability formulas, age brackets, thresholds |
-| `docs/requirements.md` | Project requirements and acceptance criteria |
-| `docs/todo.md` | Task tracking (update before/after work) |
-| `docs/troubleshooting/` | Issue logs: `YYYY-MM-DD_<slug>.md` format |
+- `docs/ai-rules.md` — This file: AI guidance, architecture, commands
+- `docs/api-limits.md` — RDW rate limits and pagination
+- `docs/data_mapping.md` — RDW field names and pipeline output formats
+- `docs/metrics.md` — Reliability formulas, age brackets, thresholds
+- `docs/requirements.md` — Project requirements and acceptance criteria
+- `docs/todo.md` — Task tracking (update before/after work)
+- `docs/troubleshooting/` — Issue logs: `YYYY-MM-DD_<slug>.md` format
 
 Keep docs current. Priority: update docs before any other work.
 
