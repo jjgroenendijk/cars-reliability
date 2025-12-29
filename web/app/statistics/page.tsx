@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { BrandStats, ModelStats, Rankings, PerYearStats, Metadata } from "@/app/lib/types";
 import { ReliabilityTable, type Column } from "@/app/components/reliability_table";
 import { DefectFilterPanel } from "@/app/components/defect_filter_panel";
@@ -98,6 +99,10 @@ export default function StatisticsPage() {
     const [showStdDev, setShowStdDev] = useState(false);
     const [showCatalogPrice, setShowCatalogPrice] = useState(false);
 
+    // Pagination State
+    const [pageSize, setPageSize] = useState(50);
+    const [currentPage, setCurrentPage] = useState(1);
+
     const [brand_stats, setBrandStats] = useState<BrandStats[]>([]);
     const [model_stats, setModelStats] = useState<ModelStats[]>([]);
 
@@ -126,10 +131,69 @@ export default function StatisticsPage() {
 
     const { brand_breakdowns, model_breakdowns, calculate_filtered_defects, mode } = useDefectFilter();
 
+    // URL Sync Hooks
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
     // Derive age bounds from metadata
     const minAge = metadata.age_range?.min ?? 0;
     const maxAge = metadata.age_range?.max ?? 30;
     const isAgeFilterActive = ageRange[0] > minAge || ageRange[1] < maxAge;
+
+    // 1. Hydrate state from URL on mount
+    useEffect(() => {
+        if (!searchParams) return;
+
+        const pView = searchParams.get("view");
+        if (pView === "brands" || pView === "models") setViewMode(pView);
+
+        const pBrands = searchParams.get("brands");
+        if (pBrands) setSelectedBrands(pBrands.split(","));
+
+        const pFuels = searchParams.get("fuels");
+        if (pFuels) setSelectedFuels(pFuels.split(","));
+
+        const pMinPrice = searchParams.get("minPrice");
+        if (pMinPrice) setMinPrice(Number(pMinPrice));
+
+        const pMaxPrice = searchParams.get("maxPrice");
+        if (pMaxPrice) setMaxPrice(Number(pMaxPrice));
+
+        const pAgeMin = searchParams.get("ageMin");
+        const pAgeMax = searchParams.get("ageMax");
+        if (pAgeMin && pAgeMax) setAgeRange([Number(pAgeMin), Number(pAgeMax)]);
+
+        const pFleetMin = searchParams.get("fleetMin");
+        if (pFleetMin) setMinFleetSize(Number(pFleetMin));
+
+        const pFleetMax = searchParams.get("fleetMax");
+        if (pFleetMax) setMaxFleetSize(Number(pFleetMax));
+
+        const pSearch = searchParams.get("q");
+        if (pSearch) setSearchQuery(pSearch);
+
+        const pStdDev = searchParams.get("stdDev");
+        if (pStdDev === "true") setShowStdDev(true);
+
+        const pCatPrice = searchParams.get("catPrice");
+        if (pCatPrice === "true") setShowCatalogPrice(true);
+
+        const pPageSize = searchParams.get("pageSize");
+        if (pPageSize) setPageSize(Number(pPageSize));
+
+        const pPage = searchParams.get("page");
+        if (pPage) setCurrentPage(Number(pPage));
+
+        // Consumer/Commercial defaults are usually static but could be synced too
+    }, [searchParams]);
+
+
+
+    // Reset page on filter change (except page change itself)
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [viewMode, searchQuery, selectedBrands, selectedFuels, minPrice, maxPrice, ageRange, minFleetSize, maxFleetSize, showConsumer, showCommercial]);
 
     useEffect(() => {
         async function data_fetch() {
@@ -196,6 +260,73 @@ export default function StatisticsPage() {
         if (metadata.ranges?.price) return metadata.ranges.price.max;
         return 100000; // Fallback
     }, [metadata]);
+
+    // 2. Sync state to URL
+    const createQueryString = useCallback(
+        (params: Record<string, string | number | boolean | undefined>) => {
+            const newSearchParams = new URLSearchParams(searchParams?.toString());
+
+            for (const [key, value] of Object.entries(params)) {
+                if (value === undefined || value === null || value === "") {
+                    newSearchParams.delete(key);
+                } else {
+                    newSearchParams.set(key, String(value));
+                }
+            }
+            return newSearchParams.toString();
+        },
+        [searchParams]
+    );
+
+    useEffect(() => {
+        // Debounce URL updates slightly to avoid lag on sliders
+        const timer = setTimeout(() => {
+            const params: Record<string, string | number | boolean | undefined> = {};
+
+            if (viewMode !== "brands") params.view = viewMode;
+            if (selectedBrands.length > 0) params.brands = selectedBrands.join(",");
+            if (selectedFuels.length > 0) params.fuels = selectedFuels.join(",");
+
+            if (minPrice > 0) params.minPrice = minPrice;
+            // Only add maxPrice if it's NOT the maximum available (meaning user filtered it down)
+            if (maxPrice < maxPriceAvailable) params.maxPrice = maxPrice;
+
+            // Age Defaults
+            const currentMinAge = metadata.ranges?.age.min ?? defaultMin;
+            const currentMaxAge = metadata.ranges?.age.max ?? defaultMax;
+            if (ageRange[0] !== currentMinAge) params.ageMin = ageRange[0];
+            if (ageRange[1] !== currentMaxAge) params.ageMax = ageRange[1];
+
+            // Fleet Defaults
+            const currentMinFleet = metadata.ranges?.fleet.min ?? 1000;
+            const currentMaxFleet = maxFleetSizeAvailable;
+            if (minFleetSize !== currentMinFleet) params.fleetMin = minFleetSize;
+            if (maxFleetSize !== currentMaxFleet) params.fleetMax = maxFleetSize;
+
+            if (searchQuery) params.q = searchQuery;
+            if (showStdDev) params.stdDev = "true";
+            if (showCatalogPrice) params.catPrice = "true";
+            if (pageSize !== 50) params.pageSize = pageSize;
+            if (currentPage !== 1) params.page = currentPage;
+
+            const queryString = createQueryString(params);
+
+            // If query string is empty, clean up the URL completely
+            if (!queryString) {
+                router.replace(pathname, { scroll: false });
+            } else {
+                router.replace(`${pathname}?${queryString}`, { scroll: false });
+            }
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [
+        viewMode, selectedBrands, selectedFuels, minPrice, maxPrice,
+        ageRange, minFleetSize, maxFleetSize, searchQuery,
+        showStdDev, showCatalogPrice, pageSize, currentPage,
+        pathname, router, createQueryString, defaultMin, defaultMax,
+        maxPriceAvailable, maxFleetSizeAvailable, metadata
+    ]);
 
 
     // -- Main Aggegration & Filtering Pipeline --
@@ -438,7 +569,7 @@ export default function StatisticsPage() {
         // 1. Add Price Column if enabled (Models only)
         if (viewMode === "models" && showCatalogPrice) {
             cols.splice(2, 0, {
-                // @ts-expect-error avg_catalog_price is dynamically added
+                // avg_catalog_price is dynamically added
                 key: "avg_catalog_price",
                 label: "Avg. Price",
                 format: (v: unknown) => (typeof v === 'number') ? `€ ${Number(v).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")}` : "-"
@@ -540,6 +671,8 @@ export default function StatisticsPage() {
                     maxPriceAvailable={maxPriceAvailable}
                     showCatalogPrice={showCatalogPrice}
                     setShowCatalogPrice={setShowCatalogPrice}
+                    pageSize={pageSize}
+                    setPageSize={setPageSize}
                 />
             </div>
 
@@ -553,8 +686,6 @@ export default function StatisticsPage() {
                     </div>
                 ) : processed_data.length > 0 ? (
                     <>
-
-
                         {/* Table */}
                         <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
                             <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
@@ -573,6 +704,9 @@ export default function StatisticsPage() {
                                 defaultSortDirection="asc"
                                 filterKey={viewMode === "brands" ? "merk" : "handelsbenaming"}
                                 hideSearchInput={true}
+                                pageSize={pageSize}
+                                currentPage={currentPage}
+                                onPageChange={setCurrentPage}
                             />
                         </div>
                     </>
