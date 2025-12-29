@@ -8,6 +8,7 @@ import { AlertTriangle, RefreshCw, Info } from "lucide-react";
 import { useFuelData } from "@/app/hooks/useFuelData";
 import { FuelTable } from "@/app/components/fuels/FuelTable";
 import { FuelLegend } from "@/app/components/fuels/FuelLegend";
+import { DEFAULTS } from "@/app/lib/defaults";
 
 export default function FuelsPage() {
   const [viewMode, setViewMode] = useState<"brands" | "models">("brands");
@@ -17,10 +18,12 @@ export default function FuelsPage() {
   const [showConsumer, setShowConsumer] = useState(true);
   const [showCommercial, setShowCommercial] = useState(false);
   const [selectedFuels, setSelectedFuels] = useState<string[]>([]);
-  const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(100000);
-  const [minFleetSize, setMinFleetSize] = useState(100);
+  const [minPrice, setMinPrice] = useState(DEFAULTS.price.min);
+  const [maxPrice, setMaxPrice] = useState(DEFAULTS.price.max);
+  const [minFleetSize, setMinFleetSize] = useState(DEFAULTS.fleet.min);
   const [maxFleetSize, setMaxFleetSize] = useState(5000);
+  const [minInspections, setMinInspections] = useState(0);
+  const [maxInspections, setMaxInspections] = useState(1000000);
   const [showCatalogPrice, setShowCatalogPrice] = useState(false);
 
   const filterState = {
@@ -33,7 +36,9 @@ export default function FuelsPage() {
     selectedBrands,
     searchQuery,
     minFleetSize,
-    maxFleetSize
+    maxFleetSize,
+    minInspections,
+    maxInspections
   };
 
   const {
@@ -48,9 +53,7 @@ export default function FuelsPage() {
     sort_indicator
   } = useFuelData(filterState);
 
-  const defaultMin = 4;
-  const defaultMax = 20;
-  const maxFleetSizeAvailable = 5000;
+
 
   if (error) {
     return (
@@ -109,14 +112,26 @@ export default function FuelsPage() {
           setMinFleetSize={setMinFleetSize}
           maxFleetSize={maxFleetSize}
           setMaxFleetSize={setMaxFleetSize}
-          maxFleetSizeAvailable={maxFleetSizeAvailable}
+          maxFleetSizeAvailable={maxFleetSize}
+          minFleetSizeAvailable={0}
+          minInspections={minInspections}
+          maxInspections={maxInspections}
+          setMinInspections={setMinInspections}
+          setMaxInspections={setMaxInspections}
+          minInspectionsAvailable={0}
+          maxInspectionsAvailable={1000000}
           defectFilterComponent={<DefectFilterPanel />}
           showStdDev={showStdDev}
           setShowStdDev={setShowStdDev}
+          minAgeAvailable={0}
           maxAgeAvailable={30}
-          maxPriceAvailable={100000}
+          minPriceAvailable={DEFAULTS.price.min}
+          maxPriceAvailable={DEFAULTS.price.max}
           showCatalogPrice={showCatalogPrice}
           setShowCatalogPrice={setShowCatalogPrice}
+          pageSize={999999}
+          setPageSize={() => { }}
+          availableFuelTypes={[]}
         />
       </div>
 
@@ -147,9 +162,9 @@ export default function FuelsPage() {
           <button
             onClick={() => {
               setSelectedFuels([]);
-              setMinPrice(0);
-              setMaxPrice(100000);
-              setAgeRange([defaultMin, defaultMax]);
+              setMinPrice(DEFAULTS.price.min);
+              setMaxPrice(DEFAULTS.price.max);
+              setAgeRange([DEFAULTS.age.min, DEFAULTS.age.max]);
               setSearchQuery("");
             }}
             className="mt-6 text-blue-600 dark:text-blue-400 font-medium hover:underline"
