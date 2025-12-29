@@ -20,44 +20,33 @@ export interface ModelStatsFiltered extends ModelStats {
     avg_catalog_price?: number | null;
 }
 
-// -- Columns --
-export const BRAND_COLUMNS_FULL: Column<BrandStatsFiltered>[] = [
-    { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
-    { key: "vehicle_count", label: "Vehicles" },
-    { key: "total_inspections", label: "Inspections" },
-    { key: "avg_defects_per_inspection", label: "Defects / Inspection" },
-    { key: "avg_age_years", label: "Avg Age" },
-    { key: "filtered_defects_per_vehicle_year", label: "Defects / Year" },
-];
+// -- Column Factory --
+export type StatsFiltered = BrandStatsFiltered | ModelStatsFiltered;
 
-export const BRAND_COLUMNS_FILTERED: Column<BrandStatsFiltered>[] = [
-    { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
-    { key: "vehicle_count", label: "Vehicles" },
-    { key: "total_inspections", label: "Inspections" },
-    { key: "avg_defects_per_inspection", label: "Defects / Inspection" },
-    { key: "avg_age_years", label: "Avg Age" },
-    { key: "filtered_defects_per_vehicle_year", label: "Defects / Year" },
-];
+/** Build table columns based on view mode */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function columns_build(viewMode: "brands" | "models"): Column<any>[] {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cols: Column<any>[] = [
+        { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
+    ];
 
-export const MODEL_COLUMNS_FULL: Column<ModelStatsFiltered>[] = [
-    { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
-    { key: "handelsbenaming", label: "Model", format: (v) => pascal_case_format(String(v)) },
-    { key: "vehicle_count", label: "Vehicles" },
-    { key: "total_inspections", label: "Inspections" },
-    { key: "avg_defects_per_inspection", label: "Defects / Inspection" },
-    { key: "avg_age_years", label: "Avg Age" },
-    { key: "filtered_defects_per_vehicle_year", label: "Defects / Year" },
-];
+    if (viewMode === "models") {
+        cols.push({ key: "handelsbenaming", label: "Model", format: (v) => pascal_case_format(String(v)) });
+    }
 
-export const MODEL_COLUMNS_FILTERED: Column<ModelStatsFiltered>[] = [
-    { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
-    { key: "handelsbenaming", label: "Model", format: (v) => pascal_case_format(String(v)) },
-    { key: "vehicle_count", label: "Vehicles" },
-    { key: "total_inspections", label: "Inspections" },
-    { key: "avg_defects_per_inspection", label: "Defects / Inspection" },
-    { key: "avg_age_years", label: "Avg Age" },
-    { key: "filtered_defects_per_vehicle_year", label: "Defects / Year" },
-];
+    cols.push(
+        { key: "vehicle_count", label: "Vehicles" },
+        { key: "total_inspections", label: "Inspections" },
+        { key: "avg_defects_per_inspection", label: "Defects / Inspection" },
+        { key: "avg_age_years", label: "Avg Age" },
+        { key: "filtered_defects_per_vehicle_year", label: "Defects / Year" },
+    );
+
+    return cols;
+}
+
+
 
 /** Aggregate per-year stats for a given age range */
 export function aggregateAgeRange(

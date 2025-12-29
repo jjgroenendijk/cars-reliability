@@ -7,10 +7,7 @@ import FilterBar from "@/app/components/filter_bar";
 import { useDefectFilter } from "@/app/lib/defect_filter_context";
 import { timestamp_format } from "@/app/lib/data_load";
 import { RefreshCw, AlertTriangle, Info, Trophy } from "lucide-react";
-import {
-    BRAND_COLUMNS_FULL, BRAND_COLUMNS_FILTERED,
-    MODEL_COLUMNS_FULL, MODEL_COLUMNS_FILTERED
-} from "@/app/lib/statistics_config";
+import { columns_build } from "@/app/lib/statistics_config";
 import { useStatisticsData } from "@/app/hooks/useStatisticsData";
 import { useStatisticsProcessing } from "@/app/hooks/useStatisticsProcessing";
 import { useUrlSync } from "@/app/hooks/useUrlSync";
@@ -68,9 +65,7 @@ export default function StatisticsPage() {
 
     // Memoize columns
     const tableColumns = useMemo(() => {
-        const baseCols = state.viewMode === "brands"
-            ? (isAgeFilterActive ? BRAND_COLUMNS_FILTERED : BRAND_COLUMNS_FULL)
-            : (isAgeFilterActive ? MODEL_COLUMNS_FILTERED : MODEL_COLUMNS_FULL);
+        const baseCols = columns_build(state.viewMode);
 
         const cols = [...baseCols];
 
@@ -205,7 +200,7 @@ export default function StatisticsPage() {
                                 columns={tableColumns}
                                 defaultSortKey="filtered_defects_per_vehicle_year"
                                 defaultSortDirection="asc"
-                                filterKey={state.viewMode === "brands" ? "merk" : "handelsbenaming"}
+                                filterKey={(state.viewMode === "brands" ? "merk" : "handelsbenaming") as keyof typeof finalData[number]}
                                 hideSearchInput={true}
                                 pageSize={state.pageSize}
                                 currentPage={state.currentPage}

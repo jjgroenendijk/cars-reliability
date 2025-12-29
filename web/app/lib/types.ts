@@ -233,6 +233,7 @@ export interface Metadata {
     fleet: Range;
     age: Range;
   };
+  fuel_types?: string[];
   // Deprecated age_range for backward compat if needed during transition
   age_range?: {
     min: number;
@@ -243,4 +244,5 @@ export interface Metadata {
     commercial_vehicles: number;
   };
 }
+
 

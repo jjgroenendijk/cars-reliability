@@ -68,7 +68,6 @@ const FUEL_DISPLAY_NAMES: Record<string, string> = {
     "LPG": "LPG",
     "Other": "Other",
 };
-const PRICE_STEP = 5000;
 
 export default function FilterBar({
     viewMode,
@@ -289,7 +288,6 @@ export default function FilterBar({
                                     <PriceRangeSlider
                                         minPrice={0}
                                         maxPrice={maxPriceAvailable}
-                                        step={PRICE_STEP}
                                         value={[minPrice, maxPrice]}
                                         onChange={([newMin, newMax]) => {
                                             setMinPrice(newMin);

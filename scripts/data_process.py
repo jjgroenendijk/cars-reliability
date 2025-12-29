@@ -253,6 +253,9 @@ def main() -> None:
     max_fleet_size_model = max(m["vehicle_count"] for m in model_stats) if model_stats else 0
     max_fleet_size = max(max_fleet_size_brand, max_fleet_size_model)
 
+    # Extract unique fuel types from data
+    fuel_types = sorted(inspections_df["primary_fuel"].unique().to_list())
+
     # Build metadata
     metadata = {
         "generated_at": datetime.now().isoformat(),
@@ -266,6 +269,7 @@ def main() -> None:
             "fleet": {"min": 0, "max": max_fleet_size},
             "age": {"min": min_age, "max": max_age},
         },
+        "fuel_types": fuel_types,
         "counts": {
             "brands": len(brand_stats),
             "models": len(model_stats),
@@ -286,6 +290,7 @@ def main() -> None:
         "source": "RDW Open Data",
         "pipeline_stage": 2,
     }
+
 
     # Build defect stats
     print("Building defect statistics...", flush=True)
