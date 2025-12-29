@@ -101,7 +101,10 @@ function StatisticsContent() {
 
     // Memoize columns
     const tableColumns = useMemo(() => {
-        const baseCols = columns_build(state.viewMode);
+        const baseCols = columns_build(state.viewMode, {
+            showStdDev: state.showStdDev,
+            isAgeFilterActive
+        });
 
         const cols = [...baseCols];
 
@@ -113,28 +116,6 @@ function StatisticsContent() {
             });
         }
 
-        if (state.showStdDev) {
-            const insertIndex = cols.findIndex(c => c.key === "avg_defects_per_inspection") + 1;
-
-            if (insertIndex > 0) {
-                cols.splice(insertIndex, 0, {
-                    key: "std_defects_per_inspection",
-                    label: "Std. Dev. (Inspection)",
-                    format: (v: unknown) => (typeof v === 'number') ? Number(v).toFixed(4) : "-"
-                });
-
-                if (!isAgeFilterActive) {
-                    const yearColIndex = cols.findIndex(c => c.key === "filtered_defects_per_vehicle_year");
-                    if (yearColIndex > 0) {
-                        cols.splice(yearColIndex + 1, 0, {
-                            key: "std_defects_per_vehicle_year",
-                            label: "Std. Dev. / Year",
-                            format: (v: unknown) => (typeof v === 'number') ? Number(v).toFixed(4) : "-"
-                        });
-                    }
-                }
-            }
-        }
         return cols;
     }, [state.viewMode, isAgeFilterActive, state.showStdDev, state.showCatalogPrice]);
 

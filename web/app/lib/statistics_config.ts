@@ -23,9 +23,33 @@ export interface ModelStatsFiltered extends ModelStats {
 // -- Column Factory --
 export type StatsFiltered = BrandStatsFiltered | ModelStatsFiltered;
 
+interface ColumnConfig {
+    showStdDev: boolean;
+    isAgeFilterActive: boolean;
+}
+
+/** Format value with optional inline standard deviation */
+function format_with_std_dev(
+    value: unknown,
+    row: StatsFiltered,
+    stdDevKey: keyof StatsFiltered,
+    precision: number = 2
+): string {
+    if (typeof value !== 'number') return "-";
+
+    const mainValue = value.toFixed(precision);
+    const stdDevValue = row[stdDevKey];
+
+    if (typeof stdDevValue === 'number') {
+        return `${mainValue} (σ ${stdDevValue.toFixed(precision)})`;
+    }
+
+    return mainValue;
+}
+
 /** Build table columns based on view mode */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function columns_build(viewMode: "brands" | "models"): Column<any>[] {
+export function columns_build(viewMode: "brands" | "models", config?: ColumnConfig): Column<any>[] {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cols: Column<any>[] = [
         { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
@@ -38,9 +62,21 @@ export function columns_build(viewMode: "brands" | "models"): Column<any>[] {
     cols.push(
         { key: "vehicle_count", label: "Vehicles" },
         { key: "total_inspections", label: "Inspections" },
-        { key: "avg_defects_per_inspection", label: "Defects / Inspection" },
+        config?.showStdDev
+            ? {
+                key: "avg_defects_per_inspection",
+                label: "Defects / Inspection ±SD",
+                format: (v, row) => format_with_std_dev(v, row, 'std_defects_per_inspection', 2)
+            }
+            : { key: "avg_defects_per_inspection", label: "Defects / Inspection" },
         { key: "avg_age_years", label: "Avg Age" },
-        { key: "filtered_defects_per_vehicle_year", label: "Defects / Year" },
+        (config?.showStdDev && !config?.isAgeFilterActive)
+            ? {
+                key: "filtered_defects_per_vehicle_year",
+                label: "Defects / Year ±SD",
+                format: (v, row) => format_with_std_dev(v, row, 'std_defects_per_vehicle_year', 2)
+            }
+            : { key: "filtered_defects_per_vehicle_year", label: "Defects / Year" },
     );
 
     return cols;
