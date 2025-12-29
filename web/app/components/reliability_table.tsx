@@ -149,6 +149,8 @@ export function ReliabilityTable<T extends object>({
     return String(value ?? "-");
   }
 
+
+
   return (
     <div className="w-full">
       {filterKey && !hideSearchInput && (
@@ -165,6 +167,8 @@ export function ReliabilityTable<T extends object>({
           />
         </div>
       )}
+
+
 
       <div className="overflow-x-auto rounded-lg">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 table-auto w-full">
@@ -223,36 +227,7 @@ export function ReliabilityTable<T extends object>({
         </table>
       </div>
 
-      <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400">
-        <div>
-          Showing {pageSize ? Math.min((currentPage - 1) * pageSize + 1, sortedAndFilteredData.length) : 1} to{" "}
-          {pageSize ? Math.min(currentPage * pageSize, sortedAndFilteredData.length) : sortedAndFilteredData.length} of{" "}
-          {sortedAndFilteredData.length} results
-        </div>
 
-        {pageSize && totalPages > 1 && onPageChange && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
-              Previous
-            </button>
-            <div className="flex items-center gap-1">
-              {/* Quick page jumper logic can be added here, for now simple counter */}
-              <span className="px-2">Page {currentPage} of {totalPages}</span>
-            </div>
-            <button
-              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
-              Next
-            </button>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
