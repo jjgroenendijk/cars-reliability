@@ -42,7 +42,7 @@ KNOWN_FUEL_TYPES = {"Benzine", "Diesel", "Elektriciteit", "LPG"}
 VEHICLE_TYPE_CONSUMER = "consumer"
 VEHICLE_TYPE_COMMERCIAL = "commercial"
 
-PRICE_SEGMENT_SIZE = 5000
+
 
 # Primary fuel types for categorization
 PRIMARY_FUEL_TYPES = {

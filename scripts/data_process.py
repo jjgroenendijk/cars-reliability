@@ -21,7 +21,7 @@ from config import (
     THRESHOLD_MODEL,
     VEHICLE_TYPE_CONSUMER,
     VEHICLE_TYPE_COMMERCIAL,
-    PRICE_SEGMENT_SIZE,
+
     PRIMARY_FUEL_TYPES,
 )
 from defect_build import build_defect_breakdowns, build_defect_codes, build_defect_stats
@@ -112,13 +112,7 @@ def compute_inspection_stats(
                     .otherwise(pl.lit("other"))
                     .alias("vehicle_type_group"),
                     # Price Segments (e.g. 5000, 10000, 15000)
-                    (
-                        (pl.col("catalogusprijs").cast(pl.Float64).fill_null(0) / PRICE_SEGMENT_SIZE)
-                        .floor()
-                        * PRICE_SEGMENT_SIZE
-                    )
-                    .cast(pl.Int64)
-                    .alias("price_segment"),
+
                 ]
             )
             .filter(pl.col("vehicle_type_group").is_in(["consumer", "commercial"])),
@@ -253,6 +247,12 @@ def main() -> None:
     total_defects = int(inspections_df["defect_count"].sum())
     total_vehicles = inspections_df["kenteken"].n_unique()
 
+    # Calculate dynamic ranges for frontend filters
+    max_price = int(inspections_df["catalogusprijs"].max())
+    max_fleet_size_brand = max(b["vehicle_count"] for b in brand_stats) if brand_stats else 0
+    max_fleet_size_model = max(m["vehicle_count"] for m in model_stats) if model_stats else 0
+    max_fleet_size = max(max_fleet_size_brand, max_fleet_size_model)
+
     # Build metadata
     metadata = {
         "generated_at": datetime.now().isoformat(),
@@ -261,9 +261,10 @@ def main() -> None:
             "model": THRESHOLD_MODEL,
             "age_bracket": THRESHOLD_AGE_BRACKET,
         },
-        "age_range": {
-            "min": min_age,
-            "max": max_age,
+        "ranges": {
+            "price": {"min": 0, "max": max_price},
+            "fleet": {"min": 0, "max": max_fleet_size},
+            "age": {"min": min_age, "max": max_age},
         },
         "counts": {
             "brands": len(brand_stats),
