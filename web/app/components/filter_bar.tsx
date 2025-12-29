@@ -3,9 +3,7 @@
 import { useState } from "react";
 import { Filter } from "lucide-react";
 import { BrandFilter } from "./brand_filter";
-import { AgeRangeSlider } from "./age_range_slider";
-import { FleetSizeSlider } from "./fleet_size_slider";
-import { PriceRangeSlider } from "./price_range_slider";
+import { RangeSlider } from "./range_slider";
 import type { BrandStats } from "@/app/lib/types";
 
 interface FilterBarProps {
@@ -29,44 +27,56 @@ interface FilterBarProps {
     maxPrice: number;
     setMinPrice: (price: number) => void;
     setMaxPrice: (price: number) => void;
-    // Other filters (Age, Fleet)
+    // Other filters (Age, Fleet, Inspections)
     ageRange: [number, number];
     setAgeRange: (range: [number, number]) => void;
     minFleetSize: number;
     setMinFleetSize: (size: number) => void;
     maxFleetSize: number;
     setMaxFleetSize: (size: number) => void;
-    maxFleetSizeAvailable: number;
+    minInspections: number;
+    setMinInspections: (count: number) => void;
+    maxInspections: number;
+    setMaxInspections: (count: number) => void;
     // Defect Filter Slot
     defectFilterComponent?: React.ReactNode;
     // Standard Deviation Toggle
     showStdDev: boolean;
     setShowStdDev: (show: boolean) => void;
-    // Dynamic Age Max
-    // Dynamic Age
+    // Dynamic ranges from metadata
     minAgeAvailable: number;
     maxAgeAvailable: number;
-    // Dynamic Price
     minPriceAvailable: number;
     maxPriceAvailable: number;
-    // Dynamic Fleet
     minFleetSizeAvailable: number;
+    maxFleetSizeAvailable: number;
+    minInspectionsAvailable: number;
+    maxInspectionsAvailable: number;
     // Catalog Price Toggle
     showCatalogPrice: boolean;
     setShowCatalogPrice: (show: boolean) => void;
     // Pagination
     pageSize: number;
     setPageSize: (size: number) => void;
+    // Available fuel types from metadata
+    availableFuelTypes: string[];
 }
 
-const FUEL_TYPES = ["Petrol", "Diesel", "Hybrid", "EV", "LPG", "Other"];
+// Display labels for Dutch fuel type values from backend
 const FUEL_DISPLAY_NAMES: Record<string, string> = {
-    "Petrol": "Petrol",
+    "Benzine": "Petrol",
     "Diesel": "Diesel",
     "Hybrid": "Hybrid",
-    "EV": "Electric",
+    "Elektriciteit": "Electric",
     "LPG": "LPG",
     "Other": "Other",
+};
+
+// Price formatter for slider labels
+const formatPrice = (p: number) => {
+    if (p >= 1000000) return `€${(p / 1000000).toFixed(1)}M`;
+    if (p >= 1000) return `€${(p / 1000).toFixed(0)}k`;
+    return `€${p}`;
 };
 
 export default function FilterBar({
@@ -93,7 +103,10 @@ export default function FilterBar({
     setMinFleetSize,
     maxFleetSize,
     setMaxFleetSize,
-    maxFleetSizeAvailable,
+    minInspections,
+    setMinInspections,
+    maxInspections,
+    setMaxInspections,
     defectFilterComponent,
     showStdDev,
     setShowStdDev,
@@ -102,10 +115,14 @@ export default function FilterBar({
     minPriceAvailable,
     maxPriceAvailable,
     minFleetSizeAvailable,
+    maxFleetSizeAvailable,
+    minInspectionsAvailable,
+    maxInspectionsAvailable,
     showCatalogPrice,
     setShowCatalogPrice,
     pageSize,
     setPageSize,
+    availableFuelTypes,
 }: FilterBarProps) {
     const [showMoreFilters, setShowMoreFilters] = useState(false);
 
@@ -169,9 +186,6 @@ export default function FilterBar({
 
                     {/* 3. More Filters & Actions */}
                     <div className="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-end">
-
-                        {/* Quick Fuel Toggles (Hidden when expanded filters are shown) */}
-
 
                         <button
                             onClick={() => setShowMoreFilters(!showMoreFilters)}
@@ -265,7 +279,7 @@ export default function FilterBar({
                         <div className="space-y-3">
                             <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Fuel Type</label>
                             <div className="flex flex-col gap-2">
-                                {FUEL_TYPES.map((fuel) => (
+                                {availableFuelTypes.map((fuel) => (
                                     <label key={fuel} className="flex items-center gap-2 cursor-pointer">
                                         <input
                                             type="checkbox"
@@ -285,40 +299,63 @@ export default function FilterBar({
                         {viewMode === "models" && (
                             <div className="space-y-3">
                                 <div className="px-1">
-                                    <PriceRangeSlider
-                                        minPrice={0}
-                                        maxPrice={maxPriceAvailable}
+                                    <RangeSlider
+                                        label="Price Range"
+                                        min={minPriceAvailable}
+                                        max={maxPriceAvailable}
                                         value={[minPrice, maxPrice]}
-                                        onChange={([newMin, newMax]) => {
-                                            setMinPrice(newMin);
-                                            setMaxPrice(newMax);
+                                        onChange={([min, max]) => {
+                                            setMinPrice(min);
+                                            setMaxPrice(max);
                                         }}
+                                        formatValue={formatPrice}
+                                        inputWidth="w-20"
                                     />
                                 </div>
                             </div>
                         )}
 
-                        {/* Age & Fleet */}
+                        {/* Age, Fleet & Inspections */}
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <div className="px-1">
-                                    <AgeRangeSlider
-                                        minAge={0}
-                                        maxAge={maxAgeAvailable}
+                                    <RangeSlider
+                                        label="Vehicle Age"
+                                        min={minAgeAvailable}
+                                        max={maxAgeAvailable}
                                         value={ageRange}
                                         onChange={setAgeRange}
+                                        unit="years"
+                                        inputWidth="w-12"
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <FleetSizeSlider
-                                    minFleetSize={minFleetSize}
-                                    setMinFleetSize={setMinFleetSize}
-                                    maxFleetSize={maxFleetSize}
-                                    setMaxFleetSize={setMaxFleetSize}
-                                    maxAvailable={maxFleetSizeAvailable}
-                                    minAvailable={minFleetSizeAvailable}
+                                <RangeSlider
+                                    label="Fleet Size"
+                                    min={minFleetSizeAvailable}
+                                    max={maxFleetSizeAvailable}
+                                    value={[minFleetSize, maxFleetSize]}
+                                    onChange={([min, max]) => {
+                                        setMinFleetSize(min);
+                                        setMaxFleetSize(max);
+                                    }}
+                                    inputWidth="w-20"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <RangeSlider
+                                    label="Inspections"
+                                    min={minInspectionsAvailable}
+                                    max={maxInspectionsAvailable}
+                                    value={[minInspections, maxInspections]}
+                                    onChange={([min, max]) => {
+                                        setMinInspections(min);
+                                        setMaxInspections(max);
+                                    }}
+                                    inputWidth="w-20"
                                 />
                             </div>
                         </div>
