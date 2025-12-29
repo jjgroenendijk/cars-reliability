@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import type { BrandStats, ModelStats, Rankings, FuelBreakdown } from "@/app/lib/types";
+import { DEFAULTS } from "@/app/lib/defaults";
 
 export interface BrandFuelData {
     merk: string;
@@ -30,6 +31,8 @@ interface FilterState {
     searchQuery: string;
     minFleetSize: number;
     maxFleetSize: number;
+    minInspections: number;
+    maxInspections: number;
 }
 
 function fuel_total_calculate(fb: FuelBreakdown): number {
@@ -56,7 +59,7 @@ export function useFuelData(filterState: FilterState) {
     const [generated_at, setGeneratedAt] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [ageRange, setAgeRange] = useState<[number, number]>([4, 20]);
+    const [ageRange, setAgeRange] = useState<[number, number]>([DEFAULTS.age.min, DEFAULTS.age.max]);
 
     const [sort_key, setSortKey] = useState<SortKey>("electric_pct");
     const [sort_dir, setSortDir] = useState<SortDir>("desc");
@@ -106,7 +109,7 @@ export function useFuelData(filterState: FilterState) {
     const {
         viewMode, showConsumer, showCommercial, selectedFuels,
         minPrice, maxPrice, selectedBrands, searchQuery,
-        minFleetSize, maxFleetSize
+        minFleetSize, maxFleetSize, minInspections, maxInspections
     } = filterState;
 
     // Main Aggregation & Filtering Pipeline
@@ -124,9 +127,15 @@ export function useFuelData(filterState: FilterState) {
         }
 
         filtered = filtered.filter((item) => {
-            const p = item.price_segment;
-            if (maxPrice >= 100000) return p >= minPrice;
+            const p = item.avg_catalog_price ?? 0;
+            if (maxPrice >= DEFAULTS.price.max) return p >= minPrice;
             return p >= minPrice && p <= maxPrice;
+        });
+
+        filtered = filtered.filter((item) => {
+            const insp = item.total_inspections;
+            if (maxInspections >= DEFAULTS.inspections.max) return insp >= minInspections;
+            return insp >= minInspections && insp <= maxInspections;
         });
 
         if (selectedBrands.length > 0) {
