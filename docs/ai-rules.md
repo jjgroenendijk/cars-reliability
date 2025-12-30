@@ -37,7 +37,7 @@ flowchart LR
 **Re-run requirement**: After modifying `data_process.py` or any script that changes JSON output, always re-run the pipeline:
 ```bash
 cd scripts && uv run data_process.py
-cp ../data/processed/*.json ../web/public/data/
+cd ../web && npm run dev  # JSON files sync automatically via predev hook
 ```
 
 ## Project Structure

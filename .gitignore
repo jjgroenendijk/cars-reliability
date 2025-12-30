@@ -21,6 +21,9 @@ data/processed/
 # Generated site data (produced by pipeline)
 site/data/*.json
 
+# Data sync checksum
+web/public/data/.sync-checksum
+
 # IDE
 .vscode/
 .idea/

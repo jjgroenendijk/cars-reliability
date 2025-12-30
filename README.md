@@ -80,8 +80,8 @@ python scripts/data_download.py
 python scripts/data_process.py
 
 # Stage 3: Run website
-cp -r data/processed/* web/public/data/
 cd web && npm run dev
+# Note: JSON files are automatically synced from data/processed/ to web/public/data/
 ```
 
 ## License
