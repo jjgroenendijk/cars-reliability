@@ -35,12 +35,42 @@ test.describe('Homepage', () => {
         await expect(leastReliable.getByTestId('ranking-entry')).toHaveCount(10);
     });
 
+    test('top 10 links navigate to statistics views', async ({ page }) => {
+        await page.getByTestId('ranking-most-reliable-brands')
+            .getByRole('link', { name: 'View all brands' })
+            .click();
+        await expect(page).toHaveURL(/.*statistics/);
+
+        await page.goto('/');
+        await page.getByTestId('ranking-least-reliable-brands')
+            .getByRole('link', { name: 'View all brands' })
+            .click();
+        await expect(page).toHaveURL(/.*statistics/);
+
+        await page.goto('/');
+        await page.getByTestId('ranking-most-reliable-models')
+            .getByRole('link', { name: 'View all models' })
+            .click();
+        await page.waitForURL('**/statistics?view=models');
+        await expect(page).toHaveURL(/\/statistics\?view=models$/);
+
+        await page.goto('/');
+        await page.getByTestId('ranking-least-reliable-models')
+            .getByRole('link', { name: 'View all models' })
+            .click();
+        await page.waitForURL('**/statistics?view=models');
+        await expect(page).toHaveURL(/\/statistics\?view=models$/);
+    });
+
     test('hero links navigate to lookup and statistics', async ({ page }) => {
         await page.getByRole('link', { name: 'License Plate Lookup' }).click();
         await expect(page).toHaveURL(/.*lookup/);
 
         await page.goto('/');
-        await page.getByRole('link', { name: 'View All Brands' }).click();
+        const heroSection = page.locator('section').filter({
+            has: page.getByRole('heading', { level: 1 })
+        });
+        await heroSection.getByRole('link', { name: 'View All Brands', exact: true }).click();
         await expect(page).toHaveURL(/.*statistics/);
     });
 
