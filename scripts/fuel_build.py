@@ -22,7 +22,8 @@ def build_fuel_breakdown(
     """
     # Join brandstof with vehicles to get brand/model info
     # Note: a vehicle can have multiple fuel entries (e.g., hybrid)
-    fuel_with_brand = (
+    # We keep this as a LazyFrame to avoid materializing the huge joined dataset
+    fuel_with_brand_lazy = (
         brandstof_lf.select(["kenteken", "brandstof_omschrijving"])
         .join(
             vehicles_lf.select(
@@ -45,23 +46,30 @@ def build_fuel_breakdown(
             .otherwise(pl.lit("other"))
             .alias("fuel_type")
         )
+    )
+
+    # Base aggregation: count unique vehicles per (brand, model, fuel_type)
+    # This reduces the data volume significantly before materialization
+    base_agg_df = (
+        fuel_with_brand_lazy.group_by(["merk", "handelsbenaming", "fuel_type"])
+        .agg(pl.col("kenteken").n_unique().alias("count"))
         .collect()
     )
 
-    # Aggregate by brand and fuel type (count unique vehicles per fuel type)
+    # Aggregate by brand and fuel type (sum counts from base aggregation)
     brand_fuel_df = (
-        fuel_with_brand.group_by(["merk", "fuel_type"])
-        .agg(pl.col("kenteken").n_unique().alias("count"))
+        base_agg_df.group_by(["merk", "fuel_type"])
+        .agg(pl.col("count").sum().alias("count"))
         .to_dicts()
     )
 
-    # Aggregate by model and fuel type
+    # Aggregate by model and fuel type (sum counts from base aggregation)
     model_fuel_df = (
-        fuel_with_brand.with_columns(
+        base_agg_df.with_columns(
             (pl.col("merk") + "|" + pl.col("handelsbenaming")).alias("model_key")
         )
         .group_by(["model_key", "fuel_type"])
-        .agg(pl.col("kenteken").n_unique().alias("count"))
+        .agg(pl.col("count").sum().alias("count"))
         .to_dicts()
     )
 
