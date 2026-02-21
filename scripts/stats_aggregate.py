@@ -139,7 +139,7 @@ def aggregate_brand_stats(
                 (pl.col("total_defects") / pl.col("total_vehicle_years"))
                 .fill_nan(0.0)
                 .fill_null(0.0)
-                .map_elements(lambda x: 0.0 if x == float("inf") else x, return_dtype=pl.Float64)
+                .pipe(lambda expr: pl.when(expr.is_infinite()).then(0.0).otherwise(expr))
                 .round(6)
                 .alias("defects_per_vehicle_year"),
                 pl.col("total_vehicle_years").round(4),
@@ -217,7 +217,7 @@ def aggregate_model_stats(
                 (pl.col("total_defects") / pl.col("total_vehicle_years"))
                 .fill_nan(0.0)
                 .fill_null(0.0)
-                .map_elements(lambda x: 0.0 if x == float("inf") else x, return_dtype=pl.Float64)
+                .pipe(lambda expr: pl.when(expr.is_infinite()).then(0.0).otherwise(expr))
                 .round(6)
                 .alias("defects_per_vehicle_year"),
                 pl.col("total_vehicle_years").round(4),
