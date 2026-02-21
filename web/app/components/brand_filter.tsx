@@ -64,8 +64,11 @@ export function BrandFilter({
         return sortedBrands.filter(b => b.merk.toLowerCase().includes(lowSearch));
     }, [sortedBrands, searchQuery]);
 
+    // Optimize lookup for selected brands
+    const selectedBrandsSet = useMemo(() => new Set(selectedBrands), [selectedBrands]);
+
     const toggleBrand = (merk: string) => {
-        if (selectedBrands.includes(merk)) {
+        if (selectedBrandsSet.has(merk)) {
             setSelectedBrands(selectedBrands.filter(b => b !== merk));
         } else {
             setSelectedBrands([...selectedBrands, merk]);
@@ -137,7 +140,7 @@ export function BrandFilter({
                         ) : (
                             <div className="space-y-0.5">
                                 {filteredBrands.map((brand) => {
-                                    const isSelected = selectedBrands.includes(brand.merk);
+                                    const isSelected = selectedBrandsSet.has(brand.merk);
                                     return (
                                         <button
                                             key={brand.merk}
