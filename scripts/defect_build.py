@@ -89,7 +89,8 @@ def build_defect_breakdowns(
     )
 
     # Join defects with inspections to get brand/model info
-    defects_with_brand = (
+    # We use LazyFrame for efficiency and pre-aggregate to reduce data size
+    intermediate_agg = (
         defects_lf.select(
             [
                 "kenteken",
@@ -99,9 +100,8 @@ def build_defect_breakdowns(
                 pl.col("aantal_gebreken_geconstateerd").fill_null(1).cast(pl.Int64).alias("count"),
             ]
         )
-        .collect()
         .join(
-            insp_keys,
+            insp_keys.lazy(),
             on=[
                 "kenteken",
                 "meld_datum_door_keuringsinstantie",
@@ -109,18 +109,21 @@ def build_defect_breakdowns(
             ],
             how="inner",
         )
+        .group_by(["merk", "handelsbenaming", "gebrek_identificatie"])
+        .agg(pl.col("count").sum())
+        .collect()
     )
 
     # Aggregate by brand and defect code
     brand_breakdown = (
-        defects_with_brand.group_by(["merk", "gebrek_identificatie"])
+        intermediate_agg.group_by(["merk", "gebrek_identificatie"])
         .agg(pl.col("count").sum())
         .to_dicts()
     )
 
     # Aggregate by model (merk|handelsbenaming) and defect code
     model_breakdown = (
-        defects_with_brand.with_columns(
+        intermediate_agg.with_columns(
             (pl.col("merk") + "|" + pl.col("handelsbenaming")).alias("model_key")
         )
         .group_by(["model_key", "gebrek_identificatie"])
