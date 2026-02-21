@@ -46,44 +46,40 @@ def build_fuel_breakdown(
             .alias("fuel_type")
         )
         .collect()
+        # Deduplicate on (kenteken, fuel_type) so that simple count/len equals n_unique
+        .unique(subset=["kenteken", "fuel_type"])
     )
 
-    # Aggregate by brand and fuel type (count unique vehicles per fuel type)
-    brand_fuel_df = (
-        fuel_with_brand.group_by(["merk", "fuel_type"])
-        .agg(pl.col("kenteken").n_unique().alias("count"))
-        .to_dicts()
+    def _pivot_to_fuel_dict(df: pl.DataFrame, index_col: str) -> dict[str, dict[str, int]]:
+        """Pivot DataFrame and convert to nested dictionary efficiently."""
+        # Use pivot to aggregate counts
+        # Since we deduplicated, 'len' is equivalent to n_unique
+        pivoted = df.pivot(
+            on="fuel_type", index=index_col, values="kenteken", aggregate_function="len"
+        ).fill_null(0)
+
+        # Ensure all expected fuel columns exist
+        expected_fuels = ["Benzine", "Diesel", "Elektriciteit", "LPG", "other"]
+        for fuel in expected_fuels:
+            if fuel not in pivoted.columns:
+                pivoted = pivoted.with_columns(pl.lit(0).alias(fuel))
+
+        # Select columns in fixed order
+        pivoted = pivoted.select([index_col] + expected_fuels)
+
+        # Convert to dict using struct trick for speed (avoids iterating over rows manually)
+        struct_df = pivoted.select([pl.col(index_col), pl.struct(expected_fuels).alias("data")])
+
+        return {row[index_col]: row["data"] for row in struct_df.to_dicts()}
+
+    # Generate brand breakdown
+    brand_fuel = _pivot_to_fuel_dict(fuel_with_brand, "merk")
+
+    # Generate model breakdown
+    # Create model_key column first
+    fuel_with_brand_model = fuel_with_brand.with_columns(
+        (pl.col("merk") + "|" + pl.col("handelsbenaming")).alias("model_key")
     )
-
-    # Aggregate by model and fuel type
-    model_fuel_df = (
-        fuel_with_brand.with_columns(
-            (pl.col("merk") + "|" + pl.col("handelsbenaming")).alias("model_key")
-        )
-        .group_by(["model_key", "fuel_type"])
-        .agg(pl.col("kenteken").n_unique().alias("count"))
-        .to_dicts()
-    )
-
-    # Initialize empty FuelBreakdown for each brand
-    empty_breakdown = {"Benzine": 0, "Diesel": 0, "Elektriciteit": 0, "LPG": 0, "other": 0}
-
-    brand_fuel: dict[str, dict[str, int]] = {}
-    for row in brand_fuel_df:
-        brand = row["merk"]
-        fuel = row["fuel_type"]
-        count = row["count"]
-        if brand not in brand_fuel:
-            brand_fuel[brand] = empty_breakdown.copy()
-        brand_fuel[brand][fuel] = count
-
-    model_fuel: dict[str, dict[str, int]] = {}
-    for row in model_fuel_df:
-        model = row["model_key"]
-        fuel = row["fuel_type"]
-        count = row["count"]
-        if model not in model_fuel:
-            model_fuel[model] = empty_breakdown.copy()
-        model_fuel[model][fuel] = count
+    model_fuel = _pivot_to_fuel_dict(fuel_with_brand_model, "model_key")
 
     return brand_fuel, model_fuel
