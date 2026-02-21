@@ -19,10 +19,6 @@ from config import (
     THRESHOLD_AGE_BRACKET,
     THRESHOLD_BRAND,
     THRESHOLD_MODEL,
-    VEHICLE_TYPE_CONSUMER,
-    VEHICLE_TYPE_COMMERCIAL,
-
-    PRIMARY_FUEL_TYPES,
 )
 from defect_build import build_defect_breakdowns, build_defect_codes, build_defect_stats
 from fuel_build import build_fuel_breakdown
@@ -112,10 +108,8 @@ def compute_inspection_stats(
                     .otherwise(pl.lit("other"))
                     .alias("vehicle_type_group"),
                     # Price Segments (e.g. 5000, 10000, 15000)
-
                 ]
-            )
-            .filter(pl.col("vehicle_type_group").is_in(["consumer", "commercial"])),
+            ).filter(pl.col("vehicle_type_group").is_in(["consumer", "commercial"])),
             on="kenteken",
             how="inner",
         )
@@ -225,19 +219,50 @@ def main() -> None:
         flush=True,
     )
 
+    # Add fuel_breakdown and calculate ranges in single pass for efficiency
+    max_fleet_size_brand = 0
+    min_inspections_brand = float("inf") if brand_stats else 0
+    max_inspections_brand = 0
+    default_fuel = {"Benzine": 0, "Diesel": 0, "Elektriciteit": 0, "LPG": 0, "other": 0}
+
     # Add fuel_breakdown to brand_stats
     for brand in brand_stats:
-        merk = brand["merk"]
-        brand["fuel_breakdown"] = brand_fuel.get(
-            merk, {"Benzine": 0, "Diesel": 0, "Elektriciteit": 0, "LPG": 0, "other": 0}
-        )
+        brand["fuel_breakdown"] = brand_fuel.get(brand["merk"], default_fuel)
+
+        # Track ranges
+        vc = brand["vehicle_count"]
+        ti = brand["total_inspections"]
+        if vc > max_fleet_size_brand:
+            max_fleet_size_brand = vc
+        if ti < min_inspections_brand:
+            min_inspections_brand = ti
+        if ti > max_inspections_brand:
+            max_inspections_brand = ti
+
+    if min_inspections_brand == float("inf"):
+        min_inspections_brand = 0
+
+    max_fleet_size_model = 0
+    min_inspections_model = float("inf") if model_stats else 0
+    max_inspections_model = 0
 
     # Add fuel_breakdown to model_stats
     for model in model_stats:
         model_key = f"{model['merk']}|{model['handelsbenaming']}"
-        model["fuel_breakdown"] = model_fuel.get(
-            model_key, {"Benzine": 0, "Diesel": 0, "Elektriciteit": 0, "LPG": 0, "other": 0}
-        )
+        model["fuel_breakdown"] = model_fuel.get(model_key, default_fuel)
+
+        # Track ranges
+        vc = model["vehicle_count"]
+        ti = model["total_inspections"]
+        if vc > max_fleet_size_model:
+            max_fleet_size_model = vc
+        if ti < min_inspections_model:
+            min_inspections_model = ti
+        if ti > max_inspections_model:
+            max_inspections_model = ti
+
+    if min_inspections_model == float("inf"):
+        min_inspections_model = 0
 
     # Generate rankings
     rankings = generate_rankings(brand_stats, model_stats)
@@ -249,15 +274,7 @@ def main() -> None:
 
     # Calculate dynamic ranges for frontend filters
     max_price = int(inspections_df["catalogusprijs"].max())
-    max_fleet_size_brand = max(b["vehicle_count"] for b in brand_stats) if brand_stats else 0
-    max_fleet_size_model = max(m["vehicle_count"] for m in model_stats) if model_stats else 0
     max_fleet_size = max(max_fleet_size_brand, max_fleet_size_model)
-
-    # Calculate inspections range from stats
-    min_inspections_brand = min(b["total_inspections"] for b in brand_stats) if brand_stats else 0
-    max_inspections_brand = max(b["total_inspections"] for b in brand_stats) if brand_stats else 0
-    min_inspections_model = min(m["total_inspections"] for m in model_stats) if model_stats else 0
-    max_inspections_model = max(m["total_inspections"] for m in model_stats) if model_stats else 0
     min_inspections = min(min_inspections_brand, min_inspections_model)
     max_inspections = max(max_inspections_brand, max_inspections_model)
 
@@ -285,9 +302,7 @@ def main() -> None:
             "vehicles_processed": total_vehicles,
             "total_inspections": total_inspections,
             "total_defects": total_defects,
-            "consumer_vehicles": inspections_df.filter(
-                pl.col("vehicle_type_group") == "consumer"
-            )
+            "consumer_vehicles": inspections_df.filter(pl.col("vehicle_type_group") == "consumer")
             .select(pl.col("kenteken").n_unique())
             .item(),
             "commercial_vehicles": inspections_df.filter(
@@ -299,7 +314,6 @@ def main() -> None:
         "source": "RDW Open Data",
         "pipeline_stage": 2,
     }
-
 
     # Build defect stats
     print("Building defect statistics...", flush=True)
