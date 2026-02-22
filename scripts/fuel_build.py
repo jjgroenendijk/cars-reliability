@@ -48,42 +48,42 @@ def build_fuel_breakdown(
         .collect()
     )
 
-    # Aggregate by brand and fuel type (count unique vehicles per fuel type)
-    brand_fuel_df = (
+    # Initialize empty FuelBreakdown template
+    empty_breakdown = {"Benzine": 0, "Diesel": 0, "Elektriciteit": 0, "LPG": 0, "other": 0}
+
+    # Aggregate by brand using Struct Aggregation
+    brand_fuel_agg = (
         fuel_with_brand.group_by(["merk", "fuel_type"])
         .agg(pl.col("kenteken").n_unique().alias("count"))
-        .to_dicts()
+        .select(pl.col("merk"), pl.struct("fuel_type", "count").alias("entry"))
+        .group_by("merk")
+        .agg(pl.col("entry"))
     )
 
-    # Aggregate by model and fuel type
-    model_fuel_df = (
+    brand_fuel: dict[str, dict[str, int]] = {}
+    for brand, entries in brand_fuel_agg.iter_rows():
+        breakdown = empty_breakdown.copy()
+        for entry in entries:
+            breakdown[entry["fuel_type"]] = entry["count"]
+        brand_fuel[brand] = breakdown
+
+    # Aggregate by model using Struct Aggregation
+    model_fuel_agg = (
         fuel_with_brand.with_columns(
             (pl.col("merk") + "|" + pl.col("handelsbenaming")).alias("model_key")
         )
         .group_by(["model_key", "fuel_type"])
         .agg(pl.col("kenteken").n_unique().alias("count"))
-        .to_dicts()
+        .select(pl.col("model_key"), pl.struct("fuel_type", "count").alias("entry"))
+        .group_by("model_key")
+        .agg(pl.col("entry"))
     )
 
-    # Initialize empty FuelBreakdown for each brand
-    empty_breakdown = {"Benzine": 0, "Diesel": 0, "Elektriciteit": 0, "LPG": 0, "other": 0}
-
-    brand_fuel: dict[str, dict[str, int]] = {}
-    for row in brand_fuel_df:
-        brand = row["merk"]
-        fuel = row["fuel_type"]
-        count = row["count"]
-        if brand not in brand_fuel:
-            brand_fuel[brand] = empty_breakdown.copy()
-        brand_fuel[brand][fuel] = count
-
     model_fuel: dict[str, dict[str, int]] = {}
-    for row in model_fuel_df:
-        model = row["model_key"]
-        fuel = row["fuel_type"]
-        count = row["count"]
-        if model not in model_fuel:
-            model_fuel[model] = empty_breakdown.copy()
-        model_fuel[model][fuel] = count
+    for model, entries in model_fuel_agg.iter_rows():
+        breakdown = empty_breakdown.copy()
+        for entry in entries:
+            breakdown[entry["fuel_type"]] = entry["count"]
+        model_fuel[model] = breakdown
 
     return brand_fuel, model_fuel
