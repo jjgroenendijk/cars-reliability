@@ -140,7 +140,8 @@ export function useFuelData(filterState: FilterState) {
         });
 
         if (selectedBrands.length > 0) {
-            filtered = filtered.filter((item) => selectedBrands.includes(item.merk));
+            const brandSet = new Set(selectedBrands);
+            filtered = filtered.filter((item) => brandSet.has(item.merk));
         }
 
         if (searchQuery) {
