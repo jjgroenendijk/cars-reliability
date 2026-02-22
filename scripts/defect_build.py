@@ -111,41 +111,33 @@ def build_defect_breakdowns(
         )
     )
 
-    # Aggregate by brand and defect code
-    brand_breakdown = (
-        defects_with_brand.group_by(["merk", "gebrek_identificatie"])
-        .agg(pl.col("count").sum())
-        .to_dicts()
-    )
-
-    # Aggregate by model (merk|handelsbenaming) and defect code
-    model_breakdown = (
-        defects_with_brand.with_columns(
-            (pl.col("merk") + "|" + pl.col("handelsbenaming")).alias("model_key")
+    # Aggregate by brand and defect code, then restructure into nested dicts
+    # Optimization: Use struct aggregation to minimize Python loop iterations
+    brand_defects = {
+        row["merk"]: {d["gebrek_identificatie"]: d["count"] for d in row["defects"]}
+        for row in (
+            defects_with_brand.group_by(["merk", "gebrek_identificatie"])
+            .agg(pl.col("count").sum())
+            .group_by("merk")
+            .agg(pl.struct(["gebrek_identificatie", "count"]).alias("defects"))
+            .iter_rows(named=True)
         )
-        .group_by(["model_key", "gebrek_identificatie"])
-        .agg(pl.col("count").sum())
-        .to_dicts()
-    )
+    }
 
-    # Convert to nested dict format: {brand: {defect_code: count}}
-    brand_defects: dict[str, dict[str, int]] = {}
-    for row in brand_breakdown:
-        brand = row["merk"]
-        code = row["gebrek_identificatie"]
-        count = row["count"]
-        if brand not in brand_defects:
-            brand_defects[brand] = {}
-        brand_defects[brand][code] = count
-
-    model_defects: dict[str, dict[str, int]] = {}
-    for row in model_breakdown:
-        model = row["model_key"]
-        code = row["gebrek_identificatie"]
-        count = row["count"]
-        if model not in model_defects:
-            model_defects[model] = {}
-        model_defects[model][code] = count
+    # Aggregate by model (merk|handelsbenaming) and defect code, then restructure
+    model_defects = {
+        row["model_key"]: {d["gebrek_identificatie"]: d["count"] for d in row["defects"]}
+        for row in (
+            defects_with_brand.with_columns(
+                (pl.col("merk") + "|" + pl.col("handelsbenaming")).alias("model_key")
+            )
+            .group_by(["model_key", "gebrek_identificatie"])
+            .agg(pl.col("count").sum())
+            .group_by("model_key")
+            .agg(pl.struct(["gebrek_identificatie", "count"]).alias("defects"))
+            .iter_rows(named=True)
+        )
+    }
 
     return brand_defects, model_defects
 
