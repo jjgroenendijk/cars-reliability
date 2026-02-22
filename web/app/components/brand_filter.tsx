@@ -64,7 +64,7 @@ export function BrandFilter({
         return sortedBrands.filter(b => b.merk.toLowerCase().includes(lowSearch));
     }, [sortedBrands, searchQuery]);
 
-    // Optimize lookup for selected brands
+    // Optimize lookup for selected brands (O(1) access) vs Array.includes (O(N))
     const selectedBrandsSet = useMemo(() => new Set(selectedBrands), [selectedBrands]);
 
     const toggleBrand = (merk: string) => {
