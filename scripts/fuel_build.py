@@ -22,7 +22,7 @@ def build_fuel_breakdown(
     """
     # Join brandstof with vehicles to get brand/model info
     # Note: a vehicle can have multiple fuel entries (e.g., hybrid)
-    fuel_with_brand = (
+    fuel_with_brand_lf = (
         brandstof_lf.select(["kenteken", "brandstof_omschrijving"])
         .join(
             vehicles_lf.select(
@@ -45,28 +45,40 @@ def build_fuel_breakdown(
             .otherwise(pl.lit("other"))
             .alias("fuel_type")
         )
+    )
+
+    # Perform a single pass aggregation:
+    # 1. Group by merk, handelsbenaming (to avoid creating string key on full dataset),
+    #    and fuel_type
+    # 2. Count unique vehicles
+    # This avoids materializing the huge joined table and avoids expensive string ops on large data.
+    raw_stats_df = (
+        fuel_with_brand_lf.group_by(["merk", "handelsbenaming", "fuel_type"])
+        .agg(pl.col("kenteken").n_unique().alias("count"))
         .collect()
     )
 
-    # Aggregate by brand and fuel type (count unique vehicles per fuel type)
-    brand_fuel_df = (
-        fuel_with_brand.group_by(["merk", "fuel_type"])
-        .agg(pl.col("kenteken").n_unique().alias("count"))
-        .to_dicts()
+    # Create model_key on the aggregated result (much smaller)
+    model_fuel_stats_df = raw_stats_df.with_columns(
+        (pl.col("merk") + "|" + pl.col("handelsbenaming")).alias("model_key")
     )
 
-    # Aggregate by model and fuel type
-    model_fuel_df = (
-        fuel_with_brand.with_columns(
-            (pl.col("merk") + "|" + pl.col("handelsbenaming")).alias("model_key")
-        )
-        .group_by(["model_key", "fuel_type"])
-        .agg(pl.col("kenteken").n_unique().alias("count"))
-        .to_dicts()
+    # Aggregate by brand from the materialized stats
+    brand_fuel_df = (
+        model_fuel_stats_df.group_by(["merk", "fuel_type"]).agg(pl.col("count").sum()).to_dicts()
     )
+
+    # Model stats is already aggregated
+    model_fuel_df = model_fuel_stats_df.select(["model_key", "fuel_type", "count"]).to_dicts()
 
     # Initialize empty FuelBreakdown for each brand
-    empty_breakdown = {"Benzine": 0, "Diesel": 0, "Elektriciteit": 0, "LPG": 0, "other": 0}
+    empty_breakdown = {
+        "Benzine": 0,
+        "Diesel": 0,
+        "Elektriciteit": 0,
+        "LPG": 0,
+        "other": 0,
+    }
 
     brand_fuel: dict[str, dict[str, int]] = {}
     for row in brand_fuel_df:
