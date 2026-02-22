@@ -46,6 +46,8 @@ def build_fuel_breakdown(
             .alias("fuel_type")
         )
         .collect()
+        # Deduplicate on (kenteken, fuel_type) so that simple count/len equals n_unique
+        .unique(subset=["kenteken", "fuel_type"])
     )
 
     # Initialize empty FuelBreakdown template
