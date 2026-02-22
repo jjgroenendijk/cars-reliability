@@ -89,7 +89,8 @@ def build_defect_breakdowns(
     )
 
     # Join defects with inspections to get brand/model info
-    defects_with_brand = (
+    # We use LazyFrame for efficiency and pre-aggregate to reduce data size
+    intermediate_agg = (
         defects_lf.select(
             [
                 "kenteken",
@@ -99,9 +100,8 @@ def build_defect_breakdowns(
                 pl.col("aantal_gebreken_geconstateerd").fill_null(1).cast(pl.Int64).alias("count"),
             ]
         )
-        .collect()
         .join(
-            insp_keys,
+            insp_keys.lazy(),
             on=[
                 "kenteken",
                 "meld_datum_door_keuringsinstantie",
@@ -109,39 +109,46 @@ def build_defect_breakdowns(
             ],
             how="inner",
         )
+        .group_by(["merk", "handelsbenaming", "gebrek_identificatie"])
+        .agg(pl.col("count").sum())
+        .collect()
     )
 
     # Aggregate by brand and defect code
-    brand_breakdown = defects_with_brand.group_by(["merk", "gebrek_identificatie"]).agg(
-        pl.col("count").sum()
+    brand_breakdown = (
+        intermediate_agg.group_by(["merk", "gebrek_identificatie"])
+        .agg(pl.col("count").sum())
+        .to_dicts()
     )
 
     # Aggregate by model (merk|handelsbenaming) and defect code
     model_breakdown = (
-        defects_with_brand.with_columns(
+        intermediate_agg.with_columns(
             (pl.col("merk") + "|" + pl.col("handelsbenaming")).alias("model_key")
         )
         .group_by(["model_key", "gebrek_identificatie"])
         .agg(pl.col("count").sum())
+        .to_dicts()
     )
 
     # Convert to nested dict format: {brand: {defect_code: count}}
-    # Use struct aggregation to group defects per brand/model into a single row per entity
-
     brand_defects: dict[str, dict[str, int]] = {}
-    brand_structs = brand_breakdown.group_by("merk").agg(
-        pl.struct(["gebrek_identificatie", "count"]).alias("data")
-    )
-    for brand, data in brand_structs.iter_rows():
-        # data is a list of dicts: [{'gebrek_identificatie': 'code', 'count': N}, ...]
-        brand_defects[brand] = {item["gebrek_identificatie"]: item["count"] for item in data}  # type: ignore
+    for row in brand_breakdown:
+        brand = row["merk"]
+        code = row["gebrek_identificatie"]
+        count = row["count"]
+        if brand not in brand_defects:
+            brand_defects[brand] = {}
+        brand_defects[brand][code] = count
 
     model_defects: dict[str, dict[str, int]] = {}
-    model_structs = model_breakdown.group_by("model_key").agg(
-        pl.struct(["gebrek_identificatie", "count"]).alias("data")
-    )
-    for model, data in model_structs.iter_rows():
-        model_defects[model] = {item["gebrek_identificatie"]: item["count"] for item in data}  # type: ignore
+    for row in model_breakdown:
+        model = row["model_key"]
+        code = row["gebrek_identificatie"]
+        count = row["count"]
+        if model not in model_defects:
+            model_defects[model] = {}
+        model_defects[model][code] = count
 
     return brand_defects, model_defects
 
