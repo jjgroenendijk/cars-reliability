@@ -56,6 +56,8 @@ def build_fuel_breakdown(
         fuel_with_brand_lf.group_by(["merk", "handelsbenaming", "fuel_type"])
         .agg(pl.col("kenteken").n_unique().alias("count"))
         .collect()
+        # Deduplicate on (kenteken, fuel_type) so that simple count/len equals n_unique
+        .unique(subset=["kenteken", "fuel_type"])
     )
 
     # Create model_key on the aggregated result (much smaller)
