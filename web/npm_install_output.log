@@ -1,0 +1,22 @@
+npm warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, lstat '/app/web/node_modules/next/dist/lib/metadata'
+npm warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, lstat '/app/web/node_modules/es-toolkit/dist/compat'
+
+added 408 packages, and audited 409 packages in 1m
+
+147 packages are looking for funding
+  run `npm fund` for details
+
+16 vulnerabilities (1 moderate, 14 high, 1 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+npm notice
+npm notice New minor version of npm available! 11.7.0 -> 11.10.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.10.1
+npm notice To update run: npm install -g npm@11.10.1
+npm notice

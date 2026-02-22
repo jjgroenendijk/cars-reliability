@@ -108,7 +108,6 @@ def build_defect_breakdowns(
     )
 
     # 3. Optimized Aggregation using Structs + Collect All
-
     # Brand Breakdown
     brand_agg_lazy = (
         defects_with_brand_lf.group_by(["merk", "gebrek_identificatie"])
