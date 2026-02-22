@@ -2,7 +2,11 @@ import random
 import time
 
 import polars as pl
-from scripts.defect_build import build_defect_breakdowns
+
+try:
+    from defect_build import build_defect_breakdowns
+except ImportError:
+    from scripts.defect_build import build_defect_breakdowns
 
 
 def run_benchmark():
