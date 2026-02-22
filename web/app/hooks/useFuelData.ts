@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useDeferredValue } from "react";
 import type { BrandStats, ModelStats, Rankings, FuelBreakdown, Metadata } from "@/app/lib/types";
 import { DEFAULTS } from "@/app/lib/defaults";
 
@@ -60,6 +60,7 @@ export function useFuelData(filterState: FilterState) {
 
     const [sort_key, setSortKey] = useState<SortKey>("electric_pct");
     const [sort_dir, setSortDir] = useState<SortDir>("desc");
+    const deferred_filter_state = useDeferredValue(filterState);
 
     useEffect(() => {
         async function data_fetch() {
@@ -109,7 +110,7 @@ export function useFuelData(filterState: FilterState) {
         viewMode, showConsumer, showCommercial, selectedFuels,
         minPrice, maxPrice, selectedBrands, searchQuery,
         minFleetSize, maxFleetSize, minInspections, maxInspections
-    } = filterState;
+    } = deferred_filter_state;
 
     const max_inspections_available = metadata?.ranges?.inspections?.max ?? DEFAULTS.inspections.max;
 
