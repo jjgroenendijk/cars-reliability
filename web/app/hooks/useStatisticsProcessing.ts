@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useDeferredValue, useMemo } from "react";
 import type { BrandStats, ModelStats, Metadata, PerYearStats } from "@/app/lib/types";
 import { aggregateAgeRange, type BrandStatsFiltered, type ModelStatsFiltered } from "@/app/lib/statistics_config";
 
@@ -40,17 +40,18 @@ export function useStatisticsProcessing({
     filterState,
     defectFilter
 }: UseStatisticsProcessingProps) {
+    const deferred_filter_state = useDeferredValue(filterState);
 
     // Derived states
     const minAge = metadata.age_range?.min ?? 0;
     const maxAge = metadata.age_range?.max ?? 30;
-    const isAgeFilterActive = filterState.ageRange[0] > minAge || filterState.ageRange[1] < maxAge;
+    const isAgeFilterActive = deferred_filter_state.ageRange[0] > minAge || deferred_filter_state.ageRange[1] < maxAge;
 
     const {
         viewMode, showConsumer, showCommercial, selectedFuels,
         minPrice, maxPrice, selectedBrands, searchQuery,
         ageRange, minFleetSize, maxFleetSize, minInspections, maxInspections, maxPriceAvailable, maxInspectionsAvailable
-    } = filterState;
+    } = deferred_filter_state;
 
     const { brand_breakdowns, model_breakdowns, calculate_filtered_defects, mode } = defectFilter;
 
