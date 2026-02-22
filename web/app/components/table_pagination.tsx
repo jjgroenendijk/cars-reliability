@@ -36,6 +36,7 @@ export function TablePagination({
                     disabled={currentPage === 1}
                     className="p-1.5 rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
                     title="First page"
+                    aria-label="Go to first page"
                 >
                     <ChevronsLeft className="w-4 h-4" />
                 </button>
@@ -44,6 +45,7 @@ export function TablePagination({
                     disabled={currentPage === 1}
                     className="p-1.5 rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
                     title="Previous page"
+                    aria-label="Go to previous page"
                 >
                     <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -56,6 +58,7 @@ export function TablePagination({
                     disabled={currentPage === totalPages}
                     className="p-1.5 rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
                     title="Next page"
+                    aria-label="Go to next page"
                 >
                     <ChevronRight className="w-4 h-4" />
                 </button>
@@ -64,6 +67,7 @@ export function TablePagination({
                     disabled={currentPage === totalPages}
                     className="p-1.5 rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
                     title="Last page"
+                    aria-label="Go to last page"
                 >
                     <ChevronsRight className="w-4 h-4" />
                 </button>
