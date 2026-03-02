@@ -27,8 +27,8 @@ def compute_per_year_stats(
         Tuple of (per_year_df, min_age, max_age)
     """
     # Get min/max ages from the data
-    min_age = int(df["age_at_inspection"].min())
-    max_age = int(df["age_at_inspection"].max())
+    min_age = int(float(df["age_at_inspection"].min() or 0))  # type: ignore
+    max_age = int(float(df["age_at_inspection"].max() or 0))  # type: ignore
 
     # Group by (group_cols + age) and aggregate
     per_year_df = (
@@ -63,7 +63,7 @@ def _build_per_year_lookup(
     """
     lookup: dict[str, dict[str, dict]] = {}
 
-    for row in per_year_df.to_dicts():
+    for row in per_year_df.iter_rows(named=True):
         # Build group key
         if len(group_cols) == 1:
             group_key = row[group_cols[0]]
