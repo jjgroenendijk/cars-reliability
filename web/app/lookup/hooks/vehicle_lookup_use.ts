@@ -117,19 +117,21 @@ export function useVehicleLookup(license_plate: string) {
           batches.push(unique_defect_ids.slice(i, i + 50));
         }
 
-        for (const batch of batches) {
-          const query = batch.map((id) => `gebrek_identificatie='${id}'`).join(" OR ");
-          const desc_response = await fetch(
-            `${ENDPOINTS.defect_descriptions}?$where=${encodeURIComponent(query)}`
-          );
+        await Promise.all(
+          batches.map(async (batch) => {
+            const query = batch.map((id) => `gebrek_identificatie='${id}'`).join(" OR ");
+            const desc_response = await fetch(
+              `${ENDPOINTS.defect_descriptions}?$where=${encodeURIComponent(query)}`
+            );
 
-          if (desc_response.ok) {
-            const descriptions: RdwDefectDescription[] = await desc_response.json();
-            descriptions.forEach((desc) => {
-              defect_descriptions.set(desc.gebrek_identificatie, desc.gebrek_omschrijving);
-            });
-          }
-        }
+            if (desc_response.ok) {
+              const descriptions: RdwDefectDescription[] = await desc_response.json();
+              descriptions.forEach((desc) => {
+                defect_descriptions.set(desc.gebrek_identificatie, desc.gebrek_omschrijving);
+              });
+            }
+          })
+        );
       }
 
       setState({
