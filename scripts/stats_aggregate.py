@@ -63,24 +63,36 @@ def _build_per_year_lookup(
     """
     lookup: dict[str, dict[str, dict]] = {}
 
-    for row in per_year_df.iter_rows(named=True):
-        # Build group key
-        if len(group_cols) == 1:
-            group_key = row[group_cols[0]]
-        else:
-            group_key = "|".join(str(row[c]) for c in group_cols)
+    if len(group_cols) > 1:
+        # Avoid row-by-row string joining
+        df_keys = per_year_df.select(
+            pl.concat_str([pl.col(c) for c in group_cols], separator="|").alias("group_key"),
+            pl.col("age_at_inspection").cast(pl.Int32).cast(pl.String).alias("age"),
+            "vehicle_count",
+            "total_inspections",
+            "total_defects",
+            "avg_defects_per_inspection"
+        )
+    else:
+        df_keys = per_year_df.select(
+            pl.col(group_cols[0]).cast(pl.String).alias("group_key"),
+            pl.col("age_at_inspection").cast(pl.Int32).cast(pl.String).alias("age"),
+            "vehicle_count",
+            "total_inspections",
+            "total_defects",
+            "avg_defects_per_inspection"
+        )
 
-        age = str(int(row["age_at_inspection"]))
-        stats = {
-            "vehicle_count": row["vehicle_count"],
-            "total_inspections": row["total_inspections"],
-            "total_defects": row["total_defects"],
-            "avg_defects_per_inspection": row["avg_defects_per_inspection"],
-        }
-
+    for group_key, age, vc, ti, td, avg_d in df_keys.iter_rows():
         if group_key not in lookup:
             lookup[group_key] = {}
-        lookup[group_key][age] = stats
+
+        lookup[group_key][age] = {
+            "vehicle_count": vc,
+            "total_inspections": ti,
+            "total_defects": td,
+            "avg_defects_per_inspection": avg_d,
+        }
 
     return lookup
 
