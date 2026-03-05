@@ -197,6 +197,8 @@ export function DefectTable({
                                                     : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                                                     }`}
                                                 title={defect.computed_is_reliability ? "Marked as reliability indicator" : "Marked as wear-and-tear"}
+                                                aria-pressed={defect.computed_is_reliability}
+                                                aria-label={`Toggle reliability for ${defect.defect_code}`}
                                             >
                                                 {defect.computed_is_reliability && (
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
