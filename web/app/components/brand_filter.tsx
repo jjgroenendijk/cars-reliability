@@ -109,6 +109,7 @@ export function BrandFilter({
                             }
                         }}
                         className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-full transition-colors"
+                        aria-label="Clear search or selection"
                     >
                         <X className="w-3.5 h-3.5 text-zinc-500" />
                     </button>
