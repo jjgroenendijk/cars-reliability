@@ -118,7 +118,7 @@ Base URL: `https://opendata.rdw.nl/resource/{id}.json`
 - `docs/ai-rules.md` — This file: AI guidance, architecture, commands
 - `docs/api-limits.md` — RDW rate limits and pagination
 - `docs/data_mapping.md` — RDW field names and pipeline output formats
-- `docs/metrics.md` — Reliability formulas, age brackets, thresholds
+- `docs/metrics.md` — Defect metrics, age brackets, thresholds
 - `docs/requirements.md` — Project requirements and acceptance criteria
 - `docs/todo.md` — Task tracking (update before/after work)
 - `docs/troubleshooting/` — Issue logs: `YYYY-MM-DD_<slug>.md` format

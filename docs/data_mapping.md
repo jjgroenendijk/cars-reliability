@@ -1,6 +1,6 @@
 # Data Mapping
 
-> RDW field names and their meanings for the Dutch Car Reliability project.
+> RDW field names and their meanings for the APK Statistieken project.
 
 Verification: columns verified against live RDW metadata (`https://opendata.rdw.nl/api/views/<dataset-id>`) on 2025-12-10 using a Python fetch (`urllib.request` with `$limit=metadata`). If a new field appears in RDW, update this file immediately.
 

@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://apkstat.nl"),
   title: {
     default: "APK Statistieken - Netherlands APK Inspection Data Analysis",
     template: "%s | APK Statistieken",

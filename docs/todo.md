@@ -15,3 +15,4 @@
 - [x] Start developing frontend tests (homepage coverage and key flows).
 - [x] Fix homepage top 10 links to statistics views and add e2e coverage for those buttons.
 - [x] Stabilize homepage and statistics e2e selectors for navigation and filters.
+- [ ] Rebranded website to apkstat.nl with APK Statistieken focus.
