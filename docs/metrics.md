@@ -1,10 +1,10 @@
-# Reliability Metrics
+# APK Defect Metrics
 
 > **Last Updated:** 2025-03-09
 
 ## Overview
 
-This document describes how reliability metrics are calculated from RDW APK inspection data.
+This document describes how defect metrics are calculated from RDW APK inspection data.
 
 ---
 
@@ -12,7 +12,7 @@ This document describes how reliability metrics are calculated from RDW APK insp
 
 ### Defects per Vehicle-Year - Primary Ranking Metric
 
-The main reliability indicator used for rankings. This metric normalizes defects by the actual time vehicles were under inspection, avoiding cadence bias from varying inspection frequencies.
+The main defect indicator used for rankings. This metric normalizes defects by the actual time vehicles were under inspection, avoiding cadence bias from varying inspection frequencies.
 
 **Formula:**
 
@@ -32,12 +32,12 @@ inspection_coverage_years = max((vervaldatum_keuring - meld_datum_door_keuringsi
 
 The previous formula `defects_per_year = avg_defects_per_inspection / avg_age_years` created cadence bias:
 - APK inspections occur at different frequencies by age (first at 4 years, then biennial until 8, then annual)
-- Brands with newer fleets appeared less reliable because the denominator (avg_age) was smaller
+- Brands with newer fleets appeared to have more defects because the denominator (avg_age) was smaller
 - Vehicle-years accounts for actual inspection opportunity, not just calendar age
 
 **Interpretation:**
 
-- Lower values = better reliability per year of service
+- Lower values = fewer defects per year of service
 - Accounts for inspection cadence differences across vehicle ages
 - Fair comparison between brands with different age profiles and inspection histories
 - This is the primary metric used for ranking brands and models
@@ -49,7 +49,7 @@ The previous formula `defects_per_year = avg_defects_per_inspection / avg_age_ye
 | Toyota | 15,000 | 60,000 | 0.250 |
 | Tesla | 4,500 | 12,000 | 0.375 |
 
-Toyota shows better reliability normalized by actual inspection time, even though both brands may have similar avg_defects_per_inspection.
+Toyota shows fewer defects normalized by actual inspection time, even though both brands may have similar avg_defects_per_inspection.
 
 ---
 
@@ -103,7 +103,7 @@ Both metrics include standard deviation to indicate statistical uncertainty:
 
 ## Age-Bracket Analysis
 
-Users can filter by vehicle age to compare reliability within similar age groups.
+Users can filter by vehicle age to compare defect rates within similar age groups.
 
 ### Default Age Brackets
 
@@ -256,11 +256,11 @@ The following inspections are filtered out before analysis:
 
 ## Ranking Methodology
 
-### Top 10 Most Reliable
+### Top 10 Fewest Defects
 
 Sorted by `defects_per_vehicle_year` ascending (lowest = best).
 
-### Top 10 Least Reliable
+### Top 10 Most Defects
 
 Sorted by `defects_per_vehicle_year` descending (highest = worst).
 
@@ -329,10 +329,10 @@ Top defects for VOLKSWAGEN GOLF:
 
 ### Trend Analysis
 
-Year-over-year reliability changes:
+Year-over-year defect rate changes:
 
 ```text
-TOYOTA reliability trend:
+TOYOTA defect trend:
 2020: 0.25 defects/inspection
 2021: 0.23 defects/inspection
 2022: 0.22 defects/inspection
