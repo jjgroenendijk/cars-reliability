@@ -96,7 +96,7 @@ export function useStatisticsProcessing({
                 // Deep clone per_year_stats to enable merging
                 aggregatedMap.set(key, {
                     ...item,
-                    per_year_stats: JSON.parse(JSON.stringify(item.per_year_stats))
+                    per_year_stats: structuredClone(item.per_year_stats)
                 });
             } else {
                 const existing = aggregatedMap.get(key);
