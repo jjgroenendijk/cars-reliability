@@ -1,6 +1,6 @@
 # Reliability Metrics
 
-> **Last Updated:** 2025-12-10
+> **Last Updated:** 2025-03-09
 
 ## Overview
 
@@ -173,6 +173,66 @@ All defects are counted equally (weight 1.0).
 
 > [!NOTE]
 > Severity weighting was removed because RDW does not publish defect severity classifications in their open data (`a34c-vvps` or `hx2c-gt7k`). The previous heuristic approach (inferring severity from defect code patterns) was undocumented and potentially inaccurate.
+
+---
+
+## Defect Classification
+
+### Overview
+
+The reliability metric excludes wear-and-tear defects that are normal maintenance items. This follows established industry methodology used by Consumer Reports, JD Power, ADAC/TUV, and ANWB: reliability measures design and manufacturing quality, not routine maintenance compliance.
+
+### Classification Principle
+
+- **Reliability defects** indicate a vehicle's inherent design or manufacturing quality — problems that should not occur if the vehicle was well-engineered.
+- **Wear-and-tear defects** represent predictable deterioration from normal use that every vehicle experiences regardless of brand or build quality.
+
+By excluding wear-and-tear, the metric surfaces genuine quality differences between manufacturers rather than differences in owner maintenance habits.
+
+### Categories Excluded from Reliability (Wear-and-Tear)
+
+| Category | Examples | Rationale |
+|----------|----------|-----------|
+| **Tires** | Tread depth, pressure, damage, mounting | Consumables replaced on schedule |
+| **Lighting/Bulbs** | Bulb failures, headlight alignment | Bulbs are consumables with limited lifespan |
+| **Wipers/Washers** | Wiper blade wear, washer system | Replaced every 1-2 years as routine maintenance |
+| **Brake Wear** | Brake pad and disc wear (NOT system failures) | Consumable friction materials with predictable lifespan |
+| **Shock Absorbers** | Absorber wear, leaking | Typical 80k-150k km lifespan; expected replacement item |
+| **Exhaust Wear** | Exhaust corrosion, mounting deterioration | Expected 5-8 year lifespan in European climate |
+| **Administrative** | Documentation and inspection process codes | Not vehicle defects; purely procedural |
+
+> [!IMPORTANT]
+> Brake **wear** (pads and discs) is excluded, but brake **system** failures (line leaks, ABS faults, seized calipers, master cylinder issues) remain classified as reliability defects.
+
+### What Remains as Reliability
+
+The following defect categories are counted toward the reliability score:
+
+- **Structural/rust damage** — including AC3 advisory code for rust (see note below)
+- **Engine, transmission, and powertrain failures**
+- **Electrical system failures**
+- **Brake system failures** — line leaks, ABS, calipers, master cylinder
+- **Steering system failures**
+- **Suspension structural failures** — springs, ball joints, wheel bearings
+- **Safety systems** — airbag warnings, stability control, eCall
+- **Fuel system leaks**
+- **Emission control system failures** — DPF, catalytic converter, EGR
+
+### AC3 Advisory Code (Rust)
+
+AC3 (`Roestschade`) is classified as a **reliability indicator**, not wear-and-tear. Although rust develops over time, rust resistance is a key quality differentiator between manufacturers. Vehicle design choices (material selection, galvanization, coating quality, drainage engineering) directly determine whether a vehicle develops structural rust. Including AC3 in the reliability metric rewards manufacturers that invest in corrosion protection.
+
+### Filter Modes
+
+The frontend supports three defect filter modes:
+
+| Mode | Behavior | Use Case |
+|------|----------|----------|
+| `all` | Count all defects without filtering | Raw defect rate analysis |
+| `reliability` | Exclude wear-and-tear codes | Default for rankings; measures design/manufacturing quality |
+| `custom` | User-selected defect codes | Ad-hoc investigation of specific defect categories |
+
+The `reliability` mode is the default for all ranking pages. Users can switch to `all` or `custom` via the filter controls.
 
 ### Data Sanity Checks
 
