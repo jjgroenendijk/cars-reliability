@@ -16,25 +16,25 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Dutch Car Reliability - Netherlands Vehicle Reliability Analysis",
-    template: "%s | Dutch Car Reliability",
+    default: "APK Statistieken - Netherlands APK Inspection Data Analysis",
+    template: "%s | APK Statistieken",
   },
   description:
-    "Analysis of APK inspection data from RDW Open Data to determine the reliability of car brands and models in the Netherlands.",
+    "Explore official RDW APK inspection data to analyze defect rates of car brands and models in the Netherlands.",
   keywords: [
-    "car reliability",
     "APK inspection",
+    "APK defects",
     "RDW",
     "Dutch cars",
-    "car statistics",
-    "most reliable car",
+    "car defect rates",
+    "APK statistics",
     "license plate lookup",
   ],
-  authors: [{ name: "Dutch Car Reliability" }],
+  authors: [{ name: "APK Statistieken" }],
   openGraph: {
-    title: "Dutch Car Reliability",
+    title: "APK Statistieken",
     description:
-      "Discover the most and least reliable car brands and models in the Netherlands based on APK inspection data.",
+      "Explore APK inspection defect data for car brands and models in the Netherlands based on official RDW data.",
     type: "website",
     locale: "en_US",
   },

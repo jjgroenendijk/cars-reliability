@@ -125,8 +125,13 @@ Base URL: `https://opendata.rdw.nl/resource/{id}.json`
 
 Keep docs current. Priority: update docs before any other work.
 
+## Git Workflow
+
+**Always push changes to a new PR.** Every code change must be submitted via a pull request — never commit directly to `main`.
+
 ## Verification Workflow
 
 1. Run changes locally
-2. Commit and push
-3. Watch GitHub Actions until green
+2. Commit and push to a feature branch
+3. Open a pull request
+4. Watch GitHub Actions until green

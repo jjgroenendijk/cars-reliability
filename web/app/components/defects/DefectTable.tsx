@@ -63,10 +63,10 @@ export function DefectTable({
                     <div className="flex items-start justify-between gap-4">
                         <div>
                             <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
-                                Customize Reliability Indicators
+                                Customize Defect Categories
                             </h3>
                             <p className="text-sm text-blue-700 dark:text-blue-300">
-                                Toggle defects in the table below to change whether they count as reliability issues or wear-and-tear.
+                                Toggle defects in the table below to change whether they count as build quality defects or wear-and-tear.
                                 Your selections are saved locally.
                             </p>
                         </div>
@@ -104,7 +104,7 @@ export function DefectTable({
                             : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                             }`}
                     >
-                        Reliability Only
+                        Build Quality Only
                     </button>
                     <button
                         onClick={() => setCategoryFilter("all")}
@@ -121,7 +121,7 @@ export function DefectTable({
             {/* Explanation */}
             {category_filter === "reliability" && (
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Showing only reliability-related defects. Wear-and-tear items like tires, lights, and wipers are hidden.
+                    Showing only build quality defects. Wear-and-tear items like tires, lights, and wipers are hidden.
                 </p>
             )}
 
@@ -132,7 +132,7 @@ export function DefectTable({
                         <tr className="border-b border-gray-200 dark:border-gray-700">
                             {show_config && (
                                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
-                                    Reliability
+                                    Category
                                 </th>
                             )}
                             <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
@@ -196,7 +196,7 @@ export function DefectTable({
                                                     ? "bg-blue-600 border-blue-600 text-white"
                                                     : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                                                     }`}
-                                                title={defect.computed_is_reliability ? "Marked as reliability indicator" : "Marked as wear-and-tear"}
+                                                title={defect.computed_is_reliability ? "Categorized as build quality defect" : "Categorized as wear-and-tear"}
                                             >
                                                 {defect.computed_is_reliability && (
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

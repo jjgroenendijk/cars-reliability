@@ -40,7 +40,7 @@ export default function HomePage() {
     return (
       <div className="flex flex-col justify-center items-center min-h-[400px] gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <div className="text-gray-600 dark:text-gray-400 font-medium">Loading reliability data...</div>
+        <div className="text-gray-600 dark:text-gray-400 font-medium">Loading defect data...</div>
       </div>
     );
   }
@@ -50,11 +50,11 @@ export default function HomePage() {
       <div className="max-w-4xl mx-auto py-12">
         <section className="mb-12 text-center">
           <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight">
-            Dutch Car Reliability
+            APK Statistieken
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Discover the most and least reliable car brands and models in the Netherlands,
-            based on APK inspection data from the RDW.
+            Explore APK inspection defect data for car brands and models in the Netherlands,
+            based on official RDW data.
           </p>
           <div className="inline-flex items-center gap-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-6 max-w-lg mx-auto">
             <AlertCircle className="h-6 w-6 text-yellow-600 dark:text-yellow-500 flex-shrink-0" />
@@ -74,11 +74,11 @@ export default function HomePage() {
       <section className="mb-12 text-center">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight">
-            Dutch Car <span className="text-blue-600 dark:text-blue-400">Reliability</span>
+            APK <span className="text-blue-600 dark:text-blue-400">Statistieken</span>
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-10 leading-relaxed">
-            Data-driven insights into vehicle reliability based on millions of official RDW APK inspections.
-            Find out which cars pass with flying colors and which ones struggle.
+            Explore official RDW APK inspection data covering millions of inspections.
+            See which car brands and models have the fewest or most reported defects.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -103,9 +103,9 @@ export default function HomePage() {
 
       {/* Top 10 Rankings Grid */}
       <div className="grid gap-8 md:grid-cols-2 lg:gap-12 mb-16">
-        {/* Most Reliable Brands */}
+        {/* Fewest Defects by Brand */}
         <RankingCard
-          title="Most Reliable Brands"
+          title="Fewest Defects by Brand"
           subtitle="Lowest defects per year"
           entries={rankings.most_reliable_brands}
           link_href="/statistics"
@@ -114,9 +114,9 @@ export default function HomePage() {
           test_id="ranking-most-reliable-brands"
         />
 
-        {/* Least Reliable Brands */}
+        {/* Most Defects by Brand */}
         <RankingCard
-          title="Least Reliable Brands"
+          title="Most Defects by Brand"
           subtitle="Highest defects per year"
           entries={rankings.least_reliable_brands}
           link_href="/statistics"
@@ -125,9 +125,9 @@ export default function HomePage() {
           test_id="ranking-least-reliable-brands"
         />
 
-        {/* Most Reliable Models */}
+        {/* Fewest Defects by Model */}
         <RankingCard
-          title="Most Reliable Models"
+          title="Fewest Defects by Model"
           subtitle="Lowest defects per year"
           entries={rankings.most_reliable_models.slice(0, 10)}
           link_href="/statistics?view=models"
@@ -137,9 +137,9 @@ export default function HomePage() {
           test_id="ranking-most-reliable-models"
         />
 
-        {/* Least Reliable Models */}
+        {/* Most Defects by Model */}
         <RankingCard
-          title="Least Reliable Models"
+          title="Most Defects by Model"
           subtitle="Highest defects per year"
           entries={rankings.least_reliable_models.slice(0, 10)}
           link_href="/statistics?view=models"
@@ -162,8 +162,8 @@ export default function HomePage() {
             </h2>
             <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
               These statistics are calculated based on APK inspection data from the RDW (Netherlands Vehicle Authority).
-              The reliability score is calculated by analyzing the number of defects found relative to the vehicle&apos;s age
-              and the total number of inspections. Lower scores indicate better reliability.
+              The defect rate is calculated by analyzing the number of defects found relative to the vehicle&apos;s age
+              and the total number of inspections. Lower scores indicate fewer reported defects.
 
             </p>
             <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 dark:text-gray-400">

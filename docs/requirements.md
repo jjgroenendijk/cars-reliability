@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines the requirements for the Dutch Car Reliability Analysis project. The project analyzes APK (vehicle inspection) data from RDW Open Data to calculate and display car reliability metrics.
+This document defines the requirements for the APK Statistieken project. The project analyzes APK (vehicle inspection) data from RDW Open Data to calculate and display defect statistics per brand and model.
 
 ## Requirement Stewardship
 
@@ -17,7 +17,7 @@ This document defines the requirements for the Dutch Car Reliability Analysis pr
 The project MUST use a 3-stage pipeline with separate GitHub Actions workflows:
 
 - Stage 1: `data_download.yml` (Python) - Fetch data from RDW API
-- Stage 2: `data_process.yml` (Python) - Compute reliability statistics
+- Stage 2: `data_process.yml` (Python) - Compute defect statistics
 - Stage 3: `website_build.yml` (TypeScript) - Build and deploy static website
 
 ### Stage Dependencies
@@ -105,15 +105,15 @@ Note: The `gekentekende_voertuigen` dataset is NOT filtered by `INSPECTION_DAYS_
 
 ### Pre-computed Features (from pipeline data)
 
-- Top 10 most reliable models
-- Bottom 10 least reliable models
-- Top 10 most reliable brands
-- Bottom 10 least reliable brands
-- Full brand reliability table (sortable, filterable)
-- Full model reliability table (sortable, filterable)
+- Top 10 models with fewest defects
+- Bottom 10 models with most defects
+- Top 10 brands with fewest defects
+- Bottom 10 brands with most defects
+- Full brand defect statistics table (sortable, filterable)
+- Full model defect statistics table (sortable, filterable)
 - Brand filtering: Users can select multiple brands to filter the displayed results on the brands and models page
 - Age-filtered views (e.g., cars 5-15 years old)
-- Dynamic defect type filtering: Users can filter defects by category (reliability vs. wear-and-tear) or select individual defect types on the brands and models pages (NOT on the home page), with reliability metrics recalculating in real-time for those views
+- Dynamic defect type filtering: Users can filter defects by category (structural vs. wear-and-tear) or select individual defect types on the brands and models pages (NOT on the home page), with defect statistics recalculating in real-time for those views
 - Commercial vs. Personal Vehicle filtering: Users can filter on commercial vehicles or personal vehicles. Defaults to personal vehicles only. The configuration section should have a filter for this.
 - Dynamic Filter Ranges: All filter inputs (sliders, min/max fields) MUST use ranges derived from the actual dataset stats, not hardcoded assumptions.
 - Standard Deviation Toggle: Configuration section must have a checkbox (disabled by default) to toggle the display of standard deviation columns for both "Defects / Inspection" and "Defects / Year" metrics. The columns are labeled "Std. Dev. (Inspection)" and "Std. Dev. (Year)" respectively. This applies to both Brand and Model views.
@@ -127,8 +127,8 @@ Note: The `gekentekende_voertuigen` dataset is NOT filtered by `INSPECTION_DAYS_
 ### Ranking Display
 
 - Rankings MUST show ascending rank numbers (1, 2, 3...) starting from the top of each list
-- "Most Reliable" lists: rank 1 = lowest defects per vehicle-year (best)
-- "Least Reliable" lists: rank 1 = highest defects per vehicle-year (worst)
+- "Fewest Defects" lists: rank 1 = lowest defects per vehicle-year (best)
+- "Most Defects" lists: rank 1 = highest defects per vehicle-year (worst)
 - Each ranking list maintains its own independent numbering
 
 ### Live Query Features (browser to RDW API)
@@ -140,7 +140,7 @@ Note: The `gekentekende_voertuigen` dataset is NOT filtered by `INSPECTION_DAYS_
 ### Future Features (Backlog)
 
 - Common issues per model - Most frequent defect types
-- Historical trend analysis - Reliability over years
+- Historical trend analysis - Defect rates over years
 
 ### Design Requirements
 

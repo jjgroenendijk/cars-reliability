@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "About - Methodology and Data",
   description:
-    "Information about the methodology and data sources of the Dutch Car Reliability Analysis.",
+    "Information about the methodology and data sources of APK Statistieken.",
 };
 
 export default function AboutPage() {
@@ -16,11 +16,11 @@ export default function AboutPage() {
       {/* Introduction */}
       <section className="mb-12">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-          What is Dutch Car Reliability?
+          What is APK Statistieken?
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mb-4">
-          Dutch Car Reliability is an independent project that analyzes the reliability of
-          car brands and models in the Netherlands based on public APK inspection data.
+          APK Statistieken is an independent project that analyzes APK inspection data
+          to show defect patterns across car brands and models in the Netherlands.
           The goal is to help consumers make informed choices when purchasing a car.
         </p>
       </section>
@@ -72,11 +72,11 @@ export default function AboutPage() {
         <div className="space-y-6">
           <div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              Reliability Score
+              Defect Rate
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              The reliability score is based on the average number of defects per inspection.
-              A lower number indicates higher reliability.
+              The defect rate is the average number of defects found per inspection.
+              A lower number means fewer issues were found during inspections.
             </p>
           </div>
 
@@ -95,7 +95,7 @@ export default function AboutPage() {
               Sample Size
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              The reliability of the statistics depends on the number of inspections.
+              The accuracy of the statistics depends on the number of inspections.
               Models are categorized as:
             </p>
             <ul className="list-disc list-inside mt-2 text-gray-600 dark:text-gray-300 ml-4">
@@ -104,7 +104,7 @@ export default function AboutPage() {
               <li><strong>Large</strong> - More than 1,000 inspections</li>
             </ul>
             <p className="text-gray-600 dark:text-gray-300 mt-2">
-              Statistics based on a large sample are more reliable.
+              Statistics based on a large sample are more accurate.
             </p>
           </div>
 
@@ -139,7 +139,7 @@ export default function AboutPage() {
             </li>
             <li>
               <strong>Model years:</strong> Different build years of the same model can have
-              vastly different reliability.
+              vastly different defect rates.
             </li>
             <li>
               <strong>Selection bias:</strong> Certain brands are more often bought by people

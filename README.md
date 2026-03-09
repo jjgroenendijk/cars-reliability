@@ -1,6 +1,6 @@
-# Dutch Car Reliability Analysis
+# APK Statistieken
 
-A data analysis project that evaluates car brand and model reliability using official Dutch vehicle inspection data from RDW Open Data. The project processes millions of APK inspection records to calculate reliability metrics and presents them through an interactive website. Rankings show the most and least reliable vehicles, with filtering by age bracket and live license plate lookup.
+A data analysis project that shows car brand and model defect rates using official Dutch vehicle inspection data from RDW Open Data. The project processes millions of APK inspection records to calculate defect statistics and presents them through an interactive website. Rankings show the vehicles with the fewest and most reported defects, with filtering by age bracket and live license plate lookup.
 
 **Links:** [Live Site](https://jjgroenendijk.github.io/cars-reliability/) | [GitHub](https://github.com/jjgroenendijk/cars-reliability)
 
@@ -8,12 +8,12 @@ A data analysis project that evaluates car brand and model reliability using off
 
 ## Overview
 
-This project calculates reliability metrics for car brands and models using official inspection data from [RDW Open Data](https://opendata.rdw.nl/). The website displays top 10 and bottom 10 rankings, with the ability to filter by vehicle age.
+This project analyzes defect patterns for car brands and models using official inspection data from [RDW Open Data](https://opendata.rdw.nl/). The website displays top 10 and bottom 10 rankings by defect rate, with the ability to filter by vehicle age.
 
 ## Features
 
-- **Top/Bottom 10 Rankings** - Most and least reliable brands and models
-- **Age-Bracket Analysis** - Compare reliability for cars 5-15 years old
+- **Top/Bottom 10 Rankings** - Brands and models with fewest and most defects
+- **Age-Bracket Analysis** - Compare defect rates for cars 5-15 years old
 - **Sortable Tables** - Full brand and model data, filterable and sortable
 - **Live License Plate Lookup** - Real-time vehicle inspection history
 - **Weekly Updates** - Data refreshed automatically via GitHub Actions
