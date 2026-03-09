@@ -66,7 +66,7 @@ export default function DefectsPage() {
                     Defect Statistics
                 </h1>
                 <p className="text-gray-600 dark:text-gray-300">
-                    Analysis of defects found during APK inspections. Filter by reliability to focus on true build quality issues.
+                    Analysis of defects found during APK inspections. Filter by defect category to focus on build quality issues.
                 </p>
             </div>
 

@@ -1,7 +1,7 @@
 [project]
 name = "cars-reliability"
 version = "1.0.0"
-description = "Dutch car reliability analysis using RDW Open Data"
+description = "APK inspection defect statistics analysis using RDW Open Data"
 requires-python = ">=3.11"
 license = {text = "CC0-1.0"}
 

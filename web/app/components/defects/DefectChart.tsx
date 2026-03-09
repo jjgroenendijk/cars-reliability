@@ -25,7 +25,7 @@ export function DefectChart({ chart_data }: DefectChartProps) {
     return (
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-8">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Top 15 Reliability Defects
+                Top 15 Build Quality Defects
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                 Only showing defects that indicate actual car quality issues (excluding wear-and-tear items).

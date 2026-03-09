@@ -73,7 +73,7 @@ export function DefectFilterPanel() {
                     </span>
                 )}
                 {mode === "reliability" && (
-                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 rounded">Reliability</span>
+                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 rounded">Build Quality</span>
                 )}
                 <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
             </button>
@@ -99,7 +99,7 @@ export function DefectFilterPanel() {
                                 : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400"
                                 }`}
                         >
-                            Reliability Only
+                            Build Quality Only
                         </button>
                     </div>
 

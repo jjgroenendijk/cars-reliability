@@ -23,10 +23,10 @@ function StatisticsLoading() {
             <div className="space-y-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                        Reliability Statistics
+                        APK Statistics
                     </h1>
                     <p className="text-lg text-zinc-600 dark:text-zinc-400 mt-2 max-w-2xl">
-                        Comprehensive analysis of vehicle reliability based on millions of RDW inspection records.
+                        Comprehensive analysis of vehicle defect rates based on millions of RDW inspection records.
                     </p>
                 </div>
             </div>
@@ -152,10 +152,10 @@ function StatisticsContent() {
             <div className="space-y-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                        Reliability Statistics
+                        APK Statistics
                     </h1>
                     <p className="text-lg text-zinc-600 dark:text-zinc-400 mt-2 max-w-2xl">
-                        Comprehensive analysis of vehicle reliability based on millions of RDW inspection records.
+                        Comprehensive analysis of vehicle defect rates based on millions of RDW inspection records.
                     </p>
                 </div>
 

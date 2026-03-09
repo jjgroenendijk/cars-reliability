@@ -45,8 +45,8 @@ export function Navigation() {
             className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white hover:opacity-80 transition-opacity"
           >
             <Car className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            <span className="hidden sm:inline">Dutch Car Reliability</span>
-            <span className="sm:hidden">DCR</span>
+            <span className="hidden sm:inline">APK Statistieken</span>
+            <span className="sm:hidden">APKS</span>
           </Link>
 
           {/* Desktop Navigation */}

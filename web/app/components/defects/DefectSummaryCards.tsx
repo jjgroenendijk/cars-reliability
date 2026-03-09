@@ -26,7 +26,7 @@ export function DefectSummaryCards({ calculated_stats, total_inspections }: Defe
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-blue-200 dark:border-blue-800 p-6">
                 <div className="flex items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">
                     <AlertCircle className="h-4 w-4" />
-                    Reliability Defects
+                    Build Quality Defects
                 </div>
                 <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                     {calculated_stats.reliability_count.toLocaleString()}
