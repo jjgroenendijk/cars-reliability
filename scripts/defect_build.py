@@ -144,10 +144,7 @@ def build_defect_breakdowns(
 
 def build_defect_codes(gebreken_df: pl.DataFrame) -> dict[str, str]:
     """Build defect code index (code -> description) for frontend display."""
-    result = {}
-    for row in gebreken_df.select(["gebrek_identificatie", "gebrek_omschrijving"]).to_dicts():
-        code = row["gebrek_identificatie"]
-        desc = row["gebrek_omschrijving"] or ""
-        if code:
-            result[code] = desc
-    return result
+    df = gebreken_df.filter(
+        pl.col("gebrek_identificatie").is_not_null() & (pl.col("gebrek_identificatie") != "")
+    ).select(pl.col("gebrek_identificatie"), pl.col("gebrek_omschrijving").fill_null(""))
+    return dict(zip(df.get_column("gebrek_identificatie"), df.get_column("gebrek_omschrijving")))
