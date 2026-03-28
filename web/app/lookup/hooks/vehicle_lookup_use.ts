@@ -35,6 +35,9 @@ const INITIAL_STATE: LookupState = {
   searched: false,
 };
 
+// Global cache to prevent duplicate fetching across vehicle lookups
+const defectDescriptionsCache = new Map<string, string>();
+
 export function useVehicleLookup(license_plate: string) {
   const [state, setState] = useState<LookupState>(INITIAL_STATE);
 
@@ -109,12 +112,13 @@ export function useVehicleLookup(license_plate: string) {
       // Fetch defect descriptions for unique defect IDs
       const unique_defect_ids = [...new Set(defects.map((d) => d.gebrek_identificatie))];
       const defect_descriptions = new Map<string, string>();
+      const missing_defect_ids = unique_defect_ids.filter(id => !defectDescriptionsCache.has(id));
 
-      if (unique_defect_ids.length > 0) {
+      if (missing_defect_ids.length > 0) {
         // Batch fetch defect descriptions (max 50 at a time due to URL length limits)
         const batches = [];
-        for (let i = 0; i < unique_defect_ids.length; i += 50) {
-          batches.push(unique_defect_ids.slice(i, i + 50));
+        for (let i = 0; i < missing_defect_ids.length; i += 50) {
+          batches.push(missing_defect_ids.slice(i, i + 50));
         }
 
         await Promise.all(
@@ -127,12 +131,20 @@ export function useVehicleLookup(license_plate: string) {
             if (desc_response.ok) {
               const descriptions: RdwDefectDescription[] = await desc_response.json();
               descriptions.forEach((desc) => {
-                defect_descriptions.set(desc.gebrek_identificatie, desc.gebrek_omschrijving);
+                defectDescriptionsCache.set(desc.gebrek_identificatie, desc.gebrek_omschrijving);
               });
             }
           })
         );
       }
+
+      // Build the final defect_descriptions map for the state
+      unique_defect_ids.forEach((id) => {
+        const desc = defectDescriptionsCache.get(id);
+        if (desc) {
+          defect_descriptions.set(id, desc);
+        }
+      });
 
       setState({
         vehicle,
