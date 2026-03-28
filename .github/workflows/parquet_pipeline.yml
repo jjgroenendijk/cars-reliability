@@ -57,7 +57,7 @@ jobs:
 
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Calculate cache key
         id: cache-key
@@ -70,14 +70,14 @@ jobs:
       - name: Restore dataset cache
         id: cache
         if: github.event.inputs.force_refresh != 'true'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: data/parquet/${{ matrix.name }}.parquet
           key: ${{ steps.cache-key.outputs.dataset-key }}
           restore-keys: ${{ steps.cache-key.outputs.dataset-restore-key }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
           python-version: ${{ env.PYTHON_VERSION }}
@@ -121,7 +121,7 @@ jobs:
 
       - name: Save dataset cache
         if: steps.download.outcome == 'success'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: data/parquet/${{ matrix.name }}.parquet
           key: ${{ steps.cache-key.outputs.dataset-key }}
@@ -130,14 +130,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: [download]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Get week number
         id: date
         run: echo "week=$(date +'%Y-W%V')" >> $GITHUB_OUTPUT
 
       - name: Restore voertuigen cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: data/parquet/voertuigen.parquet
           key: parquet-voertuigen-${{ steps.date.outputs.week }}
@@ -145,7 +145,7 @@ jobs:
           fail-on-cache-miss: true
 
       - name: Restore meldingen cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: data/parquet/meldingen.parquet
           key: parquet-meldingen-${{ steps.date.outputs.week }}
@@ -153,7 +153,7 @@ jobs:
           fail-on-cache-miss: true
 
       - name: Restore geconstateerde_gebreken cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: data/parquet/geconstateerde_gebreken.parquet
           key: parquet-geconstateerde_gebreken-${{ steps.date.outputs.week }}
@@ -161,7 +161,7 @@ jobs:
           fail-on-cache-miss: true
 
       - name: Restore gebreken cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: data/parquet/gebreken.parquet
           key: parquet-gebreken-${{ steps.date.outputs.week }}
@@ -169,7 +169,7 @@ jobs:
           fail-on-cache-miss: true
 
       - name: Restore brandstof cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: data/parquet/brandstof.parquet
           key: parquet-brandstof-${{ steps.date.outputs.week }}
@@ -189,7 +189,7 @@ jobs:
           echo "All datasets present"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
           python-version: ${{ env.PYTHON_VERSION }}
@@ -201,7 +201,7 @@ jobs:
       - name: Process data
         run: cd scripts && uv run python data_process.py
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: processed-data
           path: data/processed
@@ -212,16 +212,16 @@ jobs:
     needs: [process]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Download processed data
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: processed-data
           path: data/processed
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -244,7 +244,7 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: web/out
 
