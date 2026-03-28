@@ -54,49 +54,6 @@ def compute_per_year_stats(
     return per_year_df, min_age, max_age
 
 
-def _build_per_year_lookup(
-    per_year_df: pl.DataFrame, group_cols: list[str]
-) -> dict[str, dict[str, dict]]:
-    """Build lookup dict from per-year stats DataFrame.
-
-    Returns dict mapping group_key -> {age: stats_dict}
-    """
-    lookup: dict[str, dict[str, dict]] = {}
-
-    if len(group_cols) > 1:
-        # Avoid row-by-row string joining
-        df_keys = per_year_df.select(
-            pl.concat_str([pl.col(c) for c in group_cols], separator="|").alias("group_key"),
-            pl.col("age_at_inspection").cast(pl.Int32).cast(pl.String).alias("age"),
-            "vehicle_count",
-            "total_inspections",
-            "total_defects",
-            "avg_defects_per_inspection"
-        )
-    else:
-        df_keys = per_year_df.select(
-            pl.col(group_cols[0]).cast(pl.String).alias("group_key"),
-            pl.col("age_at_inspection").cast(pl.Int32).cast(pl.String).alias("age"),
-            "vehicle_count",
-            "total_inspections",
-            "total_defects",
-            "avg_defects_per_inspection"
-        )
-
-    for group_key, age, vc, ti, td, avg_d in df_keys.iter_rows():
-        if group_key not in lookup:
-            lookup[group_key] = {}
-
-        lookup[group_key][age] = {
-            "vehicle_count": vc,
-            "total_inspections": ti,
-            "total_defects": td,
-            "avg_defects_per_inspection": avg_d,
-        }
-
-    return lookup
-
-
 def _add_per_year_stats_to_results(
     result: list[dict], lookup: dict[str, dict[str, dict]], group_cols: list[str]
 ) -> None:
@@ -126,20 +83,37 @@ def aggregate_brand_stats(
                 pl.col("kenteken").n_unique().alias("vehicle_count"),
                 pl.len().alias("total_inspections"),
                 pl.col("defect_count").sum().cast(pl.Float64).alias("total_defects"),
-                pl.col("defect_count").std().fill_nan(None).round(4).alias("std_defects_per_inspection"),
+                pl.col("defect_count")
+                .std()
+                .fill_nan(None)
+                .round(4)
+                .alias("std_defects_per_inspection"),
                 pl.col("age_at_inspection").mean().round(2).alias("avg_age_years"),
                 pl.col("age_at_inspection").sum().cast(pl.Float64).alias("total_vehicle_years"),
                 # Std dev of defects per vehicle year (defect_count / age)
-                (pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1)).std().fill_nan(None).round(4).alias("std_defects_per_vehicle_year"),
+                (pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1))
+                .std()
+                .fill_nan(None)
+                .round(4)
+                .alias("std_defects_per_vehicle_year"),
                 # Sum and SumSq for frontend aggregation
-                (pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1)).sum().cast(pl.Float64).alias("sum_defects_per_vehicle_year_rates"),
-                ((pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1)) ** 2).sum().cast(pl.Float64).alias("sum_sq_defects_per_vehicle_year_rates"),
+                (pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1))
+                .sum()
+                .cast(pl.Float64)
+                .alias("sum_defects_per_vehicle_year_rates"),
+                ((pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1)) ** 2)
+                .sum()
+                .cast(pl.Float64)
+                .alias("sum_sq_defects_per_vehicle_year_rates"),
                 # Sum Sq for defects per inspection (frontend aggregation)
                 pl.col("defect_count").pow(2).sum().cast(pl.Float64).alias("sum_sq_defect_counts"),
                 # Sum Catalog Price (frontend aggregation)
                 pl.col("catalogusprijs").sum().cast(pl.Float64).alias("sum_catalog_price"),
                 # Count records with price (frontend aggregation denominator)
-                pl.col("catalogusprijs").filter(pl.col("catalogusprijs") > 0).count().alias("count_with_price"),
+                pl.col("catalogusprijs")
+                .filter(pl.col("catalogusprijs") > 0)
+                .count()
+                .alias("count_with_price"),
             ]
         )
         .filter(pl.col("vehicle_count") >= THRESHOLD_BRAND)
@@ -165,19 +139,39 @@ def aggregate_brand_stats(
         inspections_df, ["merk", "vehicle_type_group", "primary_fuel"]
     )
 
+    group_cols = ["merk", "vehicle_type_group", "primary_fuel"]
+
+    if len(per_year_df) > 0:
+        per_year_struct = per_year_df.group_by(group_cols).agg(
+            pl.struct(
+                pl.col("age_at_inspection").cast(pl.String).alias("key"),
+                pl.struct(
+                    "vehicle_count",
+                    "total_inspections",
+                    "total_defects",
+                    "avg_defects_per_inspection",
+                ).alias("value"),
+            ).alias("per_year_stats")
+        )
+
+        per_year_mapped = per_year_struct.with_columns(
+            pl.col("per_year_stats")
+            .map_elements(
+                lambda x: {item["key"]: item["value"] for item in x} if x is not None else {},
+                return_dtype=pl.Object,
+            )
+            .alias("per_year_stats")
+        )
+
+        brand_df = brand_df.join(per_year_mapped, on=group_cols, how="left")
+    else:
+        brand_df = brand_df.with_columns(pl.lit(None).alias("per_year_stats"))
+
     # Convert main stats to list of dicts
     result = brand_df.to_dicts()
 
-    # Build per-year lookup and add to results
-    if len(per_year_df) > 0:
-        per_year_lookup = _build_per_year_lookup(
-            per_year_df, ["merk", "vehicle_type_group", "primary_fuel"]
-        )
-        _add_per_year_stats_to_results(
-            result, per_year_lookup, ["merk", "vehicle_type_group", "primary_fuel"]
-        )
-    else:
-        for row in result:
+    for row in result:
+        if row.get("per_year_stats") is None:
             row["per_year_stats"] = {}
 
     return result, min_age, max_age
@@ -193,32 +187,50 @@ def aggregate_model_stats(
     """
     # Main aggregation
     model_df = (
-        inspections_df.group_by(
-            ["merk", "handelsbenaming", "vehicle_type_group", "primary_fuel"]
-        )
+        inspections_df.group_by(["merk", "handelsbenaming", "vehicle_type_group", "primary_fuel"])
         .agg(
             [
                 pl.col("kenteken").n_unique().alias("vehicle_count"),
                 pl.len().alias("total_inspections"),
                 pl.col("defect_count").sum().cast(pl.Float64).alias("total_defects"),
-                pl.col("defect_count").std().fill_nan(None).round(4).alias("std_defects_per_inspection"),
+                pl.col("defect_count")
+                .std()
+                .fill_nan(None)
+                .round(4)
+                .alias("std_defects_per_inspection"),
                 pl.col("age_at_inspection").mean().round(2).alias("avg_age_years"),
                 pl.col("age_at_inspection").sum().cast(pl.Float64).alias("total_vehicle_years"),
                 # Std dev of defects per vehicle year (defect_count / age)
-                (pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1)).std().fill_nan(None).round(4).alias("std_defects_per_vehicle_year"),
+                (pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1))
+                .std()
+                .fill_nan(None)
+                .round(4)
+                .alias("std_defects_per_vehicle_year"),
                 # Sum and SumSq for frontend aggregation
-                (pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1)).sum().cast(pl.Float64).alias("sum_defects_per_vehicle_year_rates"),
-                ((pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1)) ** 2).sum().cast(pl.Float64).alias("sum_sq_defects_per_vehicle_year_rates"),
+                (pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1))
+                .sum()
+                .cast(pl.Float64)
+                .alias("sum_defects_per_vehicle_year_rates"),
+                ((pl.col("defect_count") / pl.col("age_at_inspection").clip(lower_bound=1)) ** 2)
+                .sum()
+                .cast(pl.Float64)
+                .alias("sum_sq_defects_per_vehicle_year_rates"),
                 # Sum Sq for defects per inspection (frontend aggregation)
                 pl.col("defect_count").pow(2).sum().cast(pl.Float64).alias("sum_sq_defect_counts"),
                 # Sum Catalog Price (frontend aggregation)
                 pl.col("catalogusprijs").sum().cast(pl.Float64).alias("sum_catalog_price"),
                 # Count records with price (frontend aggregation denominator)
-                pl.col("catalogusprijs").filter(pl.col("catalogusprijs") > 0).count().alias("count_with_price"),
+                pl.col("catalogusprijs")
+                .filter(pl.col("catalogusprijs") > 0)
+                .count()
+                .alias("count_with_price"),
             ]
         )
         .with_columns(
-            pl.col("vehicle_count").sum().over(["merk", "handelsbenaming"]).alias("total_model_count")
+            pl.col("vehicle_count")
+            .sum()
+            .over(["merk", "handelsbenaming"])
+            .alias("total_model_count")
         )
         .filter(pl.col("total_model_count") >= THRESHOLD_MODEL)
         .with_columns(
@@ -244,25 +256,43 @@ def aggregate_model_stats(
         ["merk", "handelsbenaming", "vehicle_type_group", "primary_fuel"],
     )
 
+    group_cols = ["merk", "handelsbenaming", "vehicle_type_group", "primary_fuel"]
+
+    if len(per_year_df) > 0:
+        per_year_struct = per_year_df.group_by(group_cols).agg(
+            pl.struct(
+                pl.col("age_at_inspection").cast(pl.String).alias("key"),
+                pl.struct(
+                    "vehicle_count",
+                    "total_inspections",
+                    "total_defects",
+                    "avg_defects_per_inspection",
+                ).alias("value"),
+            ).alias("per_year_stats")
+        )
+
+        per_year_mapped = per_year_struct.with_columns(
+            pl.col("per_year_stats")
+            .map_elements(
+                lambda x: {item["key"]: item["value"] for item in x} if x is not None else {},
+                return_dtype=pl.Object,
+            )
+            .alias("per_year_stats")
+        )
+
+        model_df = model_df.join(per_year_mapped, on=group_cols, how="left")
+    else:
+        model_df = model_df.with_columns(pl.lit(None).alias("per_year_stats"))
+
     # Convert main stats to list of dicts
     result = model_df.to_dicts()
 
-    # Build per-year lookup and add to results
-    if len(per_year_df) > 0:
-        per_year_lookup = _build_per_year_lookup(
-            per_year_df,
-            ["merk", "handelsbenaming", "vehicle_type_group", "primary_fuel"],
-        )
-        _add_per_year_stats_to_results(
-            result,
-            per_year_lookup,
-            ["merk", "handelsbenaming", "vehicle_type_group", "primary_fuel"],
-        )
-    else:
-        for row in result:
+    for row in result:
+        if row.get("per_year_stats") is None:
             row["per_year_stats"] = {}
 
     return result, min_age, max_age
+
 
 def _aggregate_stats_for_ranking(stats_list: list[dict], group_keys: list[str]) -> list[dict]:
     """Aggregate stats list by group keys for ranking purposes.
@@ -298,9 +328,7 @@ def _aggregate_stats_for_ranking(stats_list: list[dict], group_keys: list[str]) 
     for item in aggregated.values():
         total_vehicle_years = item["total_vehicle_years"]
         if total_vehicle_years > 0:
-            item["defects_per_vehicle_year"] = (
-                item["total_defects"] / total_vehicle_years
-            )
+            item["defects_per_vehicle_year"] = item["total_defects"] / total_vehicle_years
         else:
             item["defects_per_vehicle_year"] = 0.0
 
@@ -316,9 +344,7 @@ def generate_rankings(brand_stats: list[dict], model_stats: list[dict]) -> dict:
         items: list[dict], threshold: int, limit: int = 10, reverse: bool = False
     ) -> list[dict]:
         # Filter by ranking threshold
-        candidates = [
-            item for item in items if item.get("vehicle_count", 0) >= threshold
-        ]
+        candidates = [item for item in items if item.get("vehicle_count", 0) >= threshold]
 
         # Sort by defects_per_vehicle_year
         sorted_items = sorted(
@@ -332,9 +358,7 @@ def generate_rankings(brand_stats: list[dict], model_stats: list[dict]) -> dict:
             entry = {
                 "rank": rank,
                 "merk": item.get("merk", ""),
-                "defects_per_vehicle_year": round(
-                    item.get("defects_per_vehicle_year") or 0, 6
-                ),
+                "defects_per_vehicle_year": round(item.get("defects_per_vehicle_year") or 0, 6),
                 "total_inspections": item.get("total_inspections", 0),
             }
             if "handelsbenaming" in item:
