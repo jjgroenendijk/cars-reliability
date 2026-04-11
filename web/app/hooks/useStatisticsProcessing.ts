@@ -68,7 +68,8 @@ export function useStatisticsProcessing({
         });
 
         if (selectedFuels.length > 0) {
-            filtered = filtered.filter((item) => selectedFuels.includes(item.primary_fuel));
+            const fuelsSet = new Set(selectedFuels);
+            filtered = filtered.filter((item) => fuelsSet.has(item.primary_fuel));
         }
 
         filtered = filtered.filter((item) => {
@@ -82,7 +83,8 @@ export function useStatisticsProcessing({
         });
 
         if (selectedBrands.length > 0) {
-            filtered = filtered.filter((item) => selectedBrands.includes(item.merk));
+            const brandsSet = new Set(selectedBrands);
+            filtered = filtered.filter((item) => brandsSet.has(item.merk));
         }
 
         // 3. Aggregate Rows by Key (Brand or Brand+Model)
