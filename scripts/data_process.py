@@ -9,6 +9,7 @@ Uses Polars lazy API throughout to minimize memory usage.
 """
 
 import gc
+from collections.abc import Callable
 from datetime import datetime
 
 import polars as pl
@@ -177,6 +178,34 @@ def compute_inspection_stats(
     return inspections_with_defects.collect()
 
 
+def _add_fuel_and_track_ranges(
+    stats_list: list[dict], fuel_dict: dict, key_extractor: Callable[[dict], str]
+) -> tuple[int, int, int]:
+    """Add fuel breakdown to stats and compute max fleet size, and min/max inspections."""
+    max_fleet_size = 0
+    min_inspections: int | float = float("inf") if stats_list else 0
+    max_inspections = 0
+    default_fuel = {"Benzine": 0, "Diesel": 0, "Elektriciteit": 0, "LPG": 0, "other": 0}
+
+    for stat in stats_list:
+        key = key_extractor(stat)
+        stat["fuel_breakdown"] = fuel_dict.get(key, default_fuel)
+
+        vc = stat["vehicle_count"]
+        ti = stat["total_inspections"]
+        if vc > max_fleet_size:
+            max_fleet_size = vc
+        if ti < min_inspections:
+            min_inspections = ti
+        if ti > max_inspections:
+            max_inspections = ti
+
+    if min_inspections == float("inf"):
+        min_inspections = 0
+
+    return max_fleet_size, int(min_inspections), max_inspections
+
+
 def main() -> None:
     """Main entry point for the data processing script."""
     print(f"Stage2: Processing (Polars native) | memory: {memory_mb():.0f} MB", flush=True)
@@ -220,49 +249,13 @@ def main() -> None:
     )
 
     # Add fuel_breakdown and calculate ranges in single pass for efficiency
-    max_fleet_size_brand = 0
-    min_inspections_brand = float("inf") if brand_stats else 0
-    max_inspections_brand = 0
-    default_fuel = {"Benzine": 0, "Diesel": 0, "Elektriciteit": 0, "LPG": 0, "other": 0}
+    max_fleet_size_brand, min_inspections_brand, max_inspections_brand = _add_fuel_and_track_ranges(
+        brand_stats, brand_fuel, lambda stat: stat["merk"]
+    )
 
-    # Add fuel_breakdown to brand_stats
-    for brand in brand_stats:
-        brand["fuel_breakdown"] = brand_fuel.get(brand["merk"], default_fuel)
-
-        # Track ranges
-        vc = brand["vehicle_count"]
-        ti = brand["total_inspections"]
-        if vc > max_fleet_size_brand:
-            max_fleet_size_brand = vc
-        if ti < min_inspections_brand:
-            min_inspections_brand = ti
-        if ti > max_inspections_brand:
-            max_inspections_brand = ti
-
-    if min_inspections_brand == float("inf"):
-        min_inspections_brand = 0
-
-    max_fleet_size_model = 0
-    min_inspections_model = float("inf") if model_stats else 0
-    max_inspections_model = 0
-
-    # Add fuel_breakdown to model_stats
-    for model in model_stats:
-        model_key = f"{model['merk']}|{model['handelsbenaming']}"
-        model["fuel_breakdown"] = model_fuel.get(model_key, default_fuel)
-
-        # Track ranges
-        vc = model["vehicle_count"]
-        ti = model["total_inspections"]
-        if vc > max_fleet_size_model:
-            max_fleet_size_model = vc
-        if ti < min_inspections_model:
-            min_inspections_model = ti
-        if ti > max_inspections_model:
-            max_inspections_model = ti
-
-    if min_inspections_model == float("inf"):
-        min_inspections_model = 0
+    max_fleet_size_model, min_inspections_model, max_inspections_model = _add_fuel_and_track_ranges(
+        model_stats, model_fuel, lambda stat: f"{stat['merk']}|{stat['handelsbenaming']}"
+    )
 
     # Generate rankings
     rankings = generate_rankings(brand_stats, model_stats)
