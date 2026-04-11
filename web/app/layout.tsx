@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Navigation } from "@/app/components/navigation";
 import { Providers } from "@/app/components/providers";
+import { FooterContent } from "@/app/components/footer_content";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,8 +18,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://apkstat.nl"),
   title: {
-    default: "APK Statistieken - Netherlands APK Inspection Data Analysis",
-    template: "%s | APK Statistieken",
+    default: "apkstat.nl - Netherlands APK Inspection Data Analysis",
+    template: "%s | apkstat.nl",
   },
   description:
     "Explore official RDW APK inspection data to analyze defect rates of car brands and models in the Netherlands.",
@@ -31,9 +32,9 @@ export const metadata: Metadata = {
     "APK statistics",
     "license plate lookup",
   ],
-  authors: [{ name: "APK Statistieken" }],
+  authors: [{ name: "apkstat.nl" }],
   openGraph: {
-    title: "APK Statistieken",
+    title: "apkstat.nl",
     description:
       "Explore APK inspection defect data for car brands and models in the Netherlands based on official RDW data.",
     type: "website",
@@ -65,20 +66,7 @@ export default function RootLayout({
           <footer className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
             <div className="container mx-auto px-4 py-6">
               <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Data from{" "}
-                  <a
-                    href="https://opendata.rdw.nl/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 dark:text-blue-400 hover:underline"
-                  >
-                    RDW Open Data
-                  </a>
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-500">
-                  This website is not affiliated with the RDW
-                </p>
+                <FooterContent />
               </div>
             </div>
           </footer>

@@ -1,6 +1,7 @@
 "use client";
 
 import type { RdwInspection, RdwDefect } from "@/app/lib/types";
+import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 
 interface InspectionsCardProps {
   inspections: RdwInspection[];
@@ -21,6 +22,8 @@ export function InspectionsCard({
   defects,
   defect_descriptions,
 }: InspectionsCardProps) {
+  const { t } = useLanguage();
+
   // Group defects by inspection date
   const defects_by_date = (date: string): RdwDefect[] => {
     return defects.filter((d) => d.meld_datum_door_keuringsinstantie === date);
@@ -30,10 +33,10 @@ export function InspectionsCard({
     return (
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-          APK History
+          {t('lookup.inspection_history')}
         </h2>
         <p className="text-gray-500 dark:text-gray-400">
-          No APK inspection data available
+          {t('lookup.no_history')}
         </p>
       </div>
     );
@@ -43,10 +46,10 @@ export function InspectionsCard({
     <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
       <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          APK History
+          {t('lookup.inspection_history')}
         </h2>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          {inspections.length} inspection{inspections.length !== 1 ? "s" : ""} found
+          {inspections.length} total
         </p>
       </div>
 
@@ -56,6 +59,8 @@ export function InspectionsCard({
             inspection.meld_datum_door_keuringsinstantie
           );
           const has_defects = inspection_defects.length > 0;
+
+          const passed = inspection.soort_meldingomschrijving?.includes("Goedgekeurd") || false;
 
           return (
             <div key={index} className="p-6">
@@ -71,12 +76,12 @@ export function InspectionsCard({
                 <div className="flex items-center gap-2">
                   <span
                     className={`px-2 py-1 text-xs font-medium rounded ${
-                      inspection.soort_meldingomschrijving?.includes("Goedgekeurd")
+                      passed
                         ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
-                        : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
+                        : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
                     }`}
                   >
-                    {inspection.soort_meldingomschrijving ?? "Unknown"}
+                    {passed ? t('lookup.result_pass') : t('lookup.result_fail')}
                   </span>
                   {inspection.km_stand && (
                     <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -89,7 +94,7 @@ export function InspectionsCard({
               {has_defects && (
                 <div className="mt-3">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Defects found:
+                    {t('lookup.defects_found')}
                   </p>
                   <ul className="space-y-1">
                     {inspection_defects.map((defect, defect_index) => (

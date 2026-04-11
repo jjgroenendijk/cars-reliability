@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/app/lib/i18n/LanguageContext";
+
 import { Suspense, useMemo, useEffect } from "react";
 import { ReliabilityTable } from "@/app/components/reliability_table";
 import { DefectFilterPanel } from "@/app/components/defect_filter_panel";
@@ -23,7 +25,7 @@ function StatisticsLoading() {
             <div className="space-y-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                        APK Statistics
+                        APK Statistieken
                     </h1>
                     <p className="text-lg text-zinc-600 dark:text-zinc-400 mt-2 max-w-2xl">
                         Comprehensive analysis of vehicle defect rates based on millions of RDW inspection records.
@@ -53,6 +55,7 @@ export default function StatisticsPage() {
  * Statistics page content with URL sync and data processing.
  */
 function StatisticsContent() {
+    const { t } = useLanguage();
     // Defect Context
     const { brand_breakdowns, model_breakdowns, calculate_filtered_defects, mode } = useDefectFilter();
 
@@ -152,7 +155,7 @@ function StatisticsContent() {
             <div className="space-y-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                        APK Statistics
+                        APK Statistieken
                     </h1>
                     <p className="text-lg text-zinc-600 dark:text-zinc-400 mt-2 max-w-2xl">
                         Comprehensive analysis of vehicle defect rates based on millions of RDW inspection records.
