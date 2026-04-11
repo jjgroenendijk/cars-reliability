@@ -11,20 +11,30 @@ import type { BrandStats, ModelStats, Rankings, DataSet } from "./types";
 const DATA_BASE_PATH = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/data`;
 
 /**
+ * Generic fetch function for JSON data.
+ * @param filename - Name of the JSON file to fetch
+ * @param fallback - Fallback value if fetching fails
+ * @returns Promise resolving to parsed JSON data of type T, or fallback
+ */
+async function fetch_json<T>(filename: string, fallback: T): Promise<T> {
+  try {
+    const response = await fetch(`${DATA_BASE_PATH}/${filename}`);
+    if (!response.ok) {
+      throw new Error(`Failed to load ${filename}: ${response.status}`);
+    }
+    return (await response.json()) as T;
+  } catch (error) {
+    console.error(error);
+    return fallback;
+  }
+}
+
+/**
  * Load brand statistics from JSON file.
  * @returns Promise resolving to array of BrandStats
  */
 export async function brand_stats_load(): Promise<BrandStats[]> {
-  try {
-    const response = await fetch(`${DATA_BASE_PATH}/brand_stats.json`);
-    if (!response.ok) {
-      throw new Error(`Failed to load brand stats: ${response.status}`);
-    }
-    const data: BrandStats[] = await response.json();
-    return data;
-  } catch {
-    return [];
-  }
+  return fetch_json<BrandStats[]>("brand_stats.json", []);
 }
 
 /**
@@ -32,16 +42,7 @@ export async function brand_stats_load(): Promise<BrandStats[]> {
  * @returns Promise resolving to array of ModelStats
  */
 export async function model_stats_load(): Promise<ModelStats[]> {
-  try {
-    const response = await fetch(`${DATA_BASE_PATH}/model_stats.json`);
-    if (!response.ok) {
-      throw new Error(`Failed to load model stats: ${response.status}`);
-    }
-    const data: ModelStats[] = await response.json();
-    return data;
-  } catch {
-    return [];
-  }
+  return fetch_json<ModelStats[]>("model_stats.json", []);
 }
 
 /**
@@ -49,16 +50,7 @@ export async function model_stats_load(): Promise<ModelStats[]> {
  * @returns Promise resolving to Rankings object
  */
 export async function rankings_load(): Promise<Rankings | null> {
-  try {
-    const response = await fetch(`${DATA_BASE_PATH}/rankings.json`);
-    if (!response.ok) {
-      throw new Error(`Failed to load rankings: ${response.status}`);
-    }
-    const data: Rankings = await response.json();
-    return data;
-  } catch {
-    return null;
-  }
+  return fetch_json<Rankings | null>("rankings.json", null);
 }
 
 /**
@@ -83,7 +75,8 @@ export async function data_load_all(): Promise<DataSet | null> {
       rankings,
       generated_at: rankings.generated_at,
     };
-  } catch {
+  } catch (error) {
+    console.error(error);
     return null;
   }
 }
@@ -103,7 +96,8 @@ export function timestamp_format(timestamp: string): string {
       hour: "2-digit",
       minute: "2-digit",
     });
-  } catch {
+  } catch (error) {
+    console.error(error);
     return timestamp;
   }
 }
