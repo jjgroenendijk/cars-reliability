@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useVehicleLookup } from "./hooks/vehicle_lookup_use";
 import { VehicleInfoCard } from "./components/vehicle_info_card";
 import { InspectionsCard } from "./components/inspections_card";
+import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 
 export default function LookupPage() {
   const [license_plate, setLicensePlate] = useState("");
   const { state, vehicle_lookup } = useVehicleLookup(license_plate);
+  const { t } = useLanguage();
 
   const form_submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,11 +20,10 @@ export default function LookupPage() {
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          License Plate Lookup
+          {t('lookup.title')}
         </h1>
         <p className="text-gray-600 dark:text-gray-300">
-          Search vehicle information and APK history by license plate.
-          Data is fetched live from the RDW.
+          {t('lookup.subtitle')}
         </p>
       </div>
 
@@ -38,7 +39,7 @@ export default function LookupPage() {
               type="text"
               value={license_plate}
               onChange={(e) => setLicensePlate(e.target.value)}
-              placeholder="E.g., AB123C or AB-123-C"
+              placeholder={t('lookup.input_placeholder')}
               className="w-full px-4 py-3 text-lg border border-gray-300 dark:border-gray-600 rounded-lg 
                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white
                        focus:ring-2 focus:ring-blue-500 focus:border-transparent
@@ -55,7 +56,7 @@ export default function LookupPage() {
                      hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed
                      transition-colors"
           >
-            {state.loading ? "Searching..." : "Search"}
+            {state.loading ? t('lookup.searching') : t('lookup.btn_search')}
           </button>
         </div>
       </form>
@@ -63,7 +64,7 @@ export default function LookupPage() {
       {/* Error Message */}
       {state.error && (
         <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4">
-          <p className="text-red-800 dark:text-red-200">{state.error}</p>
+          <p className="text-red-800 dark:text-red-200">{state.error === "Vehicle not found" ? t('lookup.error_not_found') : state.error}</p>
         </div>
       )}
 
@@ -85,7 +86,7 @@ export default function LookupPage() {
       {/* Empty State */}
       {state.searched && !state.vehicle && !state.error && !state.loading && (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-          No results found
+          {t('common.no_data')}
         </div>
       )}
 

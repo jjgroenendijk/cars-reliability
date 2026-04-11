@@ -5,13 +5,13 @@ import Link from "next/link";
 import type { Rankings, RankingEntry } from "@/app/lib/types";
 import { timestamp_format, pascal_case_format } from "@/app/lib/data_load";
 import { Search, Car, AlertCircle, Calendar, ArrowRight } from "lucide-react";
+import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 
 export default function HomePage() {
   const [rankings, setRankings] = useState<Rankings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-
+  const { t } = useLanguage();
 
   useEffect(() => {
     async function data_fetch() {
@@ -20,12 +20,13 @@ export default function HomePage() {
         const rankings_res = await fetch(`${base_path}/data/rankings.json`);
 
         if (!rankings_res.ok) {
-          throw new Error("Could not load data");
+          throw new Error("Failed to fetch rankings");
         }
 
         const rankings_data: Rankings = await rankings_res.json();
         setRankings(rankings_data);
       } catch (err) {
+        console.error("Error loading home page data:", err);
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
         setLoading(false);
@@ -40,7 +41,7 @@ export default function HomePage() {
     return (
       <div className="flex flex-col justify-center items-center min-h-[400px] gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <div className="text-gray-600 dark:text-gray-400 font-medium">Loading defect data...</div>
+        <div className="text-gray-600 dark:text-gray-400 font-medium">{t('home.rankings_loading')}</div>
       </div>
     );
   }
@@ -50,16 +51,15 @@ export default function HomePage() {
       <div className="max-w-4xl mx-auto py-12">
         <section className="mb-12 text-center">
           <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight">
-            APK Statistieken
+            apkstat.nl
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Explore APK inspection defect data for car brands and models in the Netherlands,
-            based on official RDW data.
+            {t('home.hero_subtitle')}
           </p>
           <div className="inline-flex items-center gap-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-6 max-w-lg mx-auto">
             <AlertCircle className="h-6 w-6 text-yellow-600 dark:text-yellow-500 flex-shrink-0" />
             <p className="text-yellow-800 dark:text-yellow-200 font-medium">
-              {error ?? "Data is currently being processed. Please check back later."}
+              {error ?? t('home.rankings_error')}
             </p>
           </div>
         </section>
@@ -74,11 +74,10 @@ export default function HomePage() {
       <section className="mb-12 text-center">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight">
-            APK <span className="text-blue-600 dark:text-blue-400">Statistieken</span>
+            {t('home.hero_title')}<span className="text-blue-600 dark:text-blue-400">{t('home.hero_title_accent')}</span>
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-10 leading-relaxed">
-            Explore official RDW APK inspection data covering millions of inspections.
-            See which car brands and models have the fewest or most reported defects.
+            {t('home.hero_subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -86,14 +85,14 @@ export default function HomePage() {
               className="inline-flex items-center justify-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 gap-2 group"
             >
               <Search className="h-5 w-5 group-hover:scale-110 transition-transform" />
-              License Plate Lookup
+              {t('home.btn_lookup')}
             </Link>
             <Link
               href="/statistics"
               className="inline-flex items-center justify-center px-8 py-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-semibold rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors gap-2"
             >
               <Car className="h-5 w-5" />
-              View All Brands
+              {t('home.btn_view_brands')}
             </Link>
           </div>
         </div>
@@ -105,48 +104,52 @@ export default function HomePage() {
       <div className="grid gap-8 md:grid-cols-2 lg:gap-12 mb-16">
         {/* Fewest Defects by Brand */}
         <RankingCard
-          title="Fewest Defects by Brand"
-          subtitle="Lowest defects per year"
+          title={t('home.fewest_brand')}
+          subtitle={t('home.lowest_defects')}
           entries={rankings.most_reliable_brands}
           link_href="/statistics"
-          link_text="View all brands"
+          link_text={t('home.view_all_brands')}
           highlight_color="green"
           test_id="ranking-most-reliable-brands"
+          t={t}
         />
 
         {/* Most Defects by Brand */}
         <RankingCard
-          title="Most Defects by Brand"
-          subtitle="Highest defects per year"
+          title={t('home.most_brand')}
+          subtitle={t('home.highest_defects')}
           entries={rankings.least_reliable_brands}
           link_href="/statistics"
-          link_text="View all brands"
+          link_text={t('home.view_all_brands')}
           highlight_color="red"
           test_id="ranking-least-reliable-brands"
+          t={t}
         />
 
         {/* Fewest Defects by Model */}
         <RankingCard
-          title="Fewest Defects by Model"
-          subtitle="Lowest defects per year"
+          title={t('home.fewest_model')}
+          subtitle={t('home.lowest_defects')}
           entries={rankings.most_reliable_models.slice(0, 10)}
           link_href="/statistics?view=models"
-          link_text="View all models"
+          link_text={t('home.view_all_models')}
           highlight_color="green"
           show_model
           test_id="ranking-most-reliable-models"
+          t={t}
         />
 
         {/* Most Defects by Model */}
         <RankingCard
-          title="Most Defects by Model"
-          subtitle="Highest defects per year"
+          title={t('home.most_model')}
+          subtitle={t('home.highest_defects')}
           entries={rankings.least_reliable_models.slice(0, 10)}
           link_href="/statistics?view=models"
-          link_text="View all models"
+          link_text={t('home.view_all_models')}
           highlight_color="red"
           show_model
           test_id="ranking-least-reliable-models"
+          t={t}
         />
       </div>
 
@@ -158,24 +161,21 @@ export default function HomePage() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-              About this data
+              {t('home.about_data_title')}
             </h2>
             <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-              These statistics are calculated based on APK inspection data from the RDW (Netherlands Vehicle Authority).
-              The defect rate is calculated by analyzing the number of defects found relative to the vehicle&apos;s age
-              and the total number of inspections. Lower scores indicate fewer reported defects.
-
+              {t('home.about_data_text')}
             </p>
             <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                <span>Last updated: {timestamp_format(rankings.generated_at)}</span>
+                <span>{t('home.last_updated')}: {timestamp_format(rankings.generated_at)}</span>
               </div>
               <Link
                 href="/about"
                 className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
               >
-                Learn more about the methodology
+                {t('home.learn_more')}
                 <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
@@ -195,6 +195,7 @@ interface RankingCardProps {
   highlight_color: "green" | "red";
   show_model?: boolean;
   test_id?: string;
+  t: (key: string) => string;
 }
 
 function RankingCard({
@@ -206,6 +207,7 @@ function RankingCard({
   highlight_color,
   show_model = false,
   test_id,
+  t,
 }: RankingCardProps) {
   const isGreen = highlight_color === "green";
 
@@ -224,7 +226,7 @@ function RankingCard({
       <div className="flex-grow divide-y divide-gray-100 dark:divide-gray-800">
         {entries.length === 0 ? (
           <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-            No data available
+            {t('common.no_data')}
           </div>
         ) : (
           entries.map((entry, index) => (
