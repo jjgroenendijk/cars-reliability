@@ -22,7 +22,8 @@ export async function brand_stats_load(): Promise<BrandStats[]> {
     }
     const data: BrandStats[] = await response.json();
     return data;
-  } catch {
+  } catch (error) {
+    console.error("Error loading brand stats:", error);
     return [];
   }
 }
@@ -39,7 +40,8 @@ export async function model_stats_load(): Promise<ModelStats[]> {
     }
     const data: ModelStats[] = await response.json();
     return data;
-  } catch {
+  } catch (error) {
+    console.error("Error loading model stats:", error);
     return [];
   }
 }
@@ -56,7 +58,8 @@ export async function rankings_load(): Promise<Rankings | null> {
     }
     const data: Rankings = await response.json();
     return data;
-  } catch {
+  } catch (error) {
+    console.error("Error loading rankings:", error);
     return null;
   }
 }
@@ -83,7 +86,8 @@ export async function data_load_all(): Promise<DataSet | null> {
       rankings,
       generated_at: rankings.generated_at,
     };
-  } catch {
+  } catch (error) {
+    console.error("Error loading all data:", error);
     return null;
   }
 }
@@ -103,7 +107,8 @@ export function timestamp_format(timestamp: string): string {
       hour: "2-digit",
       minute: "2-digit",
     });
-  } catch {
+  } catch (error) {
+    console.error("Error formatting timestamp:", error);
     return timestamp;
   }
 }
