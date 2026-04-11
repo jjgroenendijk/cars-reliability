@@ -82,7 +82,8 @@ export function useStatisticsProcessing({
         });
 
         if (selectedBrands.length > 0) {
-            filtered = filtered.filter((item) => selectedBrands.includes(item.merk));
+            const selectedBrandsSet = new Set(selectedBrands);
+            filtered = filtered.filter((item) => selectedBrandsSet.has(item.merk));
         }
 
         // 3. Aggregate Rows by Key (Brand or Brand+Model)
