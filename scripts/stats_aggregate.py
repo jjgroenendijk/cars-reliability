@@ -142,37 +142,34 @@ def aggregate_brand_stats(
     group_cols = ["merk", "vehicle_type_group", "primary_fuel"]
 
     if len(per_year_df) > 0:
-        per_year_struct = per_year_df.group_by(group_cols).agg(
+        per_year_lists = per_year_df.group_by(group_cols).agg(
+            pl.col("age_at_inspection").cast(pl.String).alias("_keys"),
             pl.struct(
-                pl.col("age_at_inspection").cast(pl.String).alias("key"),
-                pl.struct(
-                    "vehicle_count",
-                    "total_inspections",
-                    "total_defects",
-                    "avg_defects_per_inspection",
-                ).alias("value"),
-            ).alias("per_year_stats")
+                "vehicle_count",
+                "total_inspections",
+                "total_defects",
+                "avg_defects_per_inspection",
+            ).alias("_values")
         )
 
-        per_year_mapped = per_year_struct.with_columns(
-            pl.col("per_year_stats")
-            .map_elements(
-                lambda x: {item["key"]: item["value"] for item in x} if x is not None else {},
-                return_dtype=pl.Object,
-            )
-            .alias("per_year_stats")
-        )
-
-        brand_df = brand_df.join(per_year_mapped, on=group_cols, how="left")
+        brand_df = brand_df.join(per_year_lists, on=group_cols, how="left")
     else:
-        brand_df = brand_df.with_columns(pl.lit(None).alias("per_year_stats"))
+        brand_df = brand_df.with_columns(
+            pl.lit(None).alias("_keys"),
+            pl.lit(None).alias("_values")
+        )
 
     # Convert main stats to list of dicts
     result = brand_df.to_dicts()
 
     for row in result:
-        if row.get("per_year_stats") is None:
+        keys = row.get("_keys")
+        if keys is not None:
+            row["per_year_stats"] = dict(zip(keys, row.get("_values", [])))
+        else:
             row["per_year_stats"] = {}
+        row.pop("_keys", None)
+        row.pop("_values", None)
 
     return result, min_age, max_age
 
@@ -259,37 +256,34 @@ def aggregate_model_stats(
     group_cols = ["merk", "handelsbenaming", "vehicle_type_group", "primary_fuel"]
 
     if len(per_year_df) > 0:
-        per_year_struct = per_year_df.group_by(group_cols).agg(
+        per_year_lists = per_year_df.group_by(group_cols).agg(
+            pl.col("age_at_inspection").cast(pl.String).alias("_keys"),
             pl.struct(
-                pl.col("age_at_inspection").cast(pl.String).alias("key"),
-                pl.struct(
-                    "vehicle_count",
-                    "total_inspections",
-                    "total_defects",
-                    "avg_defects_per_inspection",
-                ).alias("value"),
-            ).alias("per_year_stats")
+                "vehicle_count",
+                "total_inspections",
+                "total_defects",
+                "avg_defects_per_inspection",
+            ).alias("_values")
         )
 
-        per_year_mapped = per_year_struct.with_columns(
-            pl.col("per_year_stats")
-            .map_elements(
-                lambda x: {item["key"]: item["value"] for item in x} if x is not None else {},
-                return_dtype=pl.Object,
-            )
-            .alias("per_year_stats")
-        )
-
-        model_df = model_df.join(per_year_mapped, on=group_cols, how="left")
+        model_df = model_df.join(per_year_lists, on=group_cols, how="left")
     else:
-        model_df = model_df.with_columns(pl.lit(None).alias("per_year_stats"))
+        model_df = model_df.with_columns(
+            pl.lit(None).alias("_keys"),
+            pl.lit(None).alias("_values")
+        )
 
     # Convert main stats to list of dicts
     result = model_df.to_dicts()
 
     for row in result:
-        if row.get("per_year_stats") is None:
+        keys = row.get("_keys")
+        if keys is not None:
+            row["per_year_stats"] = dict(zip(keys, row.get("_values", [])))
+        else:
             row["per_year_stats"] = {}
+        row.pop("_keys", None)
+        row.pop("_values", None)
 
     return result, min_age, max_age
 
@@ -299,16 +293,16 @@ def _aggregate_stats_for_ranking(stats_list: list[dict], group_keys: list[str]) 
 
     Combines segmented data (e.g. by fuel/price) into a single entry per group.
     """
-    aggregated: dict[str, dict] = {}
+    aggregated: dict[tuple, dict] = {}
 
     for item in stats_list:
         # Create unique key based on group columns
-        key_parts = [str(item.get(k, "")) for k in group_keys]
-        key = "|".join(key_parts)
+        key = tuple(item.get(k, "") for k in group_keys)
 
-        if key not in aggregated:
-            aggregated[key] = {k: item.get(k, "") for k in group_keys}
-            aggregated[key].update(
+        agg_item = aggregated.get(key)
+        if agg_item is None:
+            agg_item = {k: item.get(k, "") for k in group_keys}
+            agg_item.update(
                 {
                     "vehicle_count": 0,
                     "total_inspections": 0,
@@ -316,12 +310,13 @@ def _aggregate_stats_for_ranking(stats_list: list[dict], group_keys: list[str]) 
                     "total_vehicle_years": 0.0,
                 }
             )
+            aggregated[key] = agg_item
 
         # Accumulate metrics
-        aggregated[key]["vehicle_count"] += item.get("vehicle_count", 0)
-        aggregated[key]["total_inspections"] += item.get("total_inspections", 0)
-        aggregated[key]["total_defects"] += item.get("total_defects", 0.0)
-        aggregated[key]["total_vehicle_years"] += item.get("total_vehicle_years", 0.0)
+        agg_item["vehicle_count"] += item.get("vehicle_count", 0)
+        agg_item["total_inspections"] += item.get("total_inspections", 0)
+        agg_item["total_defects"] += item.get("total_defects", 0.0)
+        agg_item["total_vehicle_years"] += item.get("total_vehicle_years", 0.0)
 
     # Convert back to list and calculate derived metrics
     result = []
