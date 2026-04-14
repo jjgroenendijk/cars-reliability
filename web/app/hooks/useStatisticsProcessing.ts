@@ -61,30 +61,39 @@ export function useStatisticsProcessing({
         const rawData = viewMode === "brands" ? brand_stats : model_stats;
 
         // 2. Filter Rows (Fuel, Price, Usage)
-        let filtered = rawData.filter((item) => {
-            if (showConsumer && item.vehicle_type_group === "consumer") return true;
-            if (showCommercial && item.vehicle_type_group === "commercial") return true;
-            return false;
-        });
+        const selectedFuelsSet = selectedFuels.length > 0 ? new Set(selectedFuels) : null;
+        const selectedBrandsSet = selectedBrands.length > 0 ? new Set(selectedBrands) : null;
 
-        if (selectedFuels.length > 0) {
-            filtered = filtered.filter((item) => selectedFuels.includes(item.primary_fuel));
-        }
+        const filtered = rawData.filter((item) => {
+            // Usage filter
+            if (!(showConsumer && item.vehicle_type_group === "consumer") &&
+                !(showCommercial && item.vehicle_type_group === "commercial")) {
+                return false;
+            }
 
-        filtered = filtered.filter((item) => {
+            // Fuel filter
+            if (selectedFuelsSet && !selectedFuelsSet.has(item.primary_fuel)) {
+                return false;
+            }
+
+            // Price filter
             let p = 0;
             if (item.sum_catalog_price && item.count_with_price && item.count_with_price > 0) {
                 p = item.sum_catalog_price / item.count_with_price;
             }
-            // Treat max value as infinity
-            if (maxPrice >= maxPriceAvailable) return p >= minPrice;
-            return p >= minPrice && p <= maxPrice;
-        });
 
-        if (selectedBrands.length > 0) {
-            const selectedBrandsSet = new Set(selectedBrands);
-            filtered = filtered.filter((item) => selectedBrandsSet.has(item.merk));
-        }
+            // Treat max value as infinity
+            if (p < minPrice || (maxPrice < maxPriceAvailable && p > maxPrice)) {
+                return false;
+            }
+
+            // Brands filter
+            if (selectedBrandsSet && !selectedBrandsSet.has(item.merk)) {
+                return false;
+            }
+
+            return true;
+        });
 
         // 3. Aggregate Rows by Key (Brand or Brand+Model)
         const groupBy = (item: BrandStats | ModelStats) => viewMode === "brands" ? item.merk : `${item.merk} ${(item as ModelStats).handelsbenaming}`;

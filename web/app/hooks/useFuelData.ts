@@ -118,42 +118,50 @@ export function useFuelData(filterState: FilterState) {
     const processed_data = useMemo((): BrandFuelData[] => {
         const rawData = viewMode === "brands" ? brand_stats : model_stats;
 
-        let filtered = rawData.filter((item) => {
-            if (showConsumer && item.vehicle_type_group === "consumer") return true;
-            if (showCommercial && item.vehicle_type_group === "commercial") return true;
-            return false;
-        });
+        const selectedFuelsSet = selectedFuels.length > 0 ? new Set(selectedFuels) : null;
+        const selectedBrandsSet = selectedBrands.length > 0 ? new Set(selectedBrands) : null;
+        const q = searchQuery ? searchQuery.toLowerCase() : null;
 
-        if (selectedFuels.length > 0) {
-            filtered = filtered.filter((item) => selectedFuels.includes(item.primary_fuel));
-        }
+        const filtered = rawData.filter((item) => {
+            // Usage filter
+            if (!(showConsumer && item.vehicle_type_group === "consumer") &&
+                !(showCommercial && item.vehicle_type_group === "commercial")) {
+                return false;
+            }
 
-        filtered = filtered.filter((item) => {
+            // Fuel filter
+            if (selectedFuelsSet && !selectedFuelsSet.has(item.primary_fuel)) {
+                return false;
+            }
+
+            // Price filter
             const p = item.avg_catalog_price ?? 0;
-            if (maxPrice >= DEFAULTS.price.max) return p >= minPrice;
-            return p >= minPrice && p <= maxPrice;
-        });
+            if (p < minPrice || (maxPrice < DEFAULTS.price.max && p > maxPrice)) {
+                return false;
+            }
 
-        filtered = filtered.filter((item) => {
+            // Inspections filter
             const insp = item.total_inspections;
-            if (maxInspections >= max_inspections_available) return insp >= minInspections;
-            return insp >= minInspections && insp <= maxInspections;
+            if (insp < minInspections || (maxInspections < max_inspections_available && insp > maxInspections)) {
+                return false;
+            }
+
+            // Brands filter
+            if (selectedBrandsSet && !selectedBrandsSet.has(item.merk)) {
+                return false;
+            }
+
+            // Search query filter
+            if (q) {
+                if (viewMode === "brands") {
+                    if (!item.merk.toLowerCase().includes(q)) return false;
+                } else {
+                    if (!item.merk.toLowerCase().includes(q) && !(item as ModelStats).handelsbenaming.toLowerCase().includes(q)) return false;
+                }
+            }
+
+            return true;
         });
-
-        if (selectedBrands.length > 0) {
-            const selectedBrandsSet = new Set(selectedBrands);
-            filtered = filtered.filter((item) => selectedBrandsSet.has(item.merk));
-        }
-
-        if (searchQuery) {
-            const q = searchQuery.toLowerCase();
-            filtered = filtered.filter((item) => {
-                if (viewMode === "brands") return item.merk.toLowerCase().includes(q);
-                return (
-                    item.merk.toLowerCase().includes(q) || (item as ModelStats).handelsbenaming.toLowerCase().includes(q)
-                );
-            });
-        }
 
         // Aggregate
         const groupBy = (item: BrandStats | ModelStats) =>
