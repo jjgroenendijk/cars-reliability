@@ -221,7 +221,12 @@ export function useStatisticsProcessing({
                 const breakdown = viewMode === "brands" ? brand_breakdowns[key] : model_breakdowns[key];
 
                 if (breakdown) {
-                    const totalInBreakdown = Object.values(breakdown).reduce((a, b) => a + b, 0);
+                    let totalInBreakdown = 0;
+                    for (const code in breakdown) {
+                        if (Object.prototype.hasOwnProperty.call(breakdown, code)) {
+                            totalInBreakdown += breakdown[code];
+                        }
+                    }
                     const filteredInBreakdown = calculate_filtered_defects(breakdown);
                     if (totalInBreakdown > 0) {
                         defectRatio = filteredInBreakdown / totalInBreakdown;
@@ -231,12 +236,19 @@ export function useStatisticsProcessing({
 
             let finalDefects = 0;
             let finalInspections = 0;
+            let finalVehicleCount = item.vehicle_count;
+            let finalAvgAgeYears = item.avg_age_years;
 
             if (isAgeFilterActive) {
                 const aggregated = aggregateAgeRange(item.per_year_stats, ageRange[0], ageRange[1]);
                 if (aggregated) {
                     finalDefects = aggregated.total_defects;
                     finalInspections = aggregated.total_inspections;
+                    finalVehicleCount = aggregated.vehicle_count;
+                    finalAvgAgeYears = aggregated.avg_age_years;
+                } else {
+                    finalVehicleCount = 0;
+                    finalAvgAgeYears = null;
                 }
             } else {
                 finalDefects = item.total_defects;
@@ -251,8 +263,8 @@ export function useStatisticsProcessing({
                 ...item,
                 filtered_defects: Math.round(filteredDefects),
                 filtered_defects_per_vehicle_year: finalRate,
-                vehicle_count: isAgeFilterActive ? (aggregateAgeRange(item.per_year_stats, ageRange[0], ageRange[1])?.vehicle_count || 0) : item.vehicle_count,
-                avg_age_years: isAgeFilterActive ? (aggregateAgeRange(item.per_year_stats, ageRange[0], ageRange[1])?.avg_age_years || null) : item.avg_age_years,
+                vehicle_count: finalVehicleCount,
+                avg_age_years: finalAvgAgeYears,
                 total_inspections: isAgeFilterActive ? finalInspections : item.total_inspections,
             };
         });
