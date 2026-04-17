@@ -168,53 +168,42 @@ export function useStatisticsProcessing({
             }
         }
 
-        let results = Array.from(aggregatedMap.values());
+        // 4-7. Calculate Metrics and Filter in a Single Loop
+        // ⚡ Bolt Performance Optimization:
+        // Merged multiple consecutive `.map()` and `.filter()` operations into a single pass.
+        // This avoids creating several intermediate arrays and reduces iterations from O(k*N) to O(N),
+        // significantly reducing memory allocation and improving CPU efficiency on large datasets.
+        let results = [];
+        const q = searchQuery ? searchQuery.toLowerCase() : null;
 
-        // 4. Calculate Derived Metrics (Pre-Defect Filter)
-        results = results.map(item => {
-            // Calculate Std Dev for Defects per Vehicle Year (from rates)
+        for (const item of aggregatedMap.values()) {
+            // -- Metrics Calculation --
             let std_defects_per_vehicle_year = item.std_defects_per_vehicle_year;
-
             if (item.total_inspections > 1 && item.sum_defects_per_vehicle_year_rates != null && item.sum_sq_defects_per_vehicle_year_rates != null) {
                 const N = item.total_inspections;
                 const sumX = item.sum_defects_per_vehicle_year_rates;
                 const sumX2 = item.sum_sq_defects_per_vehicle_year_rates;
-
                 const mean = sumX / N;
                 const variance = (sumX2 / N) - (mean * mean);
                 std_defects_per_vehicle_year = Math.sqrt(Math.max(0, variance));
             }
 
-            // Calculate Std Dev for Defects per Inspection
             let std_defects_per_inspection = item.std_defects_per_inspection;
             if (item.total_inspections > 1 && item.sum_sq_defect_counts != null) {
                 const N = item.total_inspections;
                 const sumX = item.total_defects;
                 const sumX2 = item.sum_sq_defect_counts;
-
                 const numerator = sumX2 - ((sumX * sumX) / N);
                 const variance = numerator / (N - 1);
                 std_defects_per_inspection = Math.sqrt(Math.max(0, variance));
             }
 
-            // Calculate Avg Price
             let avg_catalog_price = null;
             if (item.sum_catalog_price != null && item.count_with_price && item.count_with_price > 0) {
                 avg_catalog_price = item.sum_catalog_price / item.count_with_price;
             }
 
-            return {
-                ...item,
-                avg_defects_per_inspection: item.total_inspections > 0 ? item.total_defects / item.total_inspections : 0,
-                defects_per_vehicle_year: item.total_vehicle_years > 0 ? item.total_defects / item.total_vehicle_years : 0,
-                std_defects_per_vehicle_year: std_defects_per_vehicle_year,
-                std_defects_per_inspection: std_defects_per_inspection,
-                avg_catalog_price: avg_catalog_price,
-            };
-        });
-
-        // 5. Apply Defect Filters (Ratio Approach) & Age Range
-        results = results.map(item => {
+            // -- Defect Filters & Age Range --
             let defectRatio = 1.0;
             if (mode !== "all") {
                 const key = viewMode === "brands" ? item.merk : `${item.merk}|${item.handelsbenaming}`;
@@ -231,12 +220,19 @@ export function useStatisticsProcessing({
 
             let finalDefects = 0;
             let finalInspections = 0;
+            let finalVehicleCount = item.vehicle_count;
+            let finalAvgAgeYears = item.avg_age_years;
 
             if (isAgeFilterActive) {
                 const aggregated = aggregateAgeRange(item.per_year_stats, ageRange[0], ageRange[1]);
                 if (aggregated) {
                     finalDefects = aggregated.total_defects;
                     finalInspections = aggregated.total_inspections;
+                    finalVehicleCount = aggregated.vehicle_count;
+                    finalAvgAgeYears = aggregated.avg_age_years;
+                } else {
+                    finalVehicleCount = 0;
+                    finalAvgAgeYears = null;
                 }
             } else {
                 finalDefects = item.total_defects;
@@ -247,34 +243,38 @@ export function useStatisticsProcessing({
             const denominator = isAgeFilterActive ? finalInspections : item.total_vehicle_years;
             const finalRate = denominator > 0 ? filteredDefects / denominator : null;
 
-            return {
+            // -- Fleet Size, Inspections & Search Filter Check --
+            const inspOk = finalInspections >= minInspections &&
+                (maxInspections >= maxInspectionsAvailable || finalInspections <= maxInspections);
+
+            if (!(finalVehicleCount >= minFleetSize &&
+                finalVehicleCount <= maxFleetSize &&
+                inspOk &&
+                finalRate !== null)) {
+                continue; // Skip if it doesn't match numeric filters
+            }
+
+            if (q) {
+                if (viewMode === "brands") {
+                    if (!item.merk.toLowerCase().includes(q)) continue;
+                } else {
+                    if (!item.merk.toLowerCase().includes(q) && !item.handelsbenaming.toLowerCase().includes(q)) continue;
+                }
+            }
+
+            // Match passed filters, push constructed object
+            results.push({
                 ...item,
+                avg_defects_per_inspection: item.total_inspections > 0 ? item.total_defects / item.total_inspections : 0,
+                defects_per_vehicle_year: item.total_vehicle_years > 0 ? item.total_defects / item.total_vehicle_years : 0,
+                std_defects_per_vehicle_year: std_defects_per_vehicle_year,
+                std_defects_per_inspection: std_defects_per_inspection,
+                avg_catalog_price: avg_catalog_price,
                 filtered_defects: Math.round(filteredDefects),
                 filtered_defects_per_vehicle_year: finalRate,
-                vehicle_count: isAgeFilterActive ? (aggregateAgeRange(item.per_year_stats, ageRange[0], ageRange[1])?.vehicle_count || 0) : item.vehicle_count,
-                avg_age_years: isAgeFilterActive ? (aggregateAgeRange(item.per_year_stats, ageRange[0], ageRange[1])?.avg_age_years || null) : item.avg_age_years,
-                total_inspections: isAgeFilterActive ? finalInspections : item.total_inspections,
-            };
-        });
-
-        // 6. Filter by Fleet Size, Inspections & Validity
-        results = results.filter(item => {
-            const inspOk = item.total_inspections >= minInspections &&
-                (maxInspections >= maxInspectionsAvailable || item.total_inspections <= maxInspections);
-            return item.vehicle_count >= minFleetSize &&
-                item.vehicle_count <= maxFleetSize &&
-                inspOk &&
-                item.filtered_defects_per_vehicle_year !== null;
-        });
-
-        // 7. Search Filter
-        if (searchQuery) {
-            const q = searchQuery.toLowerCase();
-            results = results.filter((item) => {
-                if (viewMode === "brands") return item.merk.toLowerCase().includes(q);
-                return (
-                    item.merk.toLowerCase().includes(q) || item.handelsbenaming.toLowerCase().includes(q)
-                );
+                vehicle_count: finalVehicleCount,
+                avg_age_years: finalAvgAgeYears,
+                total_inspections: finalInspections,
             });
         }
 
