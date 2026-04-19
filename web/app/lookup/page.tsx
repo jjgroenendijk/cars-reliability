@@ -47,6 +47,7 @@ export default function LookupPage() {
                        uppercase"
               autoComplete="off"
               autoCapitalize="characters"
+              maxLength={20}
             />
           </div>
           <button
