@@ -42,8 +42,8 @@ export function useVehicleLookup(license_plate: string) {
   const [state, setState] = useState<LookupState>(INITIAL_STATE);
 
   const license_plate_format = useCallback((input: string): string => {
-    // Remove all non-alphanumeric characters and convert to uppercase
-    return input.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    // Remove all non-alphanumeric characters, convert to uppercase, and limit length
+    return input.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 10);
   }, []);
 
   const vehicle_lookup = useCallback(async () => {
