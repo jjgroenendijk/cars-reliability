@@ -81,19 +81,22 @@ export function useDefectData() {
 
     // Filter and sort defects
     const filtered_defects = useMemo((): DefectWithCategory[] => {
-        let result = [...defects_with_category];
+        // ⚡ Bolt Performance Optimization:
+        // Replaced spread array clone and sequential .filter() passes with a single loop
+        // to avoid intermediate array allocations and redundant iterations.
+        const result = [];
+        const term = search_term ? search_term.toLowerCase() : null;
 
-        if (category_filter === "reliability") {
-            result = result.filter((d) => d.computed_is_reliability);
-        }
+        for (const d of defects_with_category) {
+            if (category_filter === "reliability" && !d.computed_is_reliability) {
+                continue;
+            }
 
-        if (search_term) {
-            const term = search_term.toLowerCase();
-            result = result.filter(
-                (d) =>
-                    d.defect_code.toLowerCase().includes(term) ||
-                    d.defect_description.toLowerCase().includes(term)
-            );
+            if (term && !(d.defect_code.toLowerCase().includes(term) || d.defect_description.toLowerCase().includes(term))) {
+                continue;
+            }
+
+            result.push(d);
         }
 
         result.sort((a, b) => {
@@ -106,9 +109,18 @@ export function useDefectData() {
 
     // Calculated stats
     const calculated_stats = useMemo(() => {
-        const reliability_defects = defects_with_category.filter(d => d.computed_is_reliability);
-        const reliability_count = reliability_defects.reduce((sum, d) => sum + d.count, 0);
-        const total_count = defects_with_category.reduce((sum, d) => sum + d.count, 0);
+        // ⚡ Bolt Performance Optimization:
+        // Combined multiple .filter() and .reduce() passes into a single loop to reduce iteration overhead.
+        let reliability_count = 0;
+        let total_count = 0;
+
+        for (const d of defects_with_category) {
+            total_count += d.count;
+            if (d.computed_is_reliability) {
+                reliability_count += d.count;
+            }
+        }
+
         const wear_count = total_count - reliability_count;
 
         return {
