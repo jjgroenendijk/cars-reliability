@@ -55,6 +55,30 @@ export function useStatisticsProcessing({
 
     const { brand_breakdowns, model_breakdowns, calculate_filtered_defects, mode } = defectFilter;
 
+    // ⚡ Bolt Performance Optimization:
+    // Pre-calculate defect ratios outside of the main aggregation loop.
+    // By doing this once, we avoid calling `Object.values().reduce()` inside a loop
+    // that processes potentially thousands of items during high-frequency updates (e.g., slider adjustments).
+    const defect_ratios = useMemo(() => {
+        const ratios = new Map<string, number>();
+        if (mode === "all") return ratios;
+
+        const breakdowns = viewMode === "brands" ? brand_breakdowns : model_breakdowns;
+        for (const [key, breakdown] of Object.entries(breakdowns)) {
+            // Replaced reduce with a faster native loop
+            let totalInBreakdown = 0;
+            for (const v of Object.values(breakdown)) {
+                totalInBreakdown += v as number;
+            }
+
+            const filteredInBreakdown = calculate_filtered_defects(breakdown);
+            if (totalInBreakdown > 0) {
+                ratios.set(key, filteredInBreakdown / totalInBreakdown);
+            }
+        }
+        return ratios;
+    }, [mode, viewMode, brand_breakdowns, model_breakdowns, calculate_filtered_defects]);
+
     // Main Aggregation & Filtering Pipeline
     const processed_data = useMemo(() => {
         // 1. Select Source
@@ -211,15 +235,7 @@ export function useStatisticsProcessing({
             let defectRatio = 1.0;
             if (mode !== "all") {
                 const key = viewMode === "brands" ? item.merk : `${item.merk}|${item.handelsbenaming}`;
-                const breakdown = viewMode === "brands" ? brand_breakdowns[key] : model_breakdowns[key];
-
-                if (breakdown) {
-                    const totalInBreakdown = Object.values(breakdown).reduce((a, b) => a + b, 0);
-                    const filteredInBreakdown = calculate_filtered_defects(breakdown);
-                    if (totalInBreakdown > 0) {
-                        defectRatio = filteredInBreakdown / totalInBreakdown;
-                    }
-                }
+                defectRatio = defect_ratios.get(key) ?? 1.0;
             }
 
             let finalDefects = 0;
@@ -285,7 +301,7 @@ export function useStatisticsProcessing({
         // 8. Sort
         return results.sort((a, b) => (a.filtered_defects_per_vehicle_year || 0) - (b.filtered_defects_per_vehicle_year || 0));
 
-    }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial, selectedFuels, minPrice, maxPrice, minFleetSize, maxFleetSize, minInspections, maxInspections, searchQuery, ageRange, isAgeFilterActive, mode, brand_breakdowns, model_breakdowns, calculate_filtered_defects, maxPriceAvailable, maxInspectionsAvailable, selectedBrands, metadata]);
+    }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial, selectedFuels, minPrice, maxPrice, minFleetSize, maxFleetSize, minInspections, maxInspections, searchQuery, ageRange, isAgeFilterActive, mode, maxPriceAvailable, maxInspectionsAvailable, selectedBrands, metadata, defect_ratios]);
 
     return {
         processed_data: processed_data as (BrandStatsFiltered | ModelStatsFiltered)[],

@@ -1,3 +1,3 @@
-## 2023-10-24 - Consolidated Array Iterations in Data Processing
-**Learning:** Chaining multiple `.map()` and `.filter()` operations over thousands of items in Next.js hooks (like `useStatisticsProcessing`) causes significant garbage collection overhead and redundant iterations. Furthermore, nested heavy helper calls (like `aggregateAgeRange`) were un-memoized during iteration, causing them to recalculate identically up to 3 times per item.
-**Action:** When processing large arrays in JavaScript, consolidate multiple mapping and filtering passes into a single `for...of` loop. Calculate heavy helper values once per iteration, store them in a local variable, and reuse them to construct the final array without allocating intermediate objects.
+## 2024-04-22 - Pre-calculated maps in NextJS hooks
+**Learning:** In NextJS frontend hooks that process large datasets (like thousands of vehicle brands/models), calling `Object.values().reduce()` dynamically within a high-frequency mapping loop (e.g. `useMemo` on a filter slider adjustment) creates severe redundant CPU overhead, blocking the main thread.
+**Action:** When filtering or aggregating over large arrays, always pre-calculate related lookup tables or ratios into a `Map` *outside* the main loop using a separate `useMemo`. This converts $O(N \times M)$ overhead into an $O(N + M)$ pipeline.
