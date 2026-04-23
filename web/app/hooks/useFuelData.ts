@@ -190,19 +190,22 @@ export function useFuelData(filterState: FilterState) {
         }
 
         // Final Processing
-        let results = Array.from(aggregatedMap.values());
+        // ⚡ Bolt Performance Optimization:
+        // Replaced chained `.map()` and `.filter()` operations with a single `for...of` pass over `aggregatedMap.values()`.
+        // Instead of allocating intermediate arrays and cloning objects (`...item`), we compute and assign
+        // percentages directly to the newly instantiated objects from the aggregation step.
+        // This changes an O(2N) pipeline with high GC overhead into an O(N) zero-allocation pass.
+        const results: BrandFuelData[] = [];
 
-        results = results.map(item => {
-            const total = fuel_total_calculate(item.fuel_breakdown);
-            return {
-                ...item,
-                petrol_pct: pct_calculate(item.fuel_breakdown.Benzine, total),
-                diesel_pct: pct_calculate(item.fuel_breakdown.Diesel, total),
-                electric_pct: pct_calculate(item.fuel_breakdown.Elektriciteit, total),
-            };
-        });
-
-        results = results.filter(item => item.vehicle_count >= minFleetSize && item.vehicle_count <= maxFleetSize);
+        for (const item of aggregatedMap.values()) {
+            if (item.vehicle_count >= minFleetSize && item.vehicle_count <= maxFleetSize) {
+                const total = fuel_total_calculate(item.fuel_breakdown);
+                item.petrol_pct = pct_calculate(item.fuel_breakdown.Benzine, total);
+                item.diesel_pct = pct_calculate(item.fuel_breakdown.Diesel, total);
+                item.electric_pct = pct_calculate(item.fuel_breakdown.Elektriciteit, total);
+                results.push(item);
+            }
+        }
 
         // Sort
         const mult = sort_dir === "asc" ? 1 : -1;
