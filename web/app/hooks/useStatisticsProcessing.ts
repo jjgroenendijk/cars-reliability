@@ -60,20 +60,28 @@ export function useStatisticsProcessing({
         // 1. Select Source
         const rawData = viewMode === "brands" ? brand_stats : model_stats;
 
-        // 2. Filter Rows (Fuel, Price, Usage)
+        // 2 & 3. Filter and Aggregate Rows by Key (Brand or Brand+Model)
+        // ⚡ Bolt Performance Optimization:
+        // Fused the massive array `.filter()` operation directly into the Map aggregation `for...of` loop.
+        // This eliminates the creation of a large intermediate array and a redundant O(N) iteration,
+        // reducing garbage collection pressure and improving processing speed.
         const selectedFuelsSet = selectedFuels.length > 0 ? new Set(selectedFuels) : null;
         const selectedBrandsSet = selectedBrands.length > 0 ? new Set(selectedBrands) : null;
 
-        const filtered = rawData.filter((item) => {
+        const groupBy = (item: BrandStats | ModelStats) => viewMode === "brands" ? item.merk : `${item.merk} ${(item as ModelStats).handelsbenaming}`;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const aggregatedMap = new Map<string, any>();
+
+        for (const item of rawData) {
             // Usage filter
             if (!(showConsumer && item.vehicle_type_group === "consumer") &&
                 !(showCommercial && item.vehicle_type_group === "commercial")) {
-                return false;
+                continue;
             }
 
             // Fuel filter
             if (selectedFuelsSet && !selectedFuelsSet.has(item.primary_fuel)) {
-                return false;
+                continue;
             }
 
             // Price filter
@@ -84,23 +92,14 @@ export function useStatisticsProcessing({
 
             // Treat max value as infinity
             if (p < minPrice || (maxPrice < maxPriceAvailable && p > maxPrice)) {
-                return false;
+                continue;
             }
 
             // Brands filter
             if (selectedBrandsSet && !selectedBrandsSet.has(item.merk)) {
-                return false;
+                continue;
             }
 
-            return true;
-        });
-
-        // 3. Aggregate Rows by Key (Brand or Brand+Model)
-        const groupBy = (item: BrandStats | ModelStats) => viewMode === "brands" ? item.merk : `${item.merk} ${(item as ModelStats).handelsbenaming}`;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const aggregatedMap = new Map<string, any>();
-
-        for (const item of filtered) {
             const key = groupBy(item);
             if (!aggregatedMap.has(key)) {
                 // Deep clone per_year_stats to enable merging
