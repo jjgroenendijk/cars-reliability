@@ -48,7 +48,8 @@ def session_create() -> requests.Session:
     session.mount("https://", adapter)
     if token := os.environ.get("RDW_APP_TOKEN") or os.environ.get("APP_Token"):
         session.headers["X-App-Token"] = token
-        print(f"Using app token: {token[:8]}...")
+        # SECURITY: Do not log partial API tokens to prevent leakage
+        print("Using app token: ***")
     return session
 
 
