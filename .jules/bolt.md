@@ -1,3 +1,7 @@
 ## 2023-10-24 - Consolidated Array Iterations in Data Processing
 **Learning:** Chaining multiple `.map()` and `.filter()` operations over thousands of items in Next.js hooks (like `useStatisticsProcessing`) causes significant garbage collection overhead and redundant iterations. Furthermore, nested heavy helper calls (like `aggregateAgeRange`) were un-memoized during iteration, causing them to recalculate identically up to 3 times per item.
 **Action:** When processing large arrays in JavaScript, consolidate multiple mapping and filtering passes into a single `for...of` loop. Calculate heavy helper values once per iteration, store them in a local variable, and reuse them to construct the final array without allocating intermediate objects.
+
+## 2023-10-24 - Avoid Object.values/entries in hot loops
+**Learning:** `Object.values(obj).reduce(...)` and `for (const [key, val] of Object.entries(obj))` allocate intermediate arrays to hold the object's keys and values. When executed thousands of times within frontend filtering loops (like `calculate_filtered_defects` and `useStatisticsProcessing`), this causes significant memory allocation and garbage collection overhead.
+**Action:** Replace `Object.values()` and `Object.entries()` with manual `for...in` loops in performance-critical sections (like large `.map()` or `.filter()` arrays). This approach performs identically but avoids the intermediate array allocation overhead.
