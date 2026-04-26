@@ -154,15 +154,18 @@ export function useStatisticsProcessing({
                 existing.std_defects_per_vehicle_year = null;
 
                 // Merge Per Year Stats
-                for (const [age, stats] of Object.entries(item.per_year_stats)) {
-                    if (!existing.per_year_stats[age]) {
-                        existing.per_year_stats[age] = { ...(stats as PerYearStats) };
-                    } else {
-                        const eStats = existing.per_year_stats[age];
-                        const iStats = stats as PerYearStats;
-                        eStats.vehicle_count += iStats.vehicle_count;
-                        eStats.total_inspections += iStats.total_inspections;
-                        eStats.total_defects += iStats.total_defects;
+                for (const age in item.per_year_stats) {
+                    if (Object.prototype.hasOwnProperty.call(item.per_year_stats, age)) {
+                        const stats = item.per_year_stats[age];
+                        if (!existing.per_year_stats[age]) {
+                            existing.per_year_stats[age] = { ...(stats as PerYearStats) };
+                        } else {
+                            const eStats = existing.per_year_stats[age];
+                            const iStats = stats as PerYearStats;
+                            eStats.vehicle_count += iStats.vehicle_count;
+                            eStats.total_inspections += iStats.total_inspections;
+                            eStats.total_defects += iStats.total_defects;
+                        }
                     }
                 }
             }
@@ -214,7 +217,12 @@ export function useStatisticsProcessing({
                 const breakdown = viewMode === "brands" ? brand_breakdowns[key] : model_breakdowns[key];
 
                 if (breakdown) {
-                    const totalInBreakdown = Object.values(breakdown).reduce((a, b) => a + b, 0);
+                    let totalInBreakdown = 0;
+                    for (const code in breakdown) {
+                        if (Object.prototype.hasOwnProperty.call(breakdown, code)) {
+                            totalInBreakdown += breakdown[code];
+                        }
+                    }
                     const filteredInBreakdown = calculate_filtered_defects(breakdown);
                     if (totalInBreakdown > 0) {
                         defectRatio = filteredInBreakdown / totalInBreakdown;
