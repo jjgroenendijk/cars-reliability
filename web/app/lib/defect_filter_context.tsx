@@ -62,9 +62,14 @@ const DefectFilterContext = createContext<DefectFilterContextType | null>(null);
  */
 function reliability_excluded_codes(codes: DefectCodeIndex): Set<string> {
     const excluded = new Set<string>();
-    for (const code of Object.keys(codes)) {
-        if (!isReliabilityDefect(code)) {
-            excluded.add(code);
+    // ⚡ Bolt Performance Optimization:
+    // Replaced `Object.keys(codes)` with a manual `for...in` loop to avoid allocating
+    // an intermediate array of keys, optimizing performance during initialization.
+    for (const code in codes) {
+        if (Object.prototype.hasOwnProperty.call(codes, code)) {
+            if (!isReliabilityDefect(code)) {
+                excluded.add(code);
+            }
         }
     }
     return excluded;
@@ -189,9 +194,14 @@ export function DefectFilterProvider({ children }: DefectFilterProviderProps) {
         (breakdown: DefectBreakdown | undefined): number => {
             if (!breakdown) return 0;
             let total = 0;
-            for (const [code, count] of Object.entries(breakdown)) {
-                if (!excluded_codes.has(code)) {
-                    total += count;
+            // ⚡ Bolt Performance Optimization:
+            // Replaced `Object.entries(breakdown)` with a manual `for...in` loop to avoid
+            // allocating intermediate arrays, reducing garbage collection pressure in this hot path.
+            for (const code in breakdown) {
+                if (Object.prototype.hasOwnProperty.call(breakdown, code)) {
+                    if (!excluded_codes.has(code)) {
+                        total += breakdown[code];
+                    }
                 }
             }
             return total;
