@@ -189,9 +189,9 @@ export function DefectFilterProvider({ children }: DefectFilterProviderProps) {
         (breakdown: DefectBreakdown | undefined): number => {
             if (!breakdown) return 0;
             let total = 0;
-            for (const [code, count] of Object.entries(breakdown)) {
-                if (!excluded_codes.has(code)) {
-                    total += count;
+            for (const code in breakdown) {
+                if (Object.prototype.hasOwnProperty.call(breakdown, code) && !excluded_codes.has(code)) {
+                    total += breakdown[code];
                 }
             }
             return total;
