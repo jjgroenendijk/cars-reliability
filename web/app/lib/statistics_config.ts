@@ -32,6 +32,11 @@ function format_decimal(value: unknown, precision: number = 2): string {
     return value.toFixed(precision);
 }
 
+function format_age_years(value: unknown): string {
+    if (typeof value !== "number") return "-";
+    return Number.isInteger(value) ? value.toString() : value.toFixed(1);
+}
+
 /** Build table columns based on view mode */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function columns_build(viewMode: "brands" | "models", config?: ColumnConfig): Column<any>[] {
@@ -67,7 +72,13 @@ export function columns_build(viewMode: "brands" | "models", config?: ColumnConf
                 headerClassName: `${std_dev_header_class} whitespace-normal text-[11px] leading-4`
             } as Column<any>]
             : []),
-        { key: "avg_age_years", label: "Avg Age", cellClassName: numeric_cell_class, headerClassName: numeric_header_class },
+        {
+            key: "avg_age_years",
+            label: "Avg Age",
+            format: format_age_years,
+            cellClassName: numeric_cell_class,
+            headerClassName: numeric_header_class
+        },
         {
             key: "filtered_defects_per_vehicle_year",
             label: "Defects /\nYear",

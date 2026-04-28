@@ -165,6 +165,13 @@ export function ReliabilityTable<T extends object>({
     );
   }
 
+  function header_content_class(headerClassName?: string, sortable?: boolean) {
+    const isRightAligned = headerClassName?.split(/\s+/).includes("text-right");
+    const alignClass = isRightAligned ? "flex-row-reverse" : "";
+    const cursorClass = sortable !== false ? "cursor-pointer group" : "";
+    return `flex items-center gap-1.5 ${alignClass} ${cursorClass}`;
+  }
+
   function cell_value_format(
     row: T,
     key: keyof T,
@@ -223,7 +230,7 @@ export function ReliabilityTable<T extends object>({
                     className={`px-4 sm:px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap select-none ${col.headerClassName || ""}`}
                     onClick={() => col.sortable !== false && sort_toggle(col.key)}
                   >
-                    <div className={`flex items-center gap-1.5 ${col.sortable !== false ? "cursor-pointer group" : ""}`}>
+                    <div className={header_content_class(col.headerClassName, col.sortable)}>
                       <span className="whitespace-pre-line leading-tight">{getHeaderLabel(col.label)}</span>
                       {col.sortable !== false && sort_indicator_render(col.key)}
                     </div>
