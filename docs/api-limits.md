@@ -52,9 +52,9 @@ Progress output format: `dataset: X% | page Y/Z | rows A/B | C MB`
 
 Each dataset has its own GitHub Actions cache:
 
-- Cache key format: `dataset-v2-WEEK-days-DAYS-HASH`
+- Cache key format: `parquet-DATASET-YYYY-Www-SCRIPT_HASH`
 - Enables partial retries (only re-download failed datasets)
-- Job timeout: 60 minutes per dataset
+- The parquet pipeline queues newer runs behind the active run so large dataset downloads can finish and save their caches
 
 ## Environment Variables
 

@@ -36,6 +36,7 @@ Stage 1 (Download) leads to Stage 2 (Process) leads to Stage 3 (Build).
 - If cached data exists and is less than 7 days old, skip the download and use the cache
 - If cached data is missing or older than 7 days, perform a full download
 - Data refresh interval: 7 days
+- Main-branch pipeline runs must not cancel an active parquet download run before dataset caches can be saved
 
 ---
 

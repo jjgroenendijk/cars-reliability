@@ -16,3 +16,4 @@
 - [x] Fix homepage top 10 links to statistics views and add e2e coverage for those buttons.
 - [x] Stabilize homepage and statistics e2e selectors for navigation and filters.
 - [ ] Rebranded website to apkstat.nl with APK Statistieken focus.
+- [x] Fix GitHub Actions dataset cache reuse after pushes and PR merges.
