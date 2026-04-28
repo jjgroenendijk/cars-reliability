@@ -1,5 +1,7 @@
 # Todo
 
+- [x] Fix statistics rankings average age display and numeric header alignment.
+
 - [x] Defer heavy table filtering while dragging selection sliders (price/age/fleet/inspections) to reduce jitter.
 
 - [x] Ensure standard deviation display is paired with the base value in-table for both Defects / Inspection and Defects / Year, styled distinctly (color or font), using separate columns.
