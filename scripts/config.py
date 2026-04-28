@@ -43,7 +43,6 @@ VEHICLE_TYPE_CONSUMER = "consumer"
 VEHICLE_TYPE_COMMERCIAL = "commercial"
 
 
-
 # Primary fuel types for categorization
 PRIMARY_FUEL_TYPES = {
     "Benzine",
