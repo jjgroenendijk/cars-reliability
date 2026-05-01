@@ -77,8 +77,10 @@ def row_count_get(session: requests.Session, dataset_id: str) -> int | None:
     return None
 
 
-def page_fetch(session: requests.Session, dataset_id: str, offset: int, limit: int) -> list[dict]:
-    """Fetch a single page of data from the API with retry logic."""
+def page_frame_fetch(
+    session: requests.Session, dataset_id: str, offset: int, limit: int
+) -> pl.DataFrame:
+    """Fetch a single page of data from the API and parse it as a Polars frame."""
     url = RESOURCE_URL.format(id=dataset_id, limit=limit, offset=offset)
     max_retries = 5
 
@@ -86,10 +88,13 @@ def page_fetch(session: requests.Session, dataset_id: str, offset: int, limit: i
         try:
             r = session.get(url, timeout=REQUEST_TIMEOUT)
             r.raise_for_status()
-            return r.json()
+            if r.content.strip() == b"[]":
+                return pl.DataFrame()
+            return pl.read_json(io.BytesIO(r.content), infer_schema_length=None)
         except (
             requests.exceptions.ChunkedEncodingError,
             requests.exceptions.ConnectionError,
+            requests.exceptions.HTTPError,
             requests.exceptions.Timeout,
         ) as e:
             if attempt == max_retries - 1:

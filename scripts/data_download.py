@@ -35,8 +35,8 @@ import polars as pl
 import psutil
 import requests
 
-from api_client import PARALLEL_WORKERS, env_load, page_fetch, row_count_get, session_create
-from config import DATASETS, DIR_PARQUET, PAGE_SIZE
+from api_client import PARALLEL_WORKERS, env_load, page_frame_fetch, row_count_get, session_create
+from config import DATASETS, DIR_PARQUET, DOWNLOAD_BATCH_PAGES, PAGE_SIZE
 
 # Metadata file path
 METADATA_FILE = DIR_PARQUET / ".download_metadata.json"
@@ -73,6 +73,15 @@ def memory_usage_mb() -> float:
     return process.memory_info().rss / (1024 * 1024)
 
 
+def temp_schema_collect(temp_paths: list[Path]) -> dict[str, pl.DataType]:
+    """Collect the union schema from temporary Parquet files."""
+    schema: dict[str, pl.DataType] = {}
+    for temp_path in temp_paths:
+        for name, dtype in pl.scan_parquet(temp_path).collect_schema().items():
+            schema.setdefault(name, dtype)
+    return schema
+
+
 def dataset_download_parallel(
     session: requests.Session,
     dataset_id: str,
@@ -92,10 +101,15 @@ def dataset_download_parallel(
     page_size = PAGE_SIZE
     total_pages = math.ceil(total_rows / page_size) if total_rows > 0 else 1
     offsets = list(range(0, total_rows, page_size))
+    offset_batches = [
+        offsets[idx : idx + DOWNLOAD_BATCH_PAGES]
+        for idx in range(0, len(offsets), DOWNLOAD_BATCH_PAGES)
+    ]
+    total_batches = len(offset_batches)
 
     print(
         f"[{output_name}] downloading {total_rows:,} rows in {total_pages} pages "
-        f"using {PARALLEL_WORKERS} workers...",
+        f"({total_batches} batches) using {PARALLEL_WORKERS} workers...",
         flush=True,
     )
 
@@ -108,24 +122,27 @@ def dataset_download_parallel(
     start = time.time()
     last_progress_time = [start]
 
-    def fetch_page_wrapper(page_idx: int, offset: int) -> None:
-        """Fetch a page and write directly to temp Parquet file."""
+    def fetch_batch_write(batch_idx: int, batch_offsets: list[int]) -> Path:
+        """Fetch a batch of pages and write it directly to a temp Parquet file."""
         nonlocal pages_fetched
-        page_data = page_fetch(session, dataset_id, offset, page_size)
+        frames = [
+            page_frame_fetch(session, dataset_id, offset, page_size) for offset in batch_offsets
+        ]
+        frame = frames[0] if len(frames) == 1 else pl.concat(frames, how="diagonal_relaxed")
 
-        # Write directly to temp file - no memory accumulation
-        temp_path = temp_dir / f"batch_{page_idx:05d}.parquet"
-        pl.DataFrame(page_data).write_parquet(temp_path, compression="zstd")
+        # Write directly to temp file - only this batch is kept in memory.
+        temp_path = temp_dir / f"batch_{batch_idx:05d}.parquet"
+        frame.write_parquet(temp_path, compression="zstd")
 
         with pages_lock:
-            pages_fetched += 1
+            pages_fetched += len(batch_offsets)
 
             if verbose:
                 now = time.time()
                 if now - last_progress_time[0] >= 5:
                     elapsed = now - start
                     pct = (pages_fetched / total_pages * 100) if total_pages > 0 else 0
-                    rows_fetched = pages_fetched * page_size
+                    rows_fetched = min(pages_fetched * page_size, total_rows)
                     speed = rows_fetched / elapsed if elapsed > 0 else 0
                     mem = memory_usage_mb()
                     print(
@@ -134,17 +151,21 @@ def dataset_download_parallel(
                         flush=True,
                     )
                     last_progress_time[0] = now
+        return temp_path
 
     # Download all pages in parallel
+    temp_paths: list[Path] = []
     with ThreadPoolExecutor(max_workers=PARALLEL_WORKERS) as executor:
         futures = [
-            executor.submit(fetch_page_wrapper, idx, offset) for idx, offset in enumerate(offsets)
+            executor.submit(fetch_batch_write, idx, batch_offsets)
+            for idx, batch_offsets in enumerate(offset_batches)
         ]
         for future in as_completed(futures):
             if exc := future.exception():
                 # Clean up temp dir on error
                 shutil.rmtree(temp_dir, ignore_errors=True)
                 raise exc
+            temp_paths.append(future.result())
 
     download_time = time.time() - start
     mem_after_download = memory_usage_mb()
@@ -157,16 +178,16 @@ def dataset_download_parallel(
     )
 
     # Stream-merge all temp files into final output
-    print(f"[{output_name}] merging {total_pages} temp files to Parquet...", flush=True)
+    print(f"[{output_name}] merging {len(temp_paths)} temp files to Parquet...", flush=True)
     merge_start = time.time()
 
-    # Use glob pattern to scan all temp parquet files and stream to output
-    # Handle schema variations: RDW API can return different columns in different pages
-    # - missing_columns='insert': add NULL columns for fields missing in some batches
-    # - extra_columns='ignore': skip extra columns not in the first batch's schema
-    temp_pattern = str(temp_dir / "batch_*.parquet")
+    # Stream temp files into one output while preserving fields that only appear
+    # in later pages.
+    temp_paths = sorted(temp_paths)
+    temp_schema = temp_schema_collect(temp_paths)
     pl.scan_parquet(
-        temp_pattern,
+        [str(temp_path) for temp_path in temp_paths],
+        schema=temp_schema,
         missing_columns="insert",
         extra_columns="ignore",
     ).sink_parquet(output_path, compression="zstd")

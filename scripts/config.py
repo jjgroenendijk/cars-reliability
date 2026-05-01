@@ -24,6 +24,7 @@ THRESHOLD_MODEL_RANKING = 100
 # === Download Settings ===
 REQUEST_TIMEOUT = 3600  # 1 hour for very large downloads
 PAGE_SIZE = 50000  # Rows per page for parallel pagination
+DOWNLOAD_BATCH_PAGES = 4  # RDW pages per temporary Parquet batch
 
 # === RDW API Configuration ===
 API_BASE = "https://opendata.rdw.nl"

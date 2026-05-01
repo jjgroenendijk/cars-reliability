@@ -27,15 +27,14 @@
 - Total data: no hard cap on total rows; paging required for large pulls
 - Payload size: keep responses below ~250 MB by tuning `$limit` and selected columns
 
-## Dynamic Rate Limit Handling
+## Retry Handling
 
-The `data_download.py` script implements adaptive rate limiting:
+The `data_download.py` script retries transient page failures:
 
-- Starts with 8 parallel workers per dataset
-- On HTTP 429 response: halves workers (min 2) and applies exponential backoff
-- Wait times: 2s, 4s, 8s, 16s, 32s (capped)
-- Cooldown: 30s between worker reductions
-- Recovery: slowly restores rate limit count on successful requests
+- Uses a bounded worker pool per dataset
+- Retries connection, timeout, chunked encoding, and throttling failures
+- Applies exponential backoff before retrying a failed page
+- Fails the dataset when a page still cannot be fetched after all retries
 
 ## Parallel Download Strategy
 
@@ -44,9 +43,9 @@ Stage 1 uses parallel fetching at two levels:
 1. Dataset level: All 5 datasets download in parallel jobs (GitHub Actions)
 2. Page level: Within each dataset, multiple pages are fetched concurrently
 
-For grouped queries (meldingen, geconstateerde_gebreken), an `$order` clause is required to enable deterministic parallel pagination.
+Fetched JSON pages are parsed directly by Polars and saved as temporary Parquet batches. Multiple RDW pages can be grouped into one batch file to reduce final merge overhead while keeping memory bounded. Polars infers against each full page so late-appearing RDW fields are preserved.
 
-Progress output format: `dataset: X% | page Y/Z | rows A/B | C MB`
+Progress output format: `[dataset] X% | page Y/Z | rows A | B rows/s | C MB`
 
 ## Per-Dataset Caching
 
