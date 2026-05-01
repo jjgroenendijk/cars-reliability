@@ -19,5 +19,6 @@
 - [x] Fix homepage top 10 links to statistics views and add e2e coverage for those buttons.
 - [x] Stabilize homepage and statistics e2e selectors for navigation and filters.
 - [x] Fix site build failure caused by unsupported Lucide GitHub icon import.
+- [x] Optimize RDW page downloads and Parquet batch writes.
 - [ ] Fix ESLint 10 incompatibility with eslint-config-next React plugin.
 - [ ] Rebranded website to apkstat.nl with APK Statistieken focus.
