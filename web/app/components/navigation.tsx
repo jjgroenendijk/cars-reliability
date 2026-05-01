@@ -9,7 +9,7 @@ import {
   Fuel,
   Search,
   Info,
-  Github,
+  GitFork,
   Menu,
   X,
   AlertTriangle,
@@ -110,7 +110,7 @@ export function Navigation() {
               className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
               aria-label="View Source Code"
             >
-              <Github className="h-5 w-5" />
+              <GitFork className="h-5 w-5" />
             </a>
 
             {/* Mobile Menu Button */}

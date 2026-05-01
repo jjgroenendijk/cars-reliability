@@ -149,15 +149,12 @@ def aggregate_brand_stats(
                 "total_inspections",
                 "total_defects",
                 "avg_defects_per_inspection",
-            ).alias("_values")
+            ).alias("_values"),
         )
 
         brand_df = brand_df.join(per_year_lists, on=group_cols, how="left")
     else:
-        brand_df = brand_df.with_columns(
-            pl.lit(None).alias("_keys"),
-            pl.lit(None).alias("_values")
-        )
+        brand_df = brand_df.with_columns(pl.lit(None).alias("_keys"), pl.lit(None).alias("_values"))
 
     # Convert main stats to list of dicts
     result = brand_df.to_dicts()
@@ -263,15 +260,12 @@ def aggregate_model_stats(
                 "total_inspections",
                 "total_defects",
                 "avg_defects_per_inspection",
-            ).alias("_values")
+            ).alias("_values"),
         )
 
         model_df = model_df.join(per_year_lists, on=group_cols, how="left")
     else:
-        model_df = model_df.with_columns(
-            pl.lit(None).alias("_keys"),
-            pl.lit(None).alias("_values")
-        )
+        model_df = model_df.with_columns(pl.lit(None).alias("_keys"), pl.lit(None).alias("_values"))
 
     # Convert main stats to list of dicts
     result = model_df.to_dicts()

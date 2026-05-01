@@ -47,4 +47,51 @@ test.describe('Statistics Page', () => {
         await expect(page.getByRole('heading', { name: 'Rankings' })).toBeVisible({ timeout: 15000 });
         await expect(page.getByRole('table')).toBeVisible();
     });
+
+    test('formats average age as years and aligns numeric header text', async ({ page }) => {
+        const table = page.getByRole('table');
+        await expect(table).toBeVisible({ timeout: 15000 });
+
+        const headers = table.locator('thead th');
+        const headerCount = await headers.count();
+        let avgAgeIndex = -1;
+
+        for (let i = 0; i < headerCount; i += 1) {
+            const headerText = (await headers.nth(i).innerText()).replace(/\s+/g, ' ').trim();
+            if (headerText.includes('Avg Age')) {
+                avgAgeIndex = i;
+                break;
+            }
+        }
+
+        expect(avgAgeIndex).toBeGreaterThanOrEqual(0);
+
+        const avgAgeCells = table.locator(`tbody tr td:nth-child(${avgAgeIndex + 1})`);
+        await expect(avgAgeCells.first()).toBeVisible();
+        await expect(avgAgeCells.first()).not.toContainText('%');
+
+        const alignment = await page.evaluate((columnIndex) => {
+            const tableElement = document.querySelector('table');
+            const header = tableElement?.querySelectorAll('thead th')[columnIndex];
+            const headerLabel = header?.querySelector('span');
+            const cell = tableElement?.querySelector(`tbody tr td:nth-child(${columnIndex + 1})`);
+
+            if (!headerLabel || !cell) {
+                return null;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(cell);
+            const rects = Array.from(range.getClientRects());
+            const cellTextRight = rects.at(-1)?.right ?? cell.getBoundingClientRect().right;
+
+            return {
+                headerTextRight: headerLabel.getBoundingClientRect().right,
+                cellTextRight,
+            };
+        }, avgAgeIndex);
+
+        expect(alignment).not.toBeNull();
+        expect(Math.abs(alignment!.headerTextRight - alignment!.cellTextRight)).toBeLessThan(2);
+    });
 });

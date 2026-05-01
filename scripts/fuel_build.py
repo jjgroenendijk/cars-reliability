@@ -20,18 +20,11 @@ def _build_fuel_dict(df: pl.DataFrame, key_col: str) -> dict[str, dict[str, int]
         Dictionary mapping key_col values to fuel breakdown dicts.
     """
     # 1. Aggregate counts by key and fuel type
-    counts = (
-        df.group_by([key_col, "fuel_type"])
-        .agg(pl.col("kenteken").n_unique().alias("count"))
-    )
+    counts = df.group_by([key_col, "fuel_type"]).agg(pl.col("kenteken").n_unique().alias("count"))
 
     # 2. Pivot to wide format so fuel types become columns
     # We use "count" as values. Missing combinations get null, which we fill with 0.
-    pivoted = counts.pivot(
-        index=key_col,
-        columns="fuel_type",
-        values="count"
-    ).fill_null(0)
+    pivoted = counts.pivot(index=key_col, columns="fuel_type", values="count").fill_null(0)
 
     # 3. Ensure all known fuel types + "other" are present as columns
     # Sort to ensure consistent field order in the struct/dict
@@ -41,16 +34,11 @@ def _build_fuel_dict(df: pl.DataFrame, key_col: str) -> dict[str, dict[str, int]
     # Add missing columns with 0
     missing_cols = [col for col in expected_cols if col not in existing_cols]
     if missing_cols:
-        pivoted = pivoted.with_columns([
-            pl.lit(0).alias(col) for col in missing_cols
-        ])
+        pivoted = pivoted.with_columns([pl.lit(0).alias(col) for col in missing_cols])
 
     # 4. Create struct column with all fuel counts
     # The struct fields will follow the order in expected_cols
-    struct_df = pivoted.select(
-        pl.col(key_col),
-        pl.struct(expected_cols).alias("fuel_breakdown")
-    )
+    struct_df = pivoted.select(pl.col(key_col), pl.struct(expected_cols).alias("fuel_breakdown"))
 
     # 5. Convert directly to dictionary
     # to_list() on a struct column returns a list of dictionaries
