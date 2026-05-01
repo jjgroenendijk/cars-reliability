@@ -139,8 +139,6 @@ export function ReliabilityTable<T extends object>({
     return filteredAndSortedData.slice(startIndex, startIndex + pageSize);
   }, [filteredAndSortedData, isPaginated, pageSize, currentPage]);
 
-  const totalPages = isPaginated ? Math.ceil(filteredAndSortedData.length / pageSize) : 1;
-
   function sort_toggle(key: keyof T) {
     let direction: SortDirection = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
@@ -270,33 +268,6 @@ export function ReliabilityTable<T extends object>({
         </div>
       </div>
 
-      {/* Pagination Controls */}
-      {isPaginated && totalPages > 1 && onPageChange && (
-        <div className="mt-4 flex items-center justify-between px-2">
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Showing {(currentPage! - 1) * pageSize! + 1} to {Math.min(currentPage! * pageSize!, filteredAndSortedData.length)} of {filteredAndSortedData.length} entries
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => onPageChange(Math.max(1, currentPage! - 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1 border border-gray-200 dark:border-gray-700 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Previous
-            </button>
-            <div className="flex items-center px-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-              {currentPage} / {totalPages}
-            </div>
-            <button
-              onClick={() => onPageChange(Math.min(totalPages, currentPage! + 1))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 border border-gray-200 dark:border-gray-700 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

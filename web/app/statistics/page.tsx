@@ -7,7 +7,6 @@ import { ReliabilityTable } from "@/app/components/reliability_table";
 import { DefectFilterPanel } from "@/app/components/defect_filter_panel";
 import FilterBar from "@/app/components/filter_bar";
 import { useDefectFilter } from "@/app/lib/defect_filter_context";
-import { timestamp_format } from "@/app/lib/data_load";
 import { RefreshCw, AlertTriangle, Info, Trophy } from "lucide-react";
 import { columns_build } from "@/app/lib/statistics_config";
 import { useStatisticsData } from "@/app/hooks/useStatisticsData";
@@ -64,7 +63,6 @@ function StatisticsContent() {
         brand_stats: fetchedBrands,
         model_stats: fetchedModels,
         metadata,
-        generated_at,
         loading: isLoading,
         error: isError
     } = useStatisticsData();
@@ -290,17 +288,6 @@ function StatisticsContent() {
                 )
             }
 
-            <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                <p>
-                    Data: RDW Open Data
-                    {generated_at && (
-                        <>
-                            {" | Updated: "}
-                            <span className="font-mono tabular-nums">{timestamp_format(generated_at)}</span>
-                        </>
-                    )}
-                </p>
-            </div>
         </div >
     );
 }

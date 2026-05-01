@@ -1,5 +1,6 @@
 # Todo
 
+- [x] Remove redundant statistics page pagination/source footer elements.
 - [x] Fix statistics rankings average age display and numeric header alignment.
 
 - [x] Defer heavy table filtering while dragging selection sliders (price/age/fleet/inspections) to reduce jitter.
