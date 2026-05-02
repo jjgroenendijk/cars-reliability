@@ -88,7 +88,7 @@ export default function HomePage() {
               {t('home.btn_lookup')}
             </Link>
             <Link
-              href="/statistics"
+              href="/data"
               className="inline-flex items-center justify-center px-8 py-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-semibold rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors gap-2"
             >
               <Car className="h-5 w-5" />
@@ -107,7 +107,7 @@ export default function HomePage() {
           title={t('home.fewest_brand')}
           subtitle={t('home.lowest_defects')}
           entries={rankings.most_reliable_brands}
-          link_href="/statistics"
+          link_href="/data"
           link_text={t('home.view_all_brands')}
           highlight_color="green"
           test_id="ranking-most-reliable-brands"
@@ -119,7 +119,7 @@ export default function HomePage() {
           title={t('home.most_brand')}
           subtitle={t('home.highest_defects')}
           entries={rankings.least_reliable_brands}
-          link_href="/statistics"
+          link_href="/data"
           link_text={t('home.view_all_brands')}
           highlight_color="red"
           test_id="ranking-least-reliable-brands"
@@ -131,7 +131,7 @@ export default function HomePage() {
           title={t('home.fewest_model')}
           subtitle={t('home.lowest_defects')}
           entries={rankings.most_reliable_models.slice(0, 10)}
-          link_href="/statistics?view=models"
+          link_href="/data?view=models"
           link_text={t('home.view_all_models')}
           highlight_color="green"
           show_model
@@ -144,7 +144,7 @@ export default function HomePage() {
           title={t('home.most_model')}
           subtitle={t('home.highest_defects')}
           entries={rankings.least_reliable_models.slice(0, 10)}
-          link_href="/statistics?view=models"
+          link_href="/data?view=models"
           link_text={t('home.view_all_models')}
           highlight_color="red"
           show_model

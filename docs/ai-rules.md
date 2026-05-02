@@ -51,7 +51,7 @@ cd ../web && npm run dev  # JSON files sync automatically via predev hook
 ### Frontend (`web/app/`)
 
 - `page.tsx` — Homepage
-- `statistics/`, `defects/`, `fuels/`, `lookup/`, `about/` — Route pages
+- `data/`, `statistics/`, `defects/`, `fuels/`, `lookup/`, `about/` — Route pages
 - `components/` — Reusable UI (sliders, filters, tables, navigation)
 - `hooks/` — Data fetching and processing (`useStatisticsData`, `useDefectData`, `useFuelData`, `useUrlSync`)
 - `lib/types.ts` — TypeScript interfaces for all JSON data
