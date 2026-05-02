@@ -209,9 +209,9 @@ def dataset_download_sharded(
     shutil.rmtree(temp_dir, ignore_errors=True)
 
     final_rows = int(pl.scan_parquet(output_path).select(pl.len()).collect().item())
-    if final_rows != total_rows:
+    if final_rows != rows_written:
         raise RuntimeError(
-            f"row count mismatch after merge: local={final_rows:,}, RDW={total_rows:,}"
+            f"row count mismatch after merge: merged={final_rows:,}, shards={rows_written:,}"
         )
 
     file_size_mb = output_path.stat().st_size / (1024 * 1024)
