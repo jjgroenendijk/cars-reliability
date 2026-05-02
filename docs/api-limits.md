@@ -21,31 +21,35 @@
 - Request rate: ~1,000 requests/hour with app token (`X-App-Token`)
 - Anonymous use: throttled quickly; shared IP pool
 - Throttle response: HTTP 429 on excess; back off before retry
-- Rows per call: default 1,000 rows if `$limit` omitted
-- Max rows per call: up to 50,000 rows with `$limit`
-- Pagination: use `$offset` + `$limit` to retrieve >50k rows
-- Total data: no hard cap on total rows; paging required for large pulls
-- Payload size: keep responses below ~250 MB by tuning `$limit` and selected columns
+- Rows per JSON call: default 1,000 rows if `$limit` omitted
+- Max JSON rows per call: up to 50,000 rows with `$limit`
+- CSV export: use streamed `.csv` exports with an explicit `$limit` for full dataset pulls
+- Pagination: do not use unordered `$offset` pagination for full dataset downloads
+- Total data: no hard cap on total rows; shard large pulls into non-overlapping filters
+- Payload size: stream CSV responses to disk before converting to Parquet
 
 ## Retry Handling
 
-The `data_download.py` script retries transient page failures:
+The `data_download.py` script retries transient shard failures:
 
 - Uses a bounded worker pool per dataset
 - Retries connection, timeout, chunked encoding, and throttling failures
-- Applies exponential backoff before retrying a failed page
-- Fails the dataset when a page still cannot be fetched after all retries
+- Applies exponential backoff before retrying a failed shard
+- Fails the dataset when a shard still cannot be fetched after all retries
 
 ## Parallel Download Strategy
 
 Stage 1 uses parallel fetching at two levels:
 
 1. Dataset level: All 5 datasets download in parallel jobs (GitHub Actions)
-2. Page level: Within each dataset, multiple pages are fetched concurrently
+2. Shard level: Within each dataset, non-overlapping `kenteken` ranges are fetched concurrently
 
-Fetched JSON pages are parsed directly by Polars and saved as temporary Parquet batches. Multiple RDW pages can be grouped into one batch file to reduce final merge overhead while keeping memory bounded. Polars infers against each full page so late-appearing RDW fields are preserved.
+Full dataset downloads stream RDW CSV exports to temporary files, one shard per
+`kenteken` range. Each CSV shard is converted to temporary Parquet with all raw fields
+kept as strings, then Polars merges the temporary Parquet files into the final dataset.
+This avoids unstable Socrata offset pagination while keeping memory bounded.
 
-Progress output format: `[dataset] X% | page Y/Z | rows A | B rows/s | C MB`
+Progress output format: `[dataset] X% | shard Y/Z | rows A | B rows/s | C MB`
 
 ## Per-Dataset Caching
 
