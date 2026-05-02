@@ -14,7 +14,9 @@ All field names from RDW datasets are preserved as-is throughout the pipeline. W
 
 Date filtering: when `INSPECTION_DAYS_LIMIT` is set, Stage 1 adds `meld_datum_door_keuringsinstantie >= <YYYYMMDD>` to both `sgfe-77wx` and `a34c-vvps` queries.
 
-Current raw snapshot: `data/raw/*` refreshed on 2025-12-10 with `INSPECTION_DAYS_LIMIT=30` (past 30 days). Includes 10,661,997 vehicles, 701,592 inspections, 716,015 defect rows, 1,005 defect reference rows, and 16,598,354 fuel rows. All columns listed below are present in the raw JSON. Full multi-year history is still not downloaded.
+Current Parquet snapshot: `data/parquet/*` refreshed on 2026-05-02 from the full row counts exposed by RDW Open Data. The inspection-event datasets are limited by RDW source availability, not by local downloader filtering: live API checks on 2026-05-02 showed `sgfe-77wx` and `a34c-vvps` both spanning `20220602` through `20260501`, with zero rows before `20220602`.
+
+Historical limitation: `sgfe-77wx` (`Meldingen Keuringsinstantie`) and `a34c-vvps` (`Geconstateerde Gebreken`) behave as rolling-window source datasets. RDW `vkij-7mwc` (`Open Data RDW: Keuringen`) contains older APK expiry dates per license plate, but not historical inspection events or per-inspection defects.
 
 ### Gekentekende Voertuigen (`m9d7-ebf2`)
 
@@ -125,7 +127,9 @@ Full column list (RDW metadata, 2025-12-10):
 
 ### Meldingen Keuringsinstantie (`sgfe-77wx`)
 
-APK inspection reports (one row per inspection). Used to compute vehicle age at inspection date for age buckets. The dataset does not expose a `herstel_indicator`; a reliable re-inspection flag still needs to be identified. Current raw snapshot contains per-inspection rows (date, time, type, expiry) for a small sample.
+APK inspection reports (one row per inspection). Used to compute vehicle age at inspection date for age buckets. The dataset does not expose a `herstel_indicator`; a reliable re-inspection flag still needs to be identified.
+
+Source availability: live RDW API checks on 2026-05-02 showed this dataset contains no rows before `20220602`. The local downloader fetches all exposed rows unless `INSPECTION_DAYS_LIMIT` is set.
 
 Recommended Stage 1 query: `$select=kenteken,meld_datum_door_keuringsinstantie,meld_tijd_door_keuringsinstantie,soort_melding_ki_omschrijving,soort_erkenning_keuringsinstantie,soort_erkenning_omschrijving,vervaldatum_keuring&$order=kenteken`
 
@@ -147,7 +151,9 @@ Full column list (RDW metadata, 2025-12-10):
 
 ### Geconstateerde Gebreken (`a34c-vvps`)
 
-Detected defects during inspections (multiple rows possible per inspection). Stage 2 aggregates `aantal_gebreken_geconstateerd` per `(kenteken, meld_datum_door_keuringsinstantie, meld_tijd_door_keuringsinstantie)`; non-numeric values default to `1`. Severity weighting from `hx2c-gt7k` is still heuristic (letters in `gebrek_identificatie` / `gebrek_artikel_nummer`). Current raw snapshot contains per-inspection rows for a small sample; full history still needs to be downloaded.
+Detected defects during inspections (multiple rows possible per inspection). Stage 2 aggregates `aantal_gebreken_geconstateerd` per `(kenteken, meld_datum_door_keuringsinstantie, meld_tijd_door_keuringsinstantie)`; non-numeric values default to `1`. Severity weighting from `hx2c-gt7k` is still heuristic (letters in `gebrek_identificatie` / `gebrek_artikel_nummer`).
+
+Source availability: live RDW API checks on 2026-05-02 showed this dataset contains no rows before `20220602`. The local downloader fetches all exposed rows unless `INSPECTION_DAYS_LIMIT` is set.
 
 Recommended Stage 1 query: `$select=kenteken,meld_datum_door_keuringsinstantie,meld_tijd_door_keuringsinstantie,gebrek_identificatie,aantal_gebreken_geconstateerd,soort_erkenning_keuringsinstantie,soort_erkenning_omschrijving&$order=kenteken`
 

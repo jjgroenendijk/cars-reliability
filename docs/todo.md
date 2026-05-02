@@ -1,5 +1,7 @@
 # Todo
 
+- [x] Document RDW inspection history availability window and source limitation.
+
 - [x] Remove redundant statistics page pagination/source footer elements.
 - [x] Fix statistics rankings average age display and numeric header alignment.
 

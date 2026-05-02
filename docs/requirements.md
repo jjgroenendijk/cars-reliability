@@ -55,6 +55,12 @@ All data comes from [RDW Open Data](https://opendata.rdw.nl/) via the Socrata AP
 
 - Vehicle type: `voertuigsoort='Personenauto'` - Exclude trucks, motorcycles
 
+### Source Availability Limitations
+
+- RDW `sgfe-77wx` (`Meldingen Keuringsinstantie`) and `a34c-vvps` (`Geconstateerde Gebreken`) are rolling-window source datasets. As verified against the live Socrata API on 2026-05-02, both datasets expose inspection rows from `20220602` through `20260501` and return zero rows before `20220602`.
+- This inspection history window is an upstream RDW Open Data availability limit, not a filter in `data_download.py`. The downloader must still fetch all rows exposed by each source unless an explicit optional project filter is configured.
+- RDW `vkij-7mwc` (`Open Data RDW: Keuringen`) exposes older APK expiry dates per license plate, but it does not contain historical inspection events or per-inspection defects and must not be treated as a replacement for `sgfe-77wx` or `a34c-vvps`.
+
 ### Optional Data Filters
 
 These filters are controlled via GitHub repository variables (Settings > Secrets and variables > Actions > Variables):
