@@ -12,6 +12,11 @@ All field names from RDW datasets are preserved as-is throughout the pipeline. W
 
 ## RDW Datasets
 
+Stage 1 full dataset downloads use streamed CSV exports split into non-overlapping
+`kenteken` ranges. Do not use unordered `$offset` pagination for these downloads,
+because Socrata/RDW page boundaries can overlap or skip rows when no deterministic
+order is applied.
+
 Date filtering: when `INSPECTION_DAYS_LIMIT` is set, Stage 1 adds `meld_datum_door_keuringsinstantie >= <YYYYMMDD>` to both `sgfe-77wx` and `a34c-vvps` queries.
 
 Current raw snapshot: `data/raw/*` refreshed on 2025-12-10 with `INSPECTION_DAYS_LIMIT=30` (past 30 days). Includes 10,661,997 vehicles, 701,592 inspections, 716,015 defect rows, 1,005 defect reference rows, and 16,598,354 fuel rows. All columns listed below are present in the raw JSON. Full multi-year history is still not downloaded.
@@ -127,7 +132,8 @@ Full column list (RDW metadata, 2025-12-10):
 
 APK inspection reports (one row per inspection). Used to compute vehicle age at inspection date for age buckets. The dataset does not expose a `herstel_indicator`; a reliable re-inspection flag still needs to be identified. Current raw snapshot contains per-inspection rows (date, time, type, expiry) for a small sample.
 
-Recommended Stage 1 query: `$select=kenteken,meld_datum_door_keuringsinstantie,meld_tijd_door_keuringsinstantie,soort_melding_ki_omschrijving,soort_erkenning_keuringsinstantie,soort_erkenning_omschrijving,vervaldatum_keuring&$order=kenteken`
+Recommended Stage 1 query: streamed CSV export sharded by non-overlapping `kenteken`
+ranges, preserving the full RDW column set as string data.
 
 Full column list (RDW metadata, 2025-12-10):
 
@@ -149,7 +155,8 @@ Full column list (RDW metadata, 2025-12-10):
 
 Detected defects during inspections (multiple rows possible per inspection). Stage 2 aggregates `aantal_gebreken_geconstateerd` per `(kenteken, meld_datum_door_keuringsinstantie, meld_tijd_door_keuringsinstantie)`; non-numeric values default to `1`. Severity weighting from `hx2c-gt7k` is still heuristic (letters in `gebrek_identificatie` / `gebrek_artikel_nummer`). Current raw snapshot contains per-inspection rows for a small sample; full history still needs to be downloaded.
 
-Recommended Stage 1 query: `$select=kenteken,meld_datum_door_keuringsinstantie,meld_tijd_door_keuringsinstantie,gebrek_identificatie,aantal_gebreken_geconstateerd,soort_erkenning_keuringsinstantie,soort_erkenning_omschrijving&$order=kenteken`
+Recommended Stage 1 query: streamed CSV export sharded by non-overlapping `kenteken`
+ranges, preserving the full RDW column set as string data.
 
 Full column list (RDW metadata, 2025-12-10):
 

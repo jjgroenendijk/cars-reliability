@@ -16,7 +16,7 @@ from config import API_BASE, REQUEST_TIMEOUT
 
 # URL templates
 COUNT_URL = API_BASE + "/resource/{id}.json?$select=count(*)"
-RESOURCE_URL = API_BASE + "/resource/{id}.json?$limit={limit}&$offset={offset}"
+CSV_URL = API_BASE + "/resource/{id}.csv"
 
 # Dynamic worker scaling for parallel downloads
 PARALLEL_WORKERS = min(32, (os.cpu_count() or 1) + 4)
@@ -77,31 +77,48 @@ def row_count_get(session: requests.Session, dataset_id: str) -> int | None:
     return None
 
 
-def page_frame_fetch(
-    session: requests.Session, dataset_id: str, offset: int, limit: int
-) -> pl.DataFrame:
-    """Fetch a single page of data from the API and parse it as a Polars frame."""
-    url = RESOURCE_URL.format(id=dataset_id, limit=limit, offset=offset)
+def csv_stream_download(
+    session: requests.Session,
+    dataset_id: str,
+    where_clause: str | None,
+    row_limit: int,
+    output_path: Path,
+) -> None:
+    """Stream a CSV export from RDW to disk."""
+    params = {"$limit": str(row_limit)}
+    if where_clause:
+        params["$where"] = where_clause
+    temp_path = output_path.with_suffix(output_path.suffix + ".part")
     max_retries = 5
 
     for attempt in range(max_retries):
         try:
-            r = session.get(url, timeout=REQUEST_TIMEOUT)
-            r.raise_for_status()
-            if r.content.strip() == b"[]":
-                return pl.DataFrame()
-            return pl.read_json(io.BytesIO(r.content), infer_schema_length=None)
+            temp_path.unlink(missing_ok=True)
+            with session.get(
+                CSV_URL.format(id=dataset_id),
+                params=params,
+                stream=True,
+                timeout=REQUEST_TIMEOUT,
+            ) as response:
+                response.raise_for_status()
+                with open(temp_path, "wb") as f:
+                    for chunk in response.iter_content(chunk_size=1024 * 1024):
+                        if chunk:
+                            f.write(chunk)
+            temp_path.replace(output_path)
+            return
         except (
             requests.exceptions.ChunkedEncodingError,
             requests.exceptions.ConnectionError,
             requests.exceptions.HTTPError,
             requests.exceptions.Timeout,
         ) as e:
+            temp_path.unlink(missing_ok=True)
             if attempt == max_retries - 1:
-                raise  # Re-raise on final attempt
-            wait_time = 2**attempt  # Exponential backoff: 1, 2, 4, 8, 16 seconds
-            print(f"  [retry] page at offset {offset} failed: {e}, retrying in {wait_time}s...")
+                raise
+            wait_time = 2**attempt
+            shard = where_clause or "full export"
+            print(f"  [retry] CSV shard {shard} failed: {e}, retrying in {wait_time}s...")
             time.sleep(wait_time)
 
-    # Should never reach here, but just in case
-    raise RuntimeError(f"Failed to fetch page at offset {offset} after {max_retries} attempts")
+    raise RuntimeError(f"Failed to fetch CSV shard for {dataset_id} after {max_retries} attempts")
