@@ -121,6 +121,8 @@ Note: The `gekentekende_voertuigen` dataset is NOT filtered by `INSPECTION_DAYS_
   - Vehicle age range (min and max)
   - Minimum fleet size
   - Brand selection (multiple brands)
+- Data page: The route and navigation item for the full sortable/filterable brands and models table MUST be named "Data".
+- Statistics page: A separate Statistics page MUST display aggregate, interesting statistics computed from the available processed JSON data, such as dataset totals, defect rates, inspection coverage, fuel distribution, age range, and standout best/worst rankings.
 - Average defects per year per model
 - About/methodology page
 

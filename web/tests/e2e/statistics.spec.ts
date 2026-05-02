@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Statistics Page', () => {
+test.describe('Data Page', () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto('/statistics');
+        await page.goto('/data');
     });
 
     test('should not display reliability chart', async ({ page }) => {
@@ -93,5 +93,17 @@ test.describe('Statistics Page', () => {
 
         expect(alignment).not.toBeNull();
         expect(Math.abs(alignment!.headerTextRight - alignment!.cellTextRight)).toBeLessThan(2);
+    });
+});
+
+test.describe('Statistics Page', () => {
+    test('shows aggregate statistics', async ({ page }) => {
+        await page.goto('/statistics');
+
+        await expect(page.getByRole('heading', { name: 'Statistics' })).toBeVisible({ timeout: 15000 });
+        await expect(page.getByText('Vehicles', { exact: true })).toBeVisible();
+        await expect(page.getByText('APK Inspections', { exact: true })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Fuel Mix' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Standout Rankings' })).toBeVisible();
     });
 });

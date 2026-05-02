@@ -1,5 +1,7 @@
 # Todo
 
+- [x] Rename current statistics table page to Data and add a new aggregate Statistics page.
+
 - [x] Remove redundant statistics page pagination/source footer elements.
 - [x] Fix statistics rankings average age display and numeric header alignment.
 

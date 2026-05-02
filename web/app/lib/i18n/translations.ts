@@ -4,6 +4,7 @@ export const translations = {
   en: {
     nav: {
       home: "Home",
+      data: "Data",
       statistics: "Statistics",
       fuels: "Fuel Types",
       defects: "Defects",
@@ -51,6 +52,7 @@ export const translations = {
   nl: {
     nav: {
       home: "Home",
+      data: "Data",
       statistics: "Statistieken",
       fuels: "Brandstoffen",
       defects: "Gebreken",

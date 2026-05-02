@@ -13,7 +13,8 @@ import {
   Menu,
   X,
   AlertTriangle,
-  BarChart3
+  BarChart3,
+  Table2
 } from "lucide-react";
 import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 
@@ -25,6 +26,7 @@ interface NavLink {
 
 const NAV_LINKS: NavLink[] = [
   { href: "/", labelKey: "nav.home", icon: Home },
+  { href: "/data", labelKey: "nav.data", icon: Table2 },
   { href: "/statistics", labelKey: "nav.statistics", icon: BarChart3 },
   { href: "/fuels", labelKey: "nav.fuels", icon: Fuel },
   { href: "/defects", labelKey: "nav.defects", icon: AlertTriangle },

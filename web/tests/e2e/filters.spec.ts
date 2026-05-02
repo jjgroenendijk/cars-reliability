@@ -5,18 +5,18 @@ test.describe('Filters', () => {
         await page.goto('/');
     });
 
-    test('can navigate to statistics page and see filters', async ({ page }) => {
-        // Navigate to Statistics page via "View All Brands"
+    test('can navigate to data page and see filters', async ({ page }) => {
+        // Navigate to Data page via "View All Brands"
         // This link is in the Hero section
         const brandsLink = page.getByRole('link', { name: 'View All Brands' }).first();
 
         await brandsLink.click();
 
-        // Should go to /statistics
-        await expect(page).toHaveURL(/.*statistics/);
+        // Should go to /data
+        await expect(page).toHaveURL(/.*data/);
 
-        // Check for main heading on statistics page
-        await expect(page.getByRole('heading', { name: 'Reliability Statistics' })).toBeVisible();
+        // Check for main heading on data page
+        await expect(page.getByRole('heading', { name: 'Data' })).toBeVisible();
 
         // Check for Search input (placeholder depends on default view mode which is brands)
         await expect(page.getByPlaceholder('Search brands...')).toBeVisible();
