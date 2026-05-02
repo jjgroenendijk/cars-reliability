@@ -308,6 +308,47 @@ def main() -> None:
         "pipeline_stage": 2,
     }
 
+    zero_defect_rate = round(int((inspections_df["defect_count"] == 0).sum()) / total_inspections, 4) if total_inspections > 0 else 0.0
+
+    yearly_trend = (
+        inspections_df.group_by("insp_year")
+        .agg([
+            pl.len().alias("inspections"),
+            pl.col("defect_count").sum().alias("total_defects"),
+        ])
+        .with_columns(
+            (pl.col("total_defects") / pl.col("inspections")).round(4).alias("avg_defects_per_inspection")
+        )
+        .filter(pl.col("inspections") >= 10_000)
+        .sort("insp_year")
+        .to_dicts()
+    )
+
+    fleet_age_stats = (
+        inspections_df.group_by("age_at_inspection")
+        .agg([
+            pl.len().alias("total_inspections"),
+            pl.col("defect_count").sum().alias("total_defects"),
+            pl.col("kenteken").n_unique().alias("vehicle_count"),
+        ])
+        .with_columns(
+            (pl.col("total_defects") / pl.col("total_inspections")).round(4).alias("avg_defects_per_inspection")
+        )
+        .filter(
+            (pl.col("vehicle_count") >= 100)
+            & (pl.col("age_at_inspection") >= 1)
+            & (pl.col("age_at_inspection") <= 30)
+        )
+        .sort("age_at_inspection")
+        .to_dicts()
+    )
+
+    metadata["stats"] = {
+        "zero_defect_rate": zero_defect_rate,
+        "yearly_trend": yearly_trend,
+        "fleet_age_stats": fleet_age_stats,
+    }
+
     # Build defect stats
     print("Building defect statistics...", flush=True)
     defect_stats = build_defect_stats(defects_lf, gebreken_df, total_inspections)
