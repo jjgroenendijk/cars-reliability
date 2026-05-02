@@ -226,6 +226,21 @@ export interface Range {
   max: number;
 }
 
+export interface FleetAgeStat {
+  age_at_inspection: number;
+  total_inspections: number;
+  total_defects: number;
+  vehicle_count: number;
+  avg_defects_per_inspection: number;
+}
+
+export interface YearlyTrendEntry {
+  insp_year: number;
+  inspections: number;
+  total_defects: number;
+  avg_defects_per_inspection: number;
+}
+
 export interface Metadata {
   generated_at: string;
   ranges?: {
@@ -235,7 +250,6 @@ export interface Metadata {
     inspections: Range;
   };
   fuel_types?: string[];
-  // Deprecated age_range for backward compat if needed during transition
   age_range?: {
     min: number;
     max: number;
@@ -243,6 +257,16 @@ export interface Metadata {
   counts?: {
     consumer_vehicles: number;
     commercial_vehicles: number;
+    vehicles_processed?: number;
+    total_inspections?: number;
+    total_defects?: number;
+    brands?: number;
+    models?: number;
+  };
+  stats?: {
+    zero_defect_rate: number;
+    yearly_trend: YearlyTrendEntry[];
+    fleet_age_stats: FleetAgeStat[];
   };
 }
 
