@@ -7,8 +7,10 @@ import { useDefectData } from "@/app/hooks/useDefectData";
 import { DefectSummaryCards } from "@/app/components/defects/DefectSummaryCards";
 import { DefectChart } from "@/app/components/defects/DefectChart";
 import { DefectTable } from "@/app/components/defects/DefectTable";
+import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 
 export default function DefectsPage() {
+    const { t } = useLanguage();
     const {
         defect_stats,
         loading,
@@ -36,7 +38,7 @@ export default function DefectsPage() {
             <div className="flex flex-col justify-center items-center min-h-[400px] gap-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                 <div className="text-gray-600 dark:text-gray-400 font-medium">
-                    Loading defect data...
+                    {t("defects.loading")}
                 </div>
             </div>
         );
@@ -46,12 +48,12 @@ export default function DefectsPage() {
         return (
             <div className="max-w-4xl mx-auto py-12">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-                    Defect Statistics
+                    {t("defects.title")}
                 </h1>
                 <div className="inline-flex items-center gap-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-6">
                     <AlertCircle className="h-6 w-6 text-yellow-600 dark:text-yellow-500 flex-shrink-0" />
                     <p className="text-yellow-800 dark:text-yellow-200 font-medium">
-                        {error ?? "Data is currently being processed. Please check back later."}
+                        {error ?? t("defects.processing")}
                     </p>
                 </div>
             </div>
@@ -63,10 +65,10 @@ export default function DefectsPage() {
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                    Defect Statistics
+                    {t("defects.title")}
                 </h1>
                 <p className="text-gray-600 dark:text-gray-300">
-                    Analysis of defects found during APK inspections. Filter by defect category to focus on build quality issues.
+                    {t("defects.page_subtitle")}
                 </p>
             </div>
 
@@ -101,18 +103,18 @@ export default function DefectsPage() {
             <div className="mt-4 flex flex-wrap items-center gap-6 text-sm text-gray-500 dark:text-gray-400">
                 <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    <span>Last updated: {timestamp_format(defect_stats.generated_at)}</span>
+                    <span>{t("common.last_updated")}: {timestamp_format(defect_stats.generated_at)}</span>
                 </div>
                 {override_count > 0 && (
                     <div className="text-blue-600 dark:text-blue-400">
-                        * {override_count} custom classification{override_count !== 1 ? "s" : ""}
+                        * {t(override_count === 1 ? "defects.custom_classification_one" : "defects.custom_classification_other", { count: override_count })}
                     </div>
                 )}
                 <Link
                     href="/about"
                     className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
                 >
-                    Learn more about the methodology
+                    {t("home.learn_more")}
                     <ArrowRight className="h-3 w-3" />
                 </Link>
             </div>

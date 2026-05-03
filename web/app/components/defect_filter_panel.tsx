@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useDefectFilter } from "@/app/lib/defect_filter_context";
 import { ChevronDown, Search, Check, RotateCcw } from "lucide-react";
+import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 
 export function DefectFilterPanel() {
     const {
@@ -20,6 +21,7 @@ export function DefectFilterPanel() {
     const [isOpen, setIsOpen] = useState(false);
     const [search_term, setSearchTerm] = useState("");
     const containerRef = useRef<HTMLDivElement>(null);
+    const { t } = useLanguage();
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -50,7 +52,7 @@ export function DefectFilterPanel() {
     if (loading) {
         return (
             <div className="px-3 py-2 rounded-lg border border-transparent bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-sm animate-pulse">
-                Loading...
+                {t("common.loading")}
             </div>
         );
     }
@@ -66,14 +68,14 @@ export function DefectFilterPanel() {
                     : "bg-zinc-100 border-transparent text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
                     }`}
             >
-                <span>Defects</span>
+                <span>{t("defect_filter.defects")}</span>
                 {mode === "custom" && active_defect_count > 0 && (
                     <span className="bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-100 text-xs px-1.5 py-0.5 rounded-full">
                         {active_defect_count}
                     </span>
                 )}
                 {mode === "reliability" && (
-                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 rounded">Build Quality</span>
+                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 rounded">{t("defect_filter.build_quality")}</span>
                 )}
                 <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
             </button>
@@ -90,7 +92,7 @@ export function DefectFilterPanel() {
                                 : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400"
                                 }`}
                         >
-                            All Defects
+                            {t("defect_filter.all_defects")}
                         </button>
                         <button
                             onClick={() => mode_set("reliability")}
@@ -99,7 +101,7 @@ export function DefectFilterPanel() {
                                 : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400"
                                 }`}
                         >
-                            Build Quality Only
+                            {t("defect_filter.build_quality_only")}
                         </button>
                     </div>
 
@@ -107,7 +109,7 @@ export function DefectFilterPanel() {
                     <div className="p-3 pb-0">
                         <div className="flex items-center justify-between mb-2">
                             <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                                Custom Selection
+                                {t("defect_filter.custom_selection")}
                             </div>
                             {mode !== "all" && (
                                 <button
@@ -115,7 +117,7 @@ export function DefectFilterPanel() {
                                     className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
                                 >
                                     <RotateCcw className="h-3 w-3" />
-                                    Reset
+                                    {t("defect_filter.reset")}
                                 </button>
                             )}
                         </div>
@@ -124,7 +126,7 @@ export function DefectFilterPanel() {
                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                             <input
                                 type="text"
-                                placeholder="Search defect codes..."
+                                placeholder={t("defect_filter.search_placeholder")}
                                 value={search_term}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full pl-9 pr-3 py-1.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
@@ -135,7 +137,7 @@ export function DefectFilterPanel() {
                     {/* Defect List */}
                     <div className="overflow-y-auto flex-1 p-1 max-h-[300px]">
                         {filtered_codes.length === 0 ? (
-                            <div className="p-4 text-center text-sm text-zinc-500">No defects found</div>
+                            <div className="p-4 text-center text-sm text-zinc-500">{t("defect_filter.no_defects_found")}</div>
                         ) : (
                             filtered_codes.map(([code, description]) => {
                                 const included = is_included(code);
@@ -161,7 +163,7 @@ export function DefectFilterPanel() {
                                                 </span>
                                             </div>
                                             <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 leading-snug">
-                                                {description || "No description"}
+                                                {description || t("defect_filter.no_description")}
                                             </div>
                                         </div>
                                     </button>
@@ -180,7 +182,7 @@ export function DefectFilterPanel() {
                             }}
                             className="flex-1 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md"
                         >
-                            Select All
+                            {t("defect_filter.select_all")}
                         </button>
                         <button
                             onClick={() => {
@@ -190,7 +192,7 @@ export function DefectFilterPanel() {
                             }}
                             className="flex-1 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md"
                         >
-                            Deselect All
+                            {t("defect_filter.deselect_all")}
                         </button>
                     </div>
                 </div>

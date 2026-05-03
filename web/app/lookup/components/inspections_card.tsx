@@ -49,7 +49,7 @@ export function InspectionsCard({
           {t('lookup.inspection_history')}
         </h2>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          {inspections.length} total
+          {t("lookup.total_count", { count: inspections.length })}
         </p>
       </div>
 
@@ -106,7 +106,7 @@ export function InspectionsCard({
                           [{defect.gebrek_identificatie}]
                         </span>
                         {defect_descriptions.get(defect.gebrek_identificatie) ??
-                          "No description available"}
+                          t("lookup.no_description")}
                         {parseInt(defect.aantal_gebreken) > 1 && (
                           <span className="ml-1 text-gray-400 dark:text-gray-500">
                             (x{defect.aantal_gebreken})

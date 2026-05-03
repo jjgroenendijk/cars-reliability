@@ -1,5 +1,17 @@
 # Todo
 
+- [x] Fix incomplete Dutch website translations.
+
+  Problem: selecting Dutch leaves multiple visible UI strings in English.
+  Audit page and component copy, move missing strings through the existing i18n
+  translation layer, and verify the Dutch locale renders translated text.
+
+  Result: added missing translation keys for shared controls and page copy,
+  localized the data, statistics, defects, fuels, and lookup UI, persisted the
+  selected language, and split i18n/page components to keep files under 400 LOC.
+  Verified with `npx tsc --noEmit` and `npm run build`; `npm run lint` is still
+  blocked by the tracked ESLint 10 / eslint-config-next React plugin crash.
+
 - [ ] Fix direct RDW CSV-to-Parquet downloads for GitHub Actions.
 
   Requirement: final output must be one physical Parquet file per dataset.

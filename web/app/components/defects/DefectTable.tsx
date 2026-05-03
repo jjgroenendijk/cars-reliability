@@ -1,5 +1,8 @@
+"use client";
+
 import { Search, Filter, ChevronUp, ChevronDown, Settings2, RotateCcw } from "lucide-react";
 import type { DefectWithCategory } from "@/app/hooks/useDefectData";
+import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 
 interface DefectTableProps {
     filtered_defects: DefectWithCategory[];
@@ -34,11 +37,13 @@ export function DefectTable({
     override_count,
     reliability_overrides
 }: DefectTableProps) {
+    const { t } = useLanguage();
+
     return (
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                    All Defect Types
+                    {t("defects.all_defect_types")}
                 </h2>
                 <button
                     onClick={() => setShowConfig(!show_config)}
@@ -48,7 +53,7 @@ export function DefectTable({
                         }`}
                 >
                     <Settings2 className="h-4 w-4" />
-                    Configure Categories
+                    {t("defects.configure_categories")}
                     {override_count > 0 && (
                         <span className="bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full">
                             {override_count}
@@ -63,11 +68,10 @@ export function DefectTable({
                     <div className="flex items-start justify-between gap-4">
                         <div>
                             <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
-                                Customize Defect Categories
+                                {t("defects.customize_categories")}
                             </h3>
                             <p className="text-sm text-blue-700 dark:text-blue-300">
-                                Toggle defects in the table below to change whether they count as build quality defects or wear-and-tear.
-                                Your selections are saved locally.
+                                {t("defects.customize_text")}
                             </p>
                         </div>
                         {override_count > 0 && (
@@ -76,7 +80,7 @@ export function DefectTable({
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800/50 rounded-lg transition-colors"
                             >
                                 <RotateCcw className="h-4 w-4" />
-                                Reset to defaults
+                                {t("defects.reset_defaults")}
                             </button>
                         )}
                     </div>
@@ -89,7 +93,7 @@ export function DefectTable({
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input
                         type="text"
-                        placeholder="Search defects..."
+                        placeholder={t("defects.search_placeholder")}
                         value={search_term}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -104,7 +108,7 @@ export function DefectTable({
                             : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                             }`}
                     >
-                        Build Quality Only
+                        {t("defects.build_quality_only")}
                     </button>
                     <button
                         onClick={() => setCategoryFilter("all")}
@@ -113,7 +117,7 @@ export function DefectTable({
                             : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                             }`}
                     >
-                        All Defects
+                        {t("defects.all_defects")}
                     </button>
                 </div>
             </div>
@@ -121,7 +125,7 @@ export function DefectTable({
             {/* Explanation */}
             {category_filter === "reliability" && (
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Showing only build quality defects. Wear-and-tear items like tires, lights, and wipers are hidden.
+                    {t("defects.reliability_explanation")}
                 </p>
             )}
 
@@ -132,21 +136,21 @@ export function DefectTable({
                         <tr className="border-b border-gray-200 dark:border-gray-700">
                             {show_config && (
                                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
-                                    Category
+                                    {t("defects.table_category")}
                                 </th>
                             )}
                             <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
-                                Code
+                                {t("defects.table_code")}
                             </th>
                             <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
-                                Description
+                                {t("defects.table_description")}
                             </th>
                             <th
                                 className="text-right py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
                                 onClick={() => handle_sort("count")}
                             >
                                 <div className="flex items-center justify-end gap-1">
-                                    Count
+                                    {t("defects.table_count")}
                                     {sort_key === "count" &&
                                         (sort_direction === "desc" ? (
                                             <ChevronDown className="h-4 w-4" />
@@ -160,7 +164,7 @@ export function DefectTable({
                                 onClick={() => handle_sort("percentage")}
                             >
                                 <div className="flex items-center justify-end gap-1">
-                                    Percentage
+                                    {t("defects.table_percentage_short")}
                                     {sort_key === "percentage" &&
                                         (sort_direction === "desc" ? (
                                             <ChevronDown className="h-4 w-4" />
@@ -178,7 +182,7 @@ export function DefectTable({
                                     colSpan={show_config ? 5 : 4}
                                     className="py-8 text-center text-gray-500 dark:text-gray-400"
                                 >
-                                    No defects found matching your criteria
+                                    {t("defects.no_matching_defects")}
                                 </td>
                             </tr>
                         ) : (
@@ -196,7 +200,7 @@ export function DefectTable({
                                                     ? "bg-blue-600 border-blue-600 text-white"
                                                     : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                                                     }`}
-                                                title={defect.computed_is_reliability ? "Categorized as build quality defect" : "Categorized as wear-and-tear"}
+                                                title={defect.computed_is_reliability ? t("defects.categorized_reliability") : t("defects.categorized_wear")}
                                             >
                                                 {defect.computed_is_reliability && (
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

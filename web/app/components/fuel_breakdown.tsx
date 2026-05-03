@@ -1,19 +1,12 @@
 "use client";
 
 import { FuelBreakdown } from "../lib/types";
+import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 
 interface FuelBreakdownProps {
   fuel_breakdown: FuelBreakdown;
   compact?: boolean;
 }
-
-const FUEL_LABELS: Record<keyof FuelBreakdown, string> = {
-  Benzine: "Petrol",
-  Diesel: "Diesel",
-  Elektriciteit: "Electric",
-  LPG: "LPG",
-  other: "Other",
-};
 
 const FUEL_COLORS: Record<keyof FuelBreakdown, string> = {
   Benzine: "bg-blue-500",
@@ -38,6 +31,7 @@ function fuel_percentage_calculate(count: number, total: number): number {
 }
 
 export function FuelBreakdownBar({ fuel_breakdown, compact }: FuelBreakdownProps) {
+  const { t } = useLanguage();
   const total = fuel_total_calculate(fuel_breakdown);
   if (total === 0) return null;
 
@@ -50,6 +44,16 @@ export function FuelBreakdownBar({ fuel_breakdown, compact }: FuelBreakdownProps
   ];
 
   const active_fuels = fuel_keys.filter((key) => fuel_breakdown[key] > 0);
+  const fuel_label_get = (key: keyof FuelBreakdown) => {
+    const fuel_keys_translation: Record<keyof FuelBreakdown, string> = {
+      Benzine: "fuels.legend_petrol",
+      Diesel: "fuels.legend_diesel",
+      Elektriciteit: "fuels.legend_electric",
+      LPG: "fuels.legend_lpg",
+      other: "fuels.legend_other",
+    };
+    return t(fuel_keys_translation[key]);
+  };
 
   if (compact) {
     return (
@@ -62,7 +66,7 @@ export function FuelBreakdownBar({ fuel_breakdown, compact }: FuelBreakdownProps
               key={key}
               className={`${FUEL_COLORS[key]} h-full`}
               style={{ width: `${pct}%` }}
-              title={`${FUEL_LABELS[key]}: ${pct}%`}
+              title={`${fuel_label_get(key)}: ${pct}%`}
             />
           );
         })}
@@ -92,7 +96,7 @@ export function FuelBreakdownBar({ fuel_breakdown, compact }: FuelBreakdownProps
             <div key={key} className="flex items-center gap-1">
               <div className={`h-3 w-3 rounded-full ${FUEL_COLORS[key]}`} />
               <span>
-                {FUEL_LABELS[key]}: {pct}%
+                {fuel_label_get(key)}: {pct}%
               </span>
             </div>
           );
