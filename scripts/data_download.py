@@ -19,6 +19,7 @@ Datasets:
 """
 
 import argparse
+import io
 import json
 import os
 import shutil
@@ -47,7 +48,7 @@ from config import DATASETS, DIR_PARQUET
 METADATA_FILE = DIR_PARQUET / ".download_metadata.json"
 KENTEKEN_DATASETS = {"m9d7-ebf2", "sgfe-77wx", "a34c-vvps", "8ys7-d773"}
 KENTEKEN_PREFIXES = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-SHARD_WORKERS = min(8, PARALLEL_WORKERS)
+SHARD_WORKERS = PARALLEL_WORKERS
 
 
 def metadata_load() -> dict:
@@ -81,6 +82,11 @@ def memory_usage_mb() -> float:
     return process.memory_info().rss / (1024 * 1024)
 
 
+def path_size_mb(path: Path) -> float:
+    """Get file size in MB."""
+    return path.stat().st_size / (1024 * 1024)
+
+
 def temp_schema_collect(temp_paths: list[Path]) -> dict[str, pl.DataType]:
     """Collect the union schema from temporary Parquet files."""
     schema: dict[str, pl.DataType] = {}
@@ -99,12 +105,6 @@ def csv_shards_get(dataset_id: str) -> list[tuple[str, str | None]]:
     ]
 
 
-def csv_shard_convert(csv_path: Path, parquet_path: Path) -> int:
-    """Convert one CSV shard to Parquet with all raw columns kept as strings."""
-    pl.scan_csv(csv_path, infer_schema=False).sink_parquet(parquet_path, compression="zstd")
-    return int(pl.scan_parquet(parquet_path).select(pl.len()).collect().item())
-
-
 def dataset_download_sharded(
     session: requests.Session,
     dataset_id: str,
@@ -114,10 +114,10 @@ def dataset_download_sharded(
     total_rows: int,
 ) -> int:
     """
-    Download dataset with parallel CSV shards and write directly to Parquet.
+    Download dataset with parallel CSV shards streamed directly to Parquet.
 
-    Uses temp files to avoid memory accumulation. Each shard is streamed to a CSV
-    file, converted to Parquet with string columns, then merged at the end.
+    Each shard is streamed into memory, converted to Parquet with string columns,
+    then all shard Parquet files are merged into one final Parquet file.
 
     Returns: row_count
     """
@@ -140,13 +140,14 @@ def dataset_download_sharded(
     last_progress_time = [start]
 
     def shard_fetch_write(shard_idx: int, shard_name: str, where_clause: str | None) -> Path:
-        """Fetch one CSV shard and convert it to a temp Parquet file."""
+        """Fetch one CSV shard and write it as a temp Parquet part."""
         nonlocal rows_written, shards_done
-        csv_path = temp_dir / f"{shard_idx:03d}_{shard_name}.csv"
         parquet_path = temp_dir / f"{shard_idx:03d}_{shard_name}.parquet"
-        csv_stream_download(session, dataset_id, where_clause, total_rows, csv_path)
-        shard_rows = csv_shard_convert(csv_path, parquet_path)
-        csv_path.unlink(missing_ok=True)
+        buffer = io.BytesIO()
+        csv_stream_download(session, dataset_id, where_clause, total_rows, buffer)
+        buffer.seek(0)
+        pl.scan_csv(buffer, infer_schema=False).sink_parquet(parquet_path, compression="zstd")
+        shard_rows = int(pl.scan_parquet(parquet_path).select(pl.len()).collect().item())
 
         with progress_lock:
             rows_written += shard_rows
@@ -195,7 +196,10 @@ def dataset_download_sharded(
 
     temp_paths = sorted(temp_paths)
     temp_schema = temp_schema_collect(temp_paths)
-    output_path.unlink(missing_ok=True)
+    if output_path.is_dir():
+        shutil.rmtree(output_path)
+    else:
+        output_path.unlink(missing_ok=True)
     pl.scan_parquet(
         [str(temp_path) for temp_path in temp_paths],
         schema=temp_schema,
@@ -214,7 +218,7 @@ def dataset_download_sharded(
             f"row count mismatch after merge: merged={final_rows:,}, shards={rows_written:,}"
         )
 
-    file_size_mb = output_path.stat().st_size / (1024 * 1024)
+    file_size_mb = path_size_mb(output_path)
     print(
         f"[{output_name}] merged Parquet in {merge_time:.1f}s ({file_size_mb:.1f} MB) "
         f"| memory: {mem_after_merge:.1f} MB",
@@ -258,7 +262,7 @@ def dataset_download_to_parquet(
     last_download_date_set(dataset_id, today)
 
     total_time = time.time() - start
-    file_size_mb = output_path.stat().st_size / (1024 * 1024)
+    file_size_mb = path_size_mb(output_path)
     print(
         f"[{output_name}] done: {row_count:,} rows, {file_size_mb:.1f} MB, {total_time:.0f}s total",
         flush=True,

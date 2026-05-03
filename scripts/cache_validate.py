@@ -22,6 +22,8 @@ def parquet_validate(file_path: Path) -> tuple[bool, str]:
     """Validate parquet file exists and is readable."""
     if not file_path.exists():
         return False, "file does not exist"
+    if not file_path.is_file():
+        return False, "path is not a single parquet file"
 
     # Check file size
     size = file_path.stat().st_size

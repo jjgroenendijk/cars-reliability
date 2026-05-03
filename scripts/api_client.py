@@ -8,6 +8,7 @@ import io
 import os
 import time
 from pathlib import Path
+from typing import BinaryIO
 
 import polars as pl
 import requests
@@ -18,8 +19,13 @@ from config import API_BASE, REQUEST_TIMEOUT
 COUNT_URL = API_BASE + "/resource/{id}.json?$select=count(*)"
 CSV_URL = API_BASE + "/resource/{id}.csv"
 
-# Dynamic worker scaling for parallel downloads
-PARALLEL_WORKERS = min(32, (os.cpu_count() or 1) + 4)
+# Dynamic worker scaling for parallel downloads.
+PARALLEL_WORKERS = int(
+    os.environ.get(
+        "RDW_WORKERS",
+        min(32, (os.cpu_count() or 1) + 4),
+    )
+)
 
 
 def env_load() -> None:
@@ -82,18 +88,19 @@ def csv_stream_download(
     dataset_id: str,
     where_clause: str | None,
     row_limit: int,
-    output_path: Path,
+    output: BinaryIO,
 ) -> None:
-    """Stream a CSV export from RDW to disk."""
+    """Stream a CSV export from RDW to a writable binary stream."""
     params = {"$limit": str(row_limit)}
     if where_clause:
         params["$where"] = where_clause
-    temp_path = output_path.with_suffix(output_path.suffix + ".part")
     max_retries = 5
 
     for attempt in range(max_retries):
         try:
-            temp_path.unlink(missing_ok=True)
+            if attempt > 0:
+                output.seek(0)
+                output.truncate()
             with session.get(
                 CSV_URL.format(id=dataset_id),
                 params=params,
@@ -101,11 +108,9 @@ def csv_stream_download(
                 timeout=REQUEST_TIMEOUT,
             ) as response:
                 response.raise_for_status()
-                with open(temp_path, "wb") as f:
-                    for chunk in response.iter_content(chunk_size=1024 * 1024):
-                        if chunk:
-                            f.write(chunk)
-            temp_path.replace(output_path)
+                for chunk in response.iter_content(chunk_size=1024 * 1024):
+                    if chunk:
+                        output.write(chunk)
             return
         except (
             requests.exceptions.ChunkedEncodingError,
@@ -113,7 +118,6 @@ def csv_stream_download(
             requests.exceptions.HTTPError,
             requests.exceptions.Timeout,
         ) as e:
-            temp_path.unlink(missing_ok=True)
             if attempt == max_retries - 1:
                 raise
             wait_time = 2**attempt
