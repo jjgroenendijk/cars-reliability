@@ -1,5 +1,17 @@
 # Todo
 
+- [x] Make `data_download.py --all` download every dataset visibly and reliably.
+
+  Problem: `--all` selects all five datasets but starts with the largest dataset,
+  so local runs can appear to download only `voertuigen` for a long time before
+  smaller datasets are attempted. Verify all selected datasets are attempted and
+  make all-dataset progress clear without increasing peak memory.
+
+  Result: `--all` now preflights row counts for every configured dataset, prints
+  the full plan, and downloads smaller datasets first while still fetching a fresh
+  row count for each actual dataset download. Verified with mocked row counts,
+  `py_compile`, `ruff format --check`, and `ruff check`.
+
 - [ ] Fix direct RDW CSV-to-Parquet downloads for GitHub Actions.
 
   Requirement: final output must be one physical Parquet file per dataset.

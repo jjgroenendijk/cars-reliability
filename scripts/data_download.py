@@ -271,6 +271,27 @@ def dataset_download_to_parquet(
     return row_count, total_time
 
 
+def datasets_plan_get(session: requests.Session) -> list[tuple[str, str]]:
+    """Return all datasets ordered so small outputs complete before large ones."""
+    planned: list[tuple[int | None, int, str, str]] = []
+
+    print("Preparing all-dataset download plan...", flush=True)
+    for idx, (dataset_id, output_name) in enumerate(DATASETS.items()):
+        row_count = row_count_get(session, dataset_id)
+        count_label = f"{row_count:,} rows" if row_count is not None else "count unavailable"
+        print(f"  [{output_name}] {count_label}", flush=True)
+        planned.append((row_count, idx, dataset_id, output_name))
+
+    planned.sort(key=lambda item: (item[0] is None, item[0] or 0, item[1]))
+
+    print("Download order:", flush=True)
+    for _, _, _, output_name in planned:
+        print(f"  - {output_name}", flush=True)
+    print()
+
+    return [(dataset_id, output_name) for _, _, dataset_id, output_name in planned]
+
+
 def main() -> None:
     """Download RDW datasets to Parquet format."""
     parser = argparse.ArgumentParser(
@@ -320,7 +341,7 @@ Examples:
 
     # Determine which datasets to download
     if args.all:
-        datasets_to_download = list(DATASETS.items())
+        datasets_to_download = datasets_plan_get(session)
     else:
         if args.dataset_id not in DATASETS:
             print(f"Unknown dataset: {args.dataset_id}")
