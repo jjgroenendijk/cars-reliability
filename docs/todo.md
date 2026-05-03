@@ -1,5 +1,27 @@
 # Todo
 
+- [ ] Fix direct RDW CSV-to-Parquet downloads for GitHub Actions.
+
+  Requirement: final output must be one physical Parquet file per dataset.
+  Stream each RDW CSV shard into `BytesIO`, convert that buffer directly to a
+  temporary shard Parquet file, then merge those shard files into the final
+  single Parquet file. Avoid intermediate CSV temp files. Keep the existing
+  non-overlapping `kenteken` sharding so downloads do not use unstable offset
+  pagination.
+
+  Also verify the parquet workflow cache restore keys match the exact keys saved
+  by the matrix download job, so the process job can restore all dataset artifacts
+  after the download job completes. Do not restore older same-week caches after
+  downloader code changes, because that can keep using the previous single-file
+  Parquet output and skip the new direct conversion path.
+
+  Local verification:
+  - `hx2c-gt7k` downloaded successfully through the direct `BytesIO` path to a
+    single `data/parquet/gebreken.parquet` file.
+  - `cache_validate.py` rejects Parquet directories and only accepts single-file
+    Parquet outputs.
+  - A header-only RDW CSV shard converts to a valid zero-row Parquet part.
+
 - [x] Fix RDW download duplicates and verify rebuilt Parquet files.
 
   Problem: the current `data/parquet/meldingen.parquet` contains many exact duplicate

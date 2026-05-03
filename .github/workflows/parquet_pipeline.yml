@@ -63,9 +63,8 @@ jobs:
         id: cache-key
         run: |
           WEEK=$(date +'%Y-W%V')
-          SCRIPT_HASH=$(sha256sum scripts/data_download.py | cut -c1-8)
+          SCRIPT_HASH=$(sha256sum scripts/data_download.py scripts/api_client.py scripts/config.py | sha256sum | cut -c1-8)
           echo "dataset-key=parquet-${{ matrix.name }}-$WEEK-$SCRIPT_HASH" >> $GITHUB_OUTPUT
-          echo "dataset-restore-key=parquet-${{ matrix.name }}-$WEEK-" >> $GITHUB_OUTPUT
 
       - name: Restore dataset cache
         id: cache
@@ -74,7 +73,6 @@ jobs:
         with:
           path: data/parquet/${{ matrix.name }}.parquet
           key: ${{ steps.cache-key.outputs.dataset-key }}
-          restore-keys: ${{ steps.cache-key.outputs.dataset-restore-key }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -102,6 +100,8 @@ jobs:
           cd scripts && uv run python data_download.py ${{ matrix.id }} --verbose
         env:
           RDW_APP_TOKEN: ${{ secrets.RDW_APP_TOKEN }}
+          RDW_WORKERS: '10'
+          POLARS_MAX_THREADS: '2'
 
       - name: Verify download or use cached data
         run: |
@@ -134,46 +134,43 @@ jobs:
 
       - name: Get week number
         id: date
-        run: echo "week=$(date +'%Y-W%V')" >> $GITHUB_OUTPUT
+        run: |
+          echo "week=$(date +'%Y-W%V')" >> $GITHUB_OUTPUT
+          echo "script-hash=$(sha256sum scripts/data_download.py scripts/api_client.py scripts/config.py | sha256sum | cut -c1-8)" >> $GITHUB_OUTPUT
 
       - name: Restore voertuigen cache
         uses: actions/cache/restore@v5
         with:
           path: data/parquet/voertuigen.parquet
-          key: parquet-voertuigen-${{ steps.date.outputs.week }}
-          restore-keys: parquet-voertuigen-
+          key: parquet-voertuigen-${{ steps.date.outputs.week }}-${{ steps.date.outputs.script-hash }}
           fail-on-cache-miss: true
 
       - name: Restore meldingen cache
         uses: actions/cache/restore@v5
         with:
           path: data/parquet/meldingen.parquet
-          key: parquet-meldingen-${{ steps.date.outputs.week }}
-          restore-keys: parquet-meldingen-
+          key: parquet-meldingen-${{ steps.date.outputs.week }}-${{ steps.date.outputs.script-hash }}
           fail-on-cache-miss: true
 
       - name: Restore geconstateerde_gebreken cache
         uses: actions/cache/restore@v5
         with:
           path: data/parquet/geconstateerde_gebreken.parquet
-          key: parquet-geconstateerde_gebreken-${{ steps.date.outputs.week }}
-          restore-keys: parquet-geconstateerde_gebreken-
+          key: parquet-geconstateerde_gebreken-${{ steps.date.outputs.week }}-${{ steps.date.outputs.script-hash }}
           fail-on-cache-miss: true
 
       - name: Restore gebreken cache
         uses: actions/cache/restore@v5
         with:
           path: data/parquet/gebreken.parquet
-          key: parquet-gebreken-${{ steps.date.outputs.week }}
-          restore-keys: parquet-gebreken-
+          key: parquet-gebreken-${{ steps.date.outputs.week }}-${{ steps.date.outputs.script-hash }}
           fail-on-cache-miss: true
 
       - name: Restore brandstof cache
         uses: actions/cache/restore@v5
         with:
           path: data/parquet/brandstof.parquet
-          key: parquet-brandstof-${{ steps.date.outputs.week }}
-          restore-keys: parquet-brandstof-
+          key: parquet-brandstof-${{ steps.date.outputs.week }}-${{ steps.date.outputs.script-hash }}
           fail-on-cache-miss: true
 
       - name: Verify parquet data
