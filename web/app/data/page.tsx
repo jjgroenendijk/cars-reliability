@@ -12,20 +12,23 @@ import { useStatisticsProcessing } from "@/app/hooks/useStatisticsProcessing";
 import { useUrlSync } from "@/app/hooks/useUrlSync";
 import { TablePagination } from "@/app/components/table_pagination";
 import { DEFAULTS } from "@/app/lib/defaults";
+import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 
 /**
  * Loading fallback for the data page while URL params are being read.
  */
 function DataLoading() {
+    const { t } = useLanguage();
+
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
             <div className="space-y-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                        Data
+                        {t("nav.data")}
                     </h1>
                     <p className="text-lg text-zinc-600 dark:text-zinc-400 mt-2 max-w-2xl">
-                        Full sortable and filterable brand and model data based on RDW inspection records.
+                        {t("statistics.subtitle")}
                     </p>
                 </div>
             </div>
@@ -52,6 +55,7 @@ export default function DataPage() {
  * Data page content with URL sync and data processing.
  */
 function DataContent() {
+    const { t } = useLanguage();
     // Defect Context
     const { brand_breakdowns, model_breakdowns, calculate_filtered_defects, mode } = useDefectFilter();
 
@@ -116,7 +120,7 @@ function DataContent() {
         if (state.viewMode === "models" && state.showCatalogPrice) {
             cols.splice(2, 0, {
                 key: "avg_catalog_price",
-                label: "Avg. Price",
+                label: t("common.avg_price"),
                 format: (v: unknown) => (typeof v === 'number') ? `€ ${Number(v).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")}` : "-",
                 cellClassName: numeric_cell_class,
                 headerClassName: "text-right"
@@ -124,21 +128,21 @@ function DataContent() {
         }
 
         return cols;
-    }, [state.viewMode, state.showStdDev, state.showCatalogPrice]);
+    }, [state.viewMode, state.showStdDev, state.showCatalogPrice, t]);
 
     if (isError) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-8">
                 <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl mb-4">
                     <AlertTriangle className="w-8 h-8 mx-auto mb-2" />
-                    <h2 className="text-xl font-bold">Error Loading Data</h2>
+                    <h2 className="text-xl font-bold">{t("common.error_loading_data")}</h2>
                     <p>{isError}</p>
                 </div>
                 <button
                     onClick={() => window.location.reload()}
                     className="px-6 py-2 bg-zinc-900 text-zinc-50 rounded-lg hover:bg-zinc-800 transition-colors"
                 >
-                    Retry
+                    {t("common.retry")}
                     <RefreshCw className="w-4 h-4 inline-block ml-2" />
                 </button>
             </div>
@@ -150,10 +154,10 @@ function DataContent() {
             <div className="space-y-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                        Data
+                        {t("nav.data")}
                     </h1>
                     <p className="text-lg text-zinc-600 dark:text-zinc-400 mt-2 max-w-2xl">
-                        Full sortable and filterable brand and model data based on RDW inspection records.
+                        {t("statistics.subtitle")}
                     </p>
                 </div>
 
@@ -231,11 +235,13 @@ function DataContent() {
                             <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
                                 <h2 className="text-lg font-semibold flex items-center gap-2">
                                     <Trophy className="w-5 h-5 text-yellow-500" />
-                                    Rankings
+                                    {t("common.rankings")}
                                 </h2>
                                 <span className="text-sm text-zinc-500">
-                                    Found <span className="font-mono tabular-nums">{finalData.length}</span>{" "}
-                                    {state.viewMode}
+                                    {t("common.found_count", {
+                                        count: finalData.length,
+                                        type: t(`common.${state.viewMode}`),
+                                    })}
                                 </span>
                             </div>
                             <ReliabilityTable
@@ -265,9 +271,9 @@ function DataContent() {
                 ) : (
                     <div className="text-center py-24 bg-zinc-50 dark:bg-zinc-800/50 rounded-3xl border border-dashed border-zinc-300 dark:border-zinc-700">
                         <Info className="w-12 h-12 mx-auto text-zinc-400 mb-4" />
-                        <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">No results found</h3>
+                        <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">{t("common.no_results_found")}</h3>
                         <p className="text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto mt-2">
-                            Try adjusting your filters.
+                            {t("common.try_adjusting_filters")}
                         </p>
                         <button
                             onClick={() => {
@@ -279,7 +285,7 @@ function DataContent() {
                             }}
                             className="mt-6 text-blue-600 dark:text-blue-400 font-medium hover:underline"
                         >
-                            Clear filters
+                            {t("common.clear_filters")}
                         </button>
                     </div>
                 )

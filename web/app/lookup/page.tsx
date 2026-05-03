@@ -32,7 +32,7 @@ export default function LookupPage() {
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-grow">
             <label htmlFor="license-plate" className="sr-only">
-              License Plate
+              {t("lookup.license_plate")}
             </label>
             <input
               id="license-plate"
@@ -94,7 +94,7 @@ export default function LookupPage() {
       {/* Data attribution */}
       <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Data is fetched live from{" "}
+          {t("lookup.live_data_prefix")}{" "}
           <a
             href="https://opendata.rdw.nl/"
             target="_blank"
@@ -103,7 +103,7 @@ export default function LookupPage() {
           >
             RDW Open Data
           </a>
-          . This website is not affiliated with the RDW.
+          . {t("lookup.live_data_suffix")}
         </p>
       </div>
     </div>

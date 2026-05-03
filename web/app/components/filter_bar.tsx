@@ -5,6 +5,7 @@ import { Filter } from "lucide-react";
 import { BrandFilter } from "./brand_filter";
 import { RangeSlider } from "./range_slider";
 import type { BrandStats } from "@/app/lib/types";
+import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 
 interface FilterBarProps {
     viewMode: "brands" | "models";
@@ -62,16 +63,6 @@ interface FilterBarProps {
     availableFuelTypes: string[];
 }
 
-// Display labels for Dutch fuel type values from backend
-const FUEL_DISPLAY_NAMES: Record<string, string> = {
-    "Benzine": "Petrol",
-    "Diesel": "Diesel",
-    "Hybrid": "Hybrid",
-    "Elektriciteit": "Electric",
-    "LPG": "LPG",
-    "Other": "Other",
-};
-
 // Price formatter for slider labels
 const formatPrice = (p: number) => {
     if (p >= 1000000) return `€${(p / 1000000).toFixed(1)}M`;
@@ -125,6 +116,7 @@ export default function FilterBar({
     availableFuelTypes,
 }: FilterBarProps) {
     const [showMoreFilters, setShowMoreFilters] = useState(false);
+    const { t } = useLanguage();
 
     const toggleFuel = (fuel: string) => {
         if (selectedFuels.includes(fuel)) {
@@ -132,6 +124,19 @@ export default function FilterBar({
         } else {
             setSelectedFuels([...selectedFuels, fuel]);
         }
+    };
+
+    const fuel_label_get = (fuel: string) => {
+        const fuel_keys: Record<string, string> = {
+            Benzine: "fuels.legend_petrol",
+            Diesel: "fuels.legend_diesel",
+            Hybrid: "fuels.legend_hybrid",
+            Elektriciteit: "fuels.legend_electric",
+            LPG: "fuels.legend_lpg",
+            Other: "fuels.legend_other",
+            other: "fuels.legend_other",
+        };
+        return fuel_keys[fuel] ? t(fuel_keys[fuel]) : fuel;
     };
 
     return (
@@ -164,7 +169,7 @@ export default function FilterBar({
                                     : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
                                     }`}
                             >
-                                Brands
+                                {t("filters.brands")}
                             </button>
                             <button
                                 onClick={() => setViewMode("models")}
@@ -173,7 +178,7 @@ export default function FilterBar({
                                     : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
                                     }`}
                             >
-                                Models
+                                {t("filters.models")}
                             </button>
                         </div>
 
@@ -195,7 +200,7 @@ export default function FilterBar({
                                 }`}
                         >
                             <Filter className="w-4 h-4" />
-                            <span>Filters</span>
+                            <span>{t("filters.filters")}</span>
                         </button>
                     </div>
                 </div>
@@ -205,7 +210,7 @@ export default function FilterBar({
                     <div className="pt-4 mt-2 border-t border-zinc-100 dark:border-zinc-800 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[auto_auto_1fr_1fr] gap-8 lg:gap-12 animate-in slide-in-from-top-2 duration-200">
                         {/* Usage Checkboxes */}
                         <div className="space-y-3">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Vehicle Usage</label>
+                            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{t("filters.vehicle_usage")}</label>
                             <div className="flex flex-col gap-2">
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input
@@ -214,7 +219,7 @@ export default function FilterBar({
                                         onChange={(e) => setShowConsumer(e.target.checked)}
                                         className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 dark:bg-zinc-700"
                                     />
-                                    <span className="text-sm text-zinc-700 dark:text-zinc-300">Personal Cars</span>
+                                    <span className="text-sm text-zinc-700 dark:text-zinc-300">{t("filters.personal_cars")}</span>
                                 </label>
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input
@@ -223,13 +228,13 @@ export default function FilterBar({
                                         onChange={(e) => setShowCommercial(e.target.checked)}
                                         className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 dark:bg-zinc-700"
                                     />
-                                    <span className="text-sm text-zinc-700 dark:text-zinc-300">Commercial Vehicles</span>
+                                    <span className="text-sm text-zinc-700 dark:text-zinc-300">{t("filters.commercial_vehicles")}</span>
                                 </label>
                             </div>
 
                             {/* Display Options */}
                             <div className="pt-2 mt-2">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">Display Options</label>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">{t("filters.display_options")}</label>
                                 <div className="flex flex-col gap-2">
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <input
@@ -238,7 +243,7 @@ export default function FilterBar({
                                             onChange={(e) => setShowStdDev(e.target.checked)}
                                             className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 dark:bg-zinc-700"
                                         />
-                                        <span className="text-sm text-zinc-700 dark:text-zinc-300">Show Standard Deviation</span>
+                                        <span className="text-sm text-zinc-700 dark:text-zinc-300">{t("filters.show_standard_deviation")}</span>
                                     </label>
 
                                     {viewMode === "models" && (
@@ -249,13 +254,13 @@ export default function FilterBar({
                                                 onChange={(e) => setShowCatalogPrice(e.target.checked)}
                                                 className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 dark:bg-zinc-700"
                                             />
-                                            <span className="text-sm text-zinc-700 dark:text-zinc-300">Show Catalog Price</span>
+                                            <span className="text-sm text-zinc-700 dark:text-zinc-300">{t("filters.show_catalog_price")}</span>
                                         </label>
                                     )}
 
                                     {/* Page Size Selector */}
                                     <div className="pt-2">
-                                        <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-1">Items per page</label>
+                                        <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-1">{t("filters.items_per_page")}</label>
                                         <select
                                             value={pageSize === 999999 ? "All" : pageSize}
                                             onChange={(e) => {
@@ -268,7 +273,7 @@ export default function FilterBar({
                                             <option value={100}>100</option>
                                             <option value={500}>500</option>
                                             <option value={1000}>1000</option>
-                                            <option value="All">All</option>
+                                            <option value="All">{t("filters.all")}</option>
                                         </select>
                                     </div>
                                 </div>
@@ -277,7 +282,7 @@ export default function FilterBar({
 
                         {/* Fuel (Full List) */}
                         <div className="space-y-3">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Fuel Type</label>
+                            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{t("filters.fuel_type")}</label>
                             <div className="flex flex-col gap-2">
                                 {availableFuelTypes.map((fuel) => (
                                     <label key={fuel} className="flex items-center gap-2 cursor-pointer">
@@ -288,7 +293,7 @@ export default function FilterBar({
                                             className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 dark:bg-zinc-700"
                                         />
                                         <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                                            {FUEL_DISPLAY_NAMES[fuel] || fuel}
+                                            {fuel_label_get(fuel)}
                                         </span>
                                     </label>
                                 ))}
@@ -301,7 +306,7 @@ export default function FilterBar({
                             {viewMode === "models" && (
                                 <div className="px-1">
                                     <RangeSlider
-                                        label="Price Range"
+                                        label={t("filters.price_range")}
                                         min={minPriceAvailable}
                                         max={maxPriceAvailable}
                                         value={[minPrice, maxPrice]}
@@ -317,12 +322,12 @@ export default function FilterBar({
 
                             <div className="px-1">
                                 <RangeSlider
-                                    label="Vehicle Age"
+                                    label={t("filters.vehicle_age")}
                                     min={minAgeAvailable}
                                     max={maxAgeAvailable}
                                     value={ageRange}
                                     onChange={setAgeRange}
-                                    unit="years"
+                                    unit={t("filters.years")}
                                     inputWidth="w-12"
                                 />
                             </div>
@@ -331,7 +336,7 @@ export default function FilterBar({
                         {/* Sliders Column 2: Fleet & Inspections */}
                         <div className="space-y-6">
                             <RangeSlider
-                                label="Fleet Size"
+                                label={t("filters.fleet_size")}
                                 min={minFleetSizeAvailable}
                                 max={maxFleetSizeAvailable}
                                 value={[minFleetSize, maxFleetSize]}
@@ -343,7 +348,7 @@ export default function FilterBar({
                             />
 
                             <RangeSlider
-                                label="Inspections"
+                                label={t("filters.inspections")}
                                 min={minInspectionsAvailable}
                                 max={maxInspectionsAvailable}
                                 value={[minInspections, maxInspections]}

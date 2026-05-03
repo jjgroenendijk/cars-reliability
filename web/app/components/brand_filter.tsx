@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import { ChevronDown, Search, Check, X } from "lucide-react";
+import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 
 interface BrandStats {
     merk: string;
@@ -28,6 +29,7 @@ export function BrandFilter({
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const { t } = useLanguage();
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -81,8 +83,8 @@ export function BrandFilter({
 
     // Placeholder text based on selection
     const placeholder = selectedBrands.length > 0
-        ? `${selectedBrands.length} selected`
-        : `Search ${mode}...`;
+        ? t("filters.selected_count", { count: selectedBrands.length })
+        : t("filters.search_mode", { mode: t(`common.${mode}`) });
 
     return (
         <div className="relative w-full sm:w-64 lg:w-72" ref={containerRef}>
@@ -109,8 +111,8 @@ export function BrandFilter({
                             }
                         }}
                         className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-full transition-colors"
-                        aria-label="Clear search or selection"
-                        title="Clear search or selection"
+                        aria-label={t("filters.clear_search_selection")}
+                        title={t("filters.clear_search_selection")}
                     >
                         <X className="w-3.5 h-3.5 text-zinc-500" />
                     </button>
@@ -123,13 +125,13 @@ export function BrandFilter({
             {isOpen && (
                 <div className="absolute top-full left-0 right-0 mt-2 max-h-[400px] flex flex-col bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-800 z-50 animate-in fade-in slide-in-from-top-2 duration-100">
                     <div className="p-2 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/50 rounded-t-xl flex justify-between items-center text-xs">
-                        <span className="text-zinc-500 font-medium ml-1">Select Brands</span>
+                        <span className="text-zinc-500 font-medium ml-1">{t("filters.select_brands")}</span>
                         {selectedBrands.length > 0 && (
                             <button
                                 onClick={() => setSelectedBrands([])}
                                 className="text-blue-600 dark:text-blue-400 hover:underline px-2"
                             >
-                                Clear ({selectedBrands.length})
+                                {t("filters.clear_count", { count: selectedBrands.length })}
                             </button>
                         )}
                     </div>
@@ -137,7 +139,9 @@ export function BrandFilter({
                     <div className="overflow-y-auto flex-1 p-1">
                         {filteredBrands.length === 0 ? (
                             <div className="p-8 text-center">
-                                <p className="text-sm text-zinc-500">No brands found matching &quot;{searchQuery}&quot;</p>
+                                <p className="text-sm text-zinc-500">
+                                    {t("filters.no_brands_found", { query: searchQuery })}
+                                </p>
                             </div>
                         ) : (
                             <div className="space-y-0.5">
@@ -173,4 +177,3 @@ export function BrandFilter({
         </div>
     );
 }
-

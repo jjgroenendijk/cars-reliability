@@ -17,6 +17,8 @@ import type { BrandStats, DefectStats, Metadata, ModelStats, Rankings } from "@/
 import { number_format, pascal_case_format, percentage_format, timestamp_format } from "@/app/lib/data_load";
 import { AgeChart } from "./age_chart";
 import { TrendChart } from "./trend_chart";
+import { useLanguage } from "@/app/lib/i18n/LanguageContext";
+import { RankingHighlight } from "./ranking_highlight";
 
 interface StatisticsData {
     brand_stats: BrandStats[];
@@ -56,6 +58,7 @@ interface FuelShare {
 }
 
 export default function StatisticsPage() {
+    const { t } = useLanguage();
     const [data, setData] = useState<StatisticsData>({
         brand_stats: [],
         model_stats: [],
@@ -173,14 +176,14 @@ export default function StatisticsPage() {
             <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-8">
                 <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl mb-4">
                     <AlertTriangle className="w-8 h-8 mx-auto mb-2" />
-                    <h1 className="text-xl font-bold">Error Loading Statistics</h1>
+                    <h1 className="text-xl font-bold">{t("common.error_loading_statistics")}</h1>
                     <p>{error}</p>
                 </div>
                 <button
                     onClick={() => window.location.reload()}
                     className="px-6 py-2 bg-zinc-900 text-zinc-50 rounded-lg hover:bg-zinc-800 transition-colors"
                 >
-                    Retry
+                    {t("common.retry")}
                     <RefreshCw className="w-4 h-4 inline-block ml-2" />
                 </button>
             </div>
@@ -196,17 +199,17 @@ export default function StatisticsPage() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                        Statistics
+                        {t("statistics.title")}
                     </h1>
                     <p className="text-lg text-zinc-600 dark:text-zinc-400 mt-2 max-w-3xl">
-                        Key insights from {number_format(statistics.totals.inspections)} APK inspections across the Dutch vehicle fleet.
+                        {t("statistics.overview_subtitle", { count: number_format(statistics.totals.inspections) })}
                     </p>
                 </div>
                 <Link
                     href="/data"
                     className="inline-flex items-center gap-2 self-start rounded-lg border border-zinc-200 dark:border-zinc-800 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800"
                 >
-                    Explore Data
+                    {t("statistics.explore_data")}
                     <ArrowRight className="h-4 w-4" />
                 </Link>
             </div>
@@ -214,28 +217,33 @@ export default function StatisticsPage() {
             {/* Insight cards */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <InsightCard
-                    label="Vehicles tracked"
+                    label={t("statistics.vehicles_tracked")}
                     value={number_format(statistics.fleet_size)}
-                    detail={`${number_format(data.brand_stats.length)} brand rows, ${number_format(data.model_stats.length)} model rows`}
+                    detail={t("statistics.rows_detail", {
+                        brands: number_format(data.brand_stats.length),
+                        models: number_format(data.model_stats.length),
+                    })}
                 />
                 {zero_defect_rate !== undefined && (
                     <InsightCard
                         accent
-                        label="Pass with zero defects"
+                        label={t("statistics.pass_zero_defects")}
                         value={percentage_format(zero_defect_rate)}
-                        detail={`${number_format(statistics.totals.inspections)} total inspections`}
+                        detail={t("statistics.total_inspections_detail", {
+                            count: number_format(statistics.totals.inspections),
+                        })}
                     />
                 )}
                 {statistics.reliability_ratio !== null && (
                     <InsightCard
-                        label="Reliability spread"
-                        value={`${decimal_format(statistics.reliability_ratio, 1)}×`}
+                        label={t("statistics.reliability_spread")}
+                        value={`${decimal_format(statistics.reliability_ratio, 1)}x`}
                         detail={`${statistics.best_brand ? pascal_case_format(statistics.best_brand.merk) : "–"} vs ${statistics.worst_brand ? pascal_case_format(statistics.worst_brand.merk) : "–"}`}
                     />
                 )}
                 {statistics.top_defect && (
                     <InsightCard
-                        label="Most common defect"
+                        label={t("statistics.most_common_defect")}
                         value={`${statistics.top_defect.percentage.toFixed(1)}%`}
                         detail={statistics.top_defect.defect_description}
                     />
@@ -248,10 +256,10 @@ export default function StatisticsPage() {
                     <section className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
                         <div className="flex items-center gap-2 mb-1">
                             <Car className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Defect Rate by Vehicle Age</h2>
+                            <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">{t("statistics.defect_rate_by_age")}</h2>
                         </div>
                         <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-5">
-                            Average defects per APK inspection. Red bar = age with most defects.
+                            {t("statistics.age_chart_note")}
                         </p>
                         <AgeChart data={fleet_age_stats} />
                     </section>
@@ -261,10 +269,10 @@ export default function StatisticsPage() {
                     <section className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
                         <div className="flex items-center gap-2 mb-1">
                             <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Reliability Trend</h2>
+                            <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">{t("statistics.reliability_trend")}</h2>
                         </div>
                         <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-2">
-                            Average defects per inspection, by inspection year.
+                            {t("statistics.trend_note")}
                         </p>
                         <TrendChart data={yearly_trend} />
                     </section>
@@ -276,7 +284,7 @@ export default function StatisticsPage() {
                 <section className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 lg:col-span-2">
                     <div className="flex items-center gap-2">
                         <BarChart3 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Fuel Mix</h2>
+                        <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">{t("statistics.fuel_mix")}</h2>
                     </div>
                     <div className="mt-5 space-y-4">
                         {statistics.fuel_shares.slice(0, 6).map((item) => (
@@ -293,7 +301,9 @@ export default function StatisticsPage() {
                                         style={{ width: `${Math.max(1, item.share * 100)}%` }}
                                     />
                                 </div>
-                                <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">{number_format(item.count)} vehicles</div>
+                                <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+                                    {t("statistics.vehicles_count", { count: number_format(item.count) })}
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -304,7 +314,7 @@ export default function StatisticsPage() {
                     <section className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
                         <div className="flex items-center gap-2">
                             <Wrench className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Top Defects</h2>
+                            <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">{t("statistics.top_defects")}</h2>
                         </div>
                         <ol className="mt-5 space-y-4">
                             {data.defect_stats.top_defects.slice(0, 5).map((defect, idx) => (
@@ -317,7 +327,7 @@ export default function StatisticsPage() {
                                             {defect.defect_description}
                                         </p>
                                         <p className="mt-0.5 font-mono text-xs text-zinc-500 dark:text-zinc-400">
-                                            {defect.percentage.toFixed(1)}% of all defects
+                                            {t("statistics.percent_all_defects", { percent: defect.percentage.toFixed(1) })}
                                         </p>
                                     </div>
                                 </li>
@@ -332,34 +342,34 @@ export default function StatisticsPage() {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                        <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Standout Rankings</h2>
+                        <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">{t("statistics.standout_rankings")}</h2>
                     </div>
                     {statistics.reliability_ratio !== null && (
                         <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                            {decimal_format(statistics.reliability_ratio, 1)}× spread between best and worst
+                            {t("statistics.spread_between", { ratio: decimal_format(statistics.reliability_ratio, 1) })}
                         </span>
                     )}
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <RankingHighlight
-                        title="Fewest defects brand"
+                        title={t("statistics.fewest_defects_brand")}
                         name={statistics.best_brand ? pascal_case_format(statistics.best_brand.merk) : "-"}
                         value={statistics.best_brand?.defects_per_vehicle_year}
                         positive
                     />
                     <RankingHighlight
-                        title="Most defects brand"
+                        title={t("statistics.most_defects_brand")}
                         name={statistics.worst_brand ? pascal_case_format(statistics.worst_brand.merk) : "-"}
                         value={statistics.worst_brand?.defects_per_vehicle_year}
                     />
                     <RankingHighlight
-                        title="Fewest defects model"
+                        title={t("statistics.fewest_defects_model")}
                         name={statistics.best_model ? `${pascal_case_format(statistics.best_model.merk)} ${pascal_case_format(statistics.best_model.handelsbenaming ?? "")}` : "-"}
                         value={statistics.best_model?.defects_per_vehicle_year}
                         positive
                     />
                     <RankingHighlight
-                        title="Most defects model"
+                        title={t("statistics.most_defects_model")}
                         name={statistics.worst_model ? `${pascal_case_format(statistics.worst_model.merk)} ${pascal_case_format(statistics.worst_model.handelsbenaming ?? "")}` : "-"}
                         value={statistics.worst_model?.defects_per_vehicle_year}
                     />
@@ -371,25 +381,15 @@ export default function StatisticsPage() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-2">
                         <Gauge className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">Data Freshness</h2>
+                        <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">{t("statistics.data_freshness")}</h2>
                     </div>
                     <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                        {data.rankings?.generated_at ? `Generated ${timestamp_format(data.rankings.generated_at)}` : "Generation time unavailable"}
+                        {data.rankings?.generated_at
+                            ? `${t("common.generated")} ${timestamp_format(data.rankings.generated_at)}`
+                            : t("common.generation_time_unavailable")}
                     </div>
                 </div>
             </section>
-        </div>
-    );
-}
-
-function RankingHighlight({ title, name, value, positive }: { title: string; name: string; value: number | undefined; positive?: boolean }) {
-    return (
-        <div className={`rounded-lg p-4 ${positive ? "bg-emerald-50 dark:bg-emerald-950/30" : "bg-zinc-50 dark:bg-zinc-800/60"}`}>
-            <div className="text-sm text-zinc-500 dark:text-zinc-400">{title}</div>
-            <div className="mt-2 min-h-12 text-lg font-semibold leading-snug text-zinc-950 dark:text-zinc-50">{name}</div>
-            <div className="mt-3 font-mono tabular-nums text-sm text-zinc-600 dark:text-zinc-400">
-                {typeof value === "number" ? `${decimal_format(value)} defects/year` : "-"}
-            </div>
         </div>
     );
 }

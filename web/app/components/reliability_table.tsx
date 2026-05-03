@@ -47,7 +47,7 @@ export function ReliabilityTable<T extends object>({
   defaultSortDirection = "asc",
   filterKey,
   filterPlaceholder = "Filter...",
-  emptyMessage = "No data available",
+  emptyMessage,
   externalSearchValue = "",
   hideSearchInput = false,
   pageSize,
@@ -76,6 +76,12 @@ export function ReliabilityTable<T extends object>({
       'Model': 'common.model',
       'Defects / Year': 'common.defects_per_year',
       'Defects / Inspection': 'common.defects_per_inspection',
+      'Vehicles': 'common.vehicles',
+      'Inspections': 'common.inspections',
+      'Avg Age': 'common.avg_age',
+      'Avg. Price': 'common.avg_price',
+      'Std Dev Inspection': 'common.std_dev_inspection',
+      'Std Dev Year': 'common.std_dev_year',
     };
 
     if (translationMap[normalizedLabel]) {
@@ -259,7 +265,7 @@ export function ReliabilityTable<T extends object>({
                     colSpan={columns.length}
                     className="px-6 py-12 text-center text-gray-500 dark:text-gray-400"
                   >
-                    {emptyMessage}
+                    {emptyMessage ?? t("common.no_data")}
                   </td>
                 </tr>
               )}

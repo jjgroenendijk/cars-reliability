@@ -9,6 +9,7 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from "recharts";
+import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 
 interface ChartDataItem {
     name: string;
@@ -22,13 +23,15 @@ interface DefectChartProps {
 }
 
 export function DefectChart({ chart_data }: DefectChartProps) {
+    const { t } = useLanguage();
+
     return (
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-8">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Top 15 Build Quality Defects
+                {t("defects.chart_title")}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                Only showing defects that indicate actual car quality issues (excluding wear-and-tear items).
+                {t("defects.chart_note")}
             </p>
             <div className="h-[500px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -59,7 +62,7 @@ export function DefectChart({ chart_data }: DefectChartProps) {
                                             </p>
                                             <p className="text-sm mt-1">
                                                 <span className="font-medium">{data.count.toLocaleString()}</span>{" "}
-                                                occurrences ({data.percentage}%)
+                                                {t("defects.occurrences_with_percent", { percent: data.percentage })}
                                             </p>
                                         </div>
                                     );

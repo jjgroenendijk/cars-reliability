@@ -1,6 +1,9 @@
+"use client";
+
 import { pascal_case_format } from "@/app/lib/data_load";
 import { FuelBreakdownBar } from "@/app/components/fuel_breakdown";
 import type { BrandFuelData } from "@/app/hooks/useFuelData";
+import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 
 type SortKey = "merk" | "vehicle_count" | "electric_pct" | "diesel_pct" | "petrol_pct";
 
@@ -12,6 +15,8 @@ interface FuelTableProps {
 }
 
 export function FuelTable({ data, viewMode, column_click, sort_indicator }: FuelTableProps) {
+    const { t } = useLanguage();
+
     return (
         <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
             <div className="overflow-x-auto">
@@ -22,34 +27,34 @@ export function FuelTable({ data, viewMode, column_click, sort_indicator }: Fuel
                                 onClick={() => column_click("merk")}
                                 className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                             >
-                                {viewMode === "models" ? "Model" : "Brand"}{sort_indicator("merk")}
+                                {viewMode === "models" ? t("fuels.table_model") : t("fuels.table_brand")}{sort_indicator("merk")}
                             </th>
                             <th
                                 onClick={() => column_click("vehicle_count")}
                                 className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                             >
-                                Vehicles{sort_indicator("vehicle_count")}
+                                {t("common.vehicles")}{sort_indicator("vehicle_count")}
                             </th>
                             <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500 w-1/3 min-w-[300px]">
-                                Fuel Distribution
+                                {t("fuels.table_fuel_distribution")}
                             </th>
                             <th
                                 onClick={() => column_click("petrol_pct")}
                                 className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                             >
-                                Petrol{sort_indicator("petrol_pct")}
+                                {t("fuels.legend_petrol")}{sort_indicator("petrol_pct")}
                             </th>
                             <th
                                 onClick={() => column_click("diesel_pct")}
                                 className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                             >
-                                Diesel{sort_indicator("diesel_pct")}
+                                {t("fuels.legend_diesel")}{sort_indicator("diesel_pct")}
                             </th>
                             <th
                                 onClick={() => column_click("electric_pct")}
                                 className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                             >
-                                Electric{sort_indicator("electric_pct")}
+                                {t("fuels.legend_electric")}{sort_indicator("electric_pct")}
                             </th>
                         </tr>
                     </thead>

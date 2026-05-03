@@ -68,7 +68,7 @@ export function VehicleInfoCard({ vehicle }: VehicleInfoCardProps) {
             <StatusIcon className={`h-4 w-4 ${status.color}`} />
             <p className={`font-medium ${status.color}`}>
               {status.text}
-              {vehicle.vervaldatum_apk && ` (tot ${formatDate(vehicle.vervaldatum_apk.toString())})`}
+              {vehicle.vervaldatum_apk && ` (${t("lookup.valid_until", { date: formatDate(vehicle.vervaldatum_apk.toString()) })})`}
             </p>
           </div>
         </div>
