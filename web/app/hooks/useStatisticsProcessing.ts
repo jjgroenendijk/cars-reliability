@@ -214,7 +214,11 @@ export function useStatisticsProcessing({
                 const breakdown = viewMode === "brands" ? brand_breakdowns[key] : model_breakdowns[key];
 
                 if (breakdown) {
-                    const totalInBreakdown = Object.values(breakdown).reduce((a, b) => a + b, 0);
+                    let totalInBreakdown = 0;
+                    const keys = Object.keys(breakdown);
+                    for (let i = 0; i < keys.length; i++) {
+                        totalInBreakdown += breakdown[keys[i]];
+                    }
                     const filteredInBreakdown = calculate_filtered_defects(breakdown);
                     if (totalInBreakdown > 0) {
                         defectRatio = filteredInBreakdown / totalInBreakdown;

@@ -1,0 +1,3 @@
+## 2025-02-28 - Optimize high-frequency React hooks with native loop constructs
+**Learning:** In high-frequency Next.js React hooks (`useMemo`, data processing pipelines), extracting operations from abstraction layers like `Object.entries().reduce()` or `Object.values()` to native loop iterations like `Object.keys()` with a `for` loop significantly improves performance by avoiding tuple array allocations.
+**Action:** When working in hot loops, especially filtering or reduction of objects containing hundreds of keys, use `Object.keys()` iterations instead of `Object.entries()` or `Object.values().reduce()` to lower CPU time overhead.
