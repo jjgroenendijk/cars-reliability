@@ -52,10 +52,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       return current;
     }
 
-    return Object.entries(values).reduce(
-      (text, [key, value]) => text.replaceAll(`{${key}}`, String(value)),
-      current
-    );
+    // ⚡ Bolt Performance Optimization:
+    // Replaced `Object.entries(values).reduce()` with `Object.keys()` loop
+    // to eliminate intermediate tuple array allocation on high-frequency translations.
+    let text = current;
+    const valueKeys = Object.keys(values);
+    for (let i = 0; i < valueKeys.length; i++) {
+        const key = valueKeys[i];
+        text = text.replaceAll(`{${key}}`, String(values[key]));
+    }
+    return text;
   };
 
   return (
