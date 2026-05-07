@@ -189,9 +189,15 @@ export function DefectFilterProvider({ children }: DefectFilterProviderProps) {
         (breakdown: DefectBreakdown | undefined): number => {
             if (!breakdown) return 0;
             let total = 0;
-            for (const [code, count] of Object.entries(breakdown)) {
+            // ⚡ Bolt Performance Optimization:
+            // Replaced `Object.entries(breakdown)` with a traditional `for` loop over `Object.keys()`
+            // to avoid intermediate tuple array allocations. This reduces overhead in hot loops
+            // where this function is called per item during large dataset filtering.
+            const keys = Object.keys(breakdown);
+            for (let i = 0; i < keys.length; i++) {
+                const code = keys[i];
                 if (!excluded_codes.has(code)) {
-                    total += count;
+                    total += breakdown[code];
                 }
             }
             return total;
