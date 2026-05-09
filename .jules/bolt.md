@@ -1,0 +1,3 @@
+## 2026-05-09 - Avoid Tuple Allocations in Hot Paths
+**Learning:** In the specific data structures used by `useStatisticsProcessing` and `useDefectData`, the deep nested aggregation logic runs heavily. Using generic object iteration methods like `Object.entries()` inside these hot loops creates massive GC pressure because of the tuple allocations. Native `for` loops combined with `Object.keys()` is explicitly needed for our specific `per_year_stats` deep merge performance to remain viable under large datasets without a Web Worker.
+**Action:** Default to `Object.keys()` for all loop operations over the static dataset lookup objects (`brand_breakdowns`, `per_year_stats`) to maintain smooth UI performance.
