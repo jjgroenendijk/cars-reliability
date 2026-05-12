@@ -109,10 +109,10 @@ export function useStatisticsProcessing({
                 // In micro-benchmarks, this manual approach is >7x faster (40ms vs 282ms per 50,000 iterations),
                 // significantly reducing CPU overhead during large dataset aggregations in this hot loop.
                 const cloned_stats: Record<string, any> = {};
-                for (const age in item.per_year_stats) {
-                    if (Object.prototype.hasOwnProperty.call(item.per_year_stats, age)) {
-                        cloned_stats[age] = { ...item.per_year_stats[age] };
-                    }
+                const ageKeys = Object.keys(item.per_year_stats);
+                for (let i = 0; i < ageKeys.length; i++) {
+                    const age = ageKeys[i];
+                    cloned_stats[age] = { ...item.per_year_stats[age] };
                 }
 
                 aggregatedMap.set(key, {
@@ -154,7 +154,10 @@ export function useStatisticsProcessing({
                 existing.std_defects_per_vehicle_year = null;
 
                 // Merge Per Year Stats
-                for (const [age, stats] of Object.entries(item.per_year_stats)) {
+                const ageKeysMerge = Object.keys(item.per_year_stats);
+                for (let i = 0; i < ageKeysMerge.length; i++) {
+                    const age = ageKeysMerge[i];
+                    const stats = item.per_year_stats[age];
                     if (!existing.per_year_stats[age]) {
                         existing.per_year_stats[age] = { ...(stats as PerYearStats) };
                     } else {
@@ -214,7 +217,11 @@ export function useStatisticsProcessing({
                 const breakdown = viewMode === "brands" ? brand_breakdowns[key] : model_breakdowns[key];
 
                 if (breakdown) {
-                    const totalInBreakdown = Object.values(breakdown).reduce((a, b) => a + b, 0);
+                    let totalInBreakdown = 0;
+                    const bKeys = Object.keys(breakdown);
+                    for (let i = 0; i < bKeys.length; i++) {
+                        totalInBreakdown += breakdown[bKeys[i]];
+                    }
                     const filteredInBreakdown = calculate_filtered_defects(breakdown);
                     if (totalInBreakdown > 0) {
                         defectRatio = filteredInBreakdown / totalInBreakdown;
