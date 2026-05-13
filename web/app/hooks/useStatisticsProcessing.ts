@@ -64,16 +64,27 @@ export function useStatisticsProcessing({
         const selectedFuelsSet = selectedFuels.length > 0 ? new Set(selectedFuels) : null;
         const selectedBrandsSet = selectedBrands.length > 0 ? new Set(selectedBrands) : null;
 
-        const filtered = rawData.filter((item) => {
+        // 3. Filter and Aggregate Rows by Key (Brand or Brand+Model) in a single pass
+        // ⚡ Bolt Performance Optimization:
+        // Combined `rawData.filter` loop and the aggregation `for` loop into a single pass.
+        // This avoids creating and iterating over a potentially large intermediate `filtered` array,
+        // saving memory allocation and garbage collection overhead during hot filtering updates.
+        const groupBy = (item: BrandStats | ModelStats) => viewMode === "brands" ? item.merk : `${item.merk} ${(item as ModelStats).handelsbenaming}`;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const aggregatedMap = new Map<string, any>();
+
+        for (let i = 0; i < rawData.length; i++) {
+            const item = rawData[i];
+
             // Usage filter
             if (!(showConsumer && item.vehicle_type_group === "consumer") &&
                 !(showCommercial && item.vehicle_type_group === "commercial")) {
-                return false;
+                continue;
             }
 
             // Fuel filter
             if (selectedFuelsSet && !selectedFuelsSet.has(item.primary_fuel)) {
-                return false;
+                continue;
             }
 
             // Price filter
@@ -84,23 +95,13 @@ export function useStatisticsProcessing({
 
             // Treat max value as infinity
             if (p < minPrice || (maxPrice < maxPriceAvailable && p > maxPrice)) {
-                return false;
+                continue;
             }
 
             // Brands filter
             if (selectedBrandsSet && !selectedBrandsSet.has(item.merk)) {
-                return false;
+                continue;
             }
-
-            return true;
-        });
-
-        // 3. Aggregate Rows by Key (Brand or Brand+Model)
-        const groupBy = (item: BrandStats | ModelStats) => viewMode === "brands" ? item.merk : `${item.merk} ${(item as ModelStats).handelsbenaming}`;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const aggregatedMap = new Map<string, any>();
-
-        for (const item of filtered) {
             const key = groupBy(item);
             if (!aggregatedMap.has(key)) {
                 // Deep clone per_year_stats to enable merging
@@ -154,7 +155,13 @@ export function useStatisticsProcessing({
                 existing.std_defects_per_vehicle_year = null;
 
                 // Merge Per Year Stats
-                for (const [age, stats] of Object.entries(item.per_year_stats)) {
+                // ⚡ Bolt Performance Optimization:
+                // Replaced `Object.entries` with `Object.keys` to avoid tuple array allocation overhead
+                // when merging per_year_stats dictionaries.
+                const ages = Object.keys(item.per_year_stats);
+                for (let i = 0; i < ages.length; i++) {
+                    const age = ages[i];
+                    const stats = item.per_year_stats[age];
                     if (!existing.per_year_stats[age]) {
                         existing.per_year_stats[age] = { ...(stats as PerYearStats) };
                     } else {
@@ -214,7 +221,13 @@ export function useStatisticsProcessing({
                 const breakdown = viewMode === "brands" ? brand_breakdowns[key] : model_breakdowns[key];
 
                 if (breakdown) {
-                    const totalInBreakdown = Object.values(breakdown).reduce((a, b) => a + b, 0);
+                    // ⚡ Bolt Performance Optimization:
+                    // Replaced `Object.values().reduce()` with `Object.keys()` to avoid array allocations.
+                    let totalInBreakdown = 0;
+                    const bKeys = Object.keys(breakdown);
+                    for (let i = 0; i < bKeys.length; i++) {
+                        totalInBreakdown += breakdown[bKeys[i]];
+                    }
                     const filteredInBreakdown = calculate_filtered_defects(breakdown);
                     if (totalInBreakdown > 0) {
                         defectRatio = filteredInBreakdown / totalInBreakdown;
