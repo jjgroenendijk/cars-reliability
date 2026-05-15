@@ -174,6 +174,27 @@ export function useStatisticsProcessing({
         // ⚡ Bolt Performance Optimization:
         // Combined multiple `.map()` and `.filter()` calls into a single loop to avoid multiple iterations and
         // intermediate array allocations. Also extracted `aggregateAgeRange` to run only once per iteration instead of up to 3 times.
+
+        // ⚡ Bolt Performance Optimization:
+        // Pre-calculate defect ratios outside of the final results loop to prevent recalculating
+        // the same ratios repeatedly for the same brand/model across thousands of iterations.
+        const defectRatioMap = new Map<string, number>();
+        if (mode !== "all") {
+            const breakdownsToUse = viewMode === "brands" ? brand_breakdowns : model_breakdowns;
+            const bKeys = Object.keys(breakdownsToUse);
+            for (let i = 0; i < bKeys.length; i++) {
+                const key = bKeys[i];
+                const breakdown = breakdownsToUse[key];
+                if (breakdown) {
+                    const totalInBreakdown = Object.values(breakdown).reduce((sum, val) => sum + val, 0);
+                    const filteredInBreakdown = calculate_filtered_defects(breakdown);
+                    if (totalInBreakdown > 0) {
+                        defectRatioMap.set(key, filteredInBreakdown / totalInBreakdown);
+                    }
+                }
+            }
+        }
+
         const finalResults = [];
 
         for (const item of results) {
@@ -211,15 +232,7 @@ export function useStatisticsProcessing({
             let defectRatio = 1.0;
             if (mode !== "all") {
                 const key = viewMode === "brands" ? item.merk : `${item.merk}|${item.handelsbenaming}`;
-                const breakdown = viewMode === "brands" ? brand_breakdowns[key] : model_breakdowns[key];
-
-                if (breakdown) {
-                    const totalInBreakdown = Object.values(breakdown).reduce((a, b) => a + b, 0);
-                    const filteredInBreakdown = calculate_filtered_defects(breakdown);
-                    if (totalInBreakdown > 0) {
-                        defectRatio = filteredInBreakdown / totalInBreakdown;
-                    }
-                }
+                defectRatio = defectRatioMap.get(key) ?? 1.0;
             }
 
             let finalDefects = 0;
