@@ -1,0 +1,3 @@
+## 2024-05-16 - Faster object iteration with Object.keys()
+**Learning:** In high-frequency React hooks (e.g., `useStatisticsProcessing` and `useDefectData` context), using `Object.entries()` or `Object.values()` with `reduce` is significantly slower than standard `for` loops combined with `Object.keys()` because it avoids allocating arrays for the key-value tuples and closures inside array iteration functions.
+**Action:** Replace `Object.entries(obj).reduce(...)` or `for (const [k, v] of Object.entries(obj))` with native `for` loops iterating over `Object.keys()` to improve performance in hot loops, while keeping code logic equivalent.

@@ -189,9 +189,14 @@ export function DefectFilterProvider({ children }: DefectFilterProviderProps) {
         (breakdown: DefectBreakdown | undefined): number => {
             if (!breakdown) return 0;
             let total = 0;
-            for (const [code, count] of Object.entries(breakdown)) {
+            // ⚡ Bolt Performance Optimization:
+            // Using Object.keys loop instead of Object.entries(breakdown)
+            // avoids array allocations and closure executions on every frame.
+            const codes = Object.keys(breakdown);
+            for (let i = 0; i < codes.length; i++) {
+                const code = codes[i];
                 if (!excluded_codes.has(code)) {
-                    total += count;
+                    total += breakdown[code];
                 }
             }
             return total;
