@@ -55,6 +55,35 @@ export function useStatisticsProcessing({
 
     const { brand_breakdowns, model_breakdowns, calculate_filtered_defects, mode } = defectFilter;
 
+    // ⚡ Bolt Performance Optimization:
+    // Pre-calculate defect ratios outside of the main loop.
+    // This reduces redundant calculations and `calculate_filtered_defects` calls
+    // during the `processed_data` mapping. Also using a direct `for` loop over
+    // `Object.keys` for counting breakdown totals instead of `Object.values().reduce`.
+    const defectRatios = useMemo(() => {
+        const ratios = new Map<string, number>();
+        if (mode === "all") return ratios;
+
+        const breakdownsToUse = viewMode === "brands" ? brand_breakdowns : model_breakdowns;
+        for (const key of Object.keys(breakdownsToUse)) {
+            const breakdown = breakdownsToUse[key];
+            if (!breakdown) continue;
+
+            let totalInBreakdown = 0;
+            const keys = Object.keys(breakdown);
+            for (let i = 0; i < keys.length; i++) {
+                totalInBreakdown += breakdown[keys[i]];
+            }
+
+            const filteredInBreakdown = calculate_filtered_defects(breakdown);
+
+            if (totalInBreakdown > 0) {
+                ratios.set(key, filteredInBreakdown / totalInBreakdown);
+            }
+        }
+        return ratios;
+    }, [viewMode, brand_breakdowns, model_breakdowns, calculate_filtered_defects, mode]);
+
     // Main Aggregation & Filtering Pipeline
     const processed_data = useMemo(() => {
         // 1. Select Source
@@ -154,15 +183,17 @@ export function useStatisticsProcessing({
                 existing.std_defects_per_vehicle_year = null;
 
                 // Merge Per Year Stats
-                for (const [age, stats] of Object.entries(item.per_year_stats)) {
+                const ages = Object.keys(item.per_year_stats);
+                for (let i = 0; i < ages.length; i++) {
+                    const age = ages[i];
+                    const stats = item.per_year_stats[age] as PerYearStats;
                     if (!existing.per_year_stats[age]) {
-                        existing.per_year_stats[age] = { ...(stats as PerYearStats) };
+                        existing.per_year_stats[age] = { ...stats };
                     } else {
                         const eStats = existing.per_year_stats[age];
-                        const iStats = stats as PerYearStats;
-                        eStats.vehicle_count += iStats.vehicle_count;
-                        eStats.total_inspections += iStats.total_inspections;
-                        eStats.total_defects += iStats.total_defects;
+                        eStats.vehicle_count += stats.vehicle_count;
+                        eStats.total_inspections += stats.total_inspections;
+                        eStats.total_defects += stats.total_defects;
                     }
                 }
             }
@@ -211,15 +242,7 @@ export function useStatisticsProcessing({
             let defectRatio = 1.0;
             if (mode !== "all") {
                 const key = viewMode === "brands" ? item.merk : `${item.merk}|${item.handelsbenaming}`;
-                const breakdown = viewMode === "brands" ? brand_breakdowns[key] : model_breakdowns[key];
-
-                if (breakdown) {
-                    const totalInBreakdown = Object.values(breakdown).reduce((a, b) => a + b, 0);
-                    const filteredInBreakdown = calculate_filtered_defects(breakdown);
-                    if (totalInBreakdown > 0) {
-                        defectRatio = filteredInBreakdown / totalInBreakdown;
-                    }
-                }
+                defectRatio = defectRatios.get(key) ?? 1.0;
             }
 
             let finalDefects = 0;
@@ -285,7 +308,7 @@ export function useStatisticsProcessing({
         // 8. Sort
         return results.sort((a, b) => (a.filtered_defects_per_vehicle_year || 0) - (b.filtered_defects_per_vehicle_year || 0));
 
-    }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial, selectedFuels, minPrice, maxPrice, minFleetSize, maxFleetSize, minInspections, maxInspections, searchQuery, ageRange, isAgeFilterActive, mode, brand_breakdowns, model_breakdowns, calculate_filtered_defects, maxPriceAvailable, maxInspectionsAvailable, selectedBrands, metadata]);
+    }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial, selectedFuels, minPrice, maxPrice, minFleetSize, maxFleetSize, minInspections, maxInspections, searchQuery, ageRange, isAgeFilterActive, mode, defectRatios, maxPriceAvailable, maxInspectionsAvailable, selectedBrands, metadata]);
 
     return {
         processed_data: processed_data as (BrandStatsFiltered | ModelStatsFiltered)[],
