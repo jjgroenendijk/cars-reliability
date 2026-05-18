@@ -34,10 +34,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   const t = (path: string, values?: Record<string, string | number>) => {
-    const keys = path.split('.');
+    const pathKeys = path.split('.');
     let current: unknown = translations[language];
 
-    for (const key of keys) {
+    for (const key of pathKeys) {
       if (typeof current !== "object" || current === null || !(key in current)) {
         return path;
       }
@@ -52,10 +52,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       return current;
     }
 
-    return Object.entries(values).reduce(
-      (text, [key, value]) => text.replaceAll(`{${key}}`, String(value)),
-      current
-    );
+    let text = current;
+    const valueKeys = Object.keys(values);
+    for (let i = 0; i < valueKeys.length; i++) {
+      const key = valueKeys[i];
+      text = text.replaceAll(`{${key}}`, String(values[key]));
+    }
+    return text;
   };
 
   return (

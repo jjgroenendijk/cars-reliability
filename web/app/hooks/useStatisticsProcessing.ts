@@ -154,7 +154,10 @@ export function useStatisticsProcessing({
                 existing.std_defects_per_vehicle_year = null;
 
                 // Merge Per Year Stats
-                for (const [age, stats] of Object.entries(item.per_year_stats)) {
+                const ages = Object.keys(item.per_year_stats);
+                for (let i = 0; i < ages.length; i++) {
+                    const age = ages[i];
+                    const stats = item.per_year_stats[age];
                     if (!existing.per_year_stats[age]) {
                         existing.per_year_stats[age] = { ...(stats as PerYearStats) };
                     } else {
