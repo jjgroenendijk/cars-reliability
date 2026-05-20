@@ -106,9 +106,20 @@ export function useDefectData() {
 
     // Calculated stats
     const calculated_stats = useMemo(() => {
-        const reliability_defects = defects_with_category.filter(d => d.computed_is_reliability);
-        const reliability_count = reliability_defects.reduce((sum, d) => sum + d.count, 0);
-        const total_count = defects_with_category.reduce((sum, d) => sum + d.count, 0);
+        // ⚡ Bolt Performance Optimization:
+        // Replaced multiple `.filter()` and `.reduce()` array allocations mapping O(2N) loops
+        // with a single linear O(N) loop iterating over `defects_with_category` to compute aggregates.
+        let reliability_count = 0;
+        let total_count = 0;
+
+        for (let i = 0; i < defects_with_category.length; i++) {
+            const d = defects_with_category[i];
+            total_count += d.count;
+            if (d.computed_is_reliability) {
+                reliability_count += d.count;
+            }
+        }
+
         const wear_count = total_count - reliability_count;
 
         return {
