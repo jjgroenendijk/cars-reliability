@@ -137,6 +137,7 @@ export function number_format(value: number): string {
  * @returns Pascal Case string (e.g., "Volkswagen" or "Golf Variant")
  */
 export function pascal_case_format(value: string): string {
+  if (!value) return "";
   return value
     .toLowerCase()
     .split(" ")

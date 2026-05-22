@@ -1,0 +1,4 @@
+## 2024-05-22 - Fix SoQL injection vulnerability in vehicle defect lookup
+**Vulnerability:** SoQL injection vulnerability in dynamic `$where` query interpolation.
+**Learning:** Socrata Query Language `$where` queries require strict sanitization of dynamically inserted inputs. Without escaping, an attacker could potentially inject malicious SoQL into the RDW Open Data API query via the defect ID, leading to unexpected query execution, data exposure, or application errors. The vulnerability existed because the defect ID was directly inserted into the query string without any sanitization.
+**Prevention:** Always strictly sanitize interpolated inputs when constructing dynamic queries (like SoQL or SQL `$where` clauses) using data from third-party APIs. For SoQL strings, escape single quotes using `.replace(/'/g, "''")`.
