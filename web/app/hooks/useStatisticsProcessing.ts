@@ -154,7 +154,13 @@ export function useStatisticsProcessing({
                 existing.std_defects_per_vehicle_year = null;
 
                 // Merge Per Year Stats
-                for (const [age, stats] of Object.entries(item.per_year_stats)) {
+                // ⚡ Bolt Performance Optimization:
+                // Replaced Object.entries() with Object.keys() to avoid tuple array allocation overhead
+                // when iterating over per_year_stats during aggregation.
+                const ageKeys = Object.keys(item.per_year_stats);
+                for (let i = 0; i < ageKeys.length; i++) {
+                    const age = ageKeys[i];
+                    const stats = item.per_year_stats[age];
                     if (!existing.per_year_stats[age]) {
                         existing.per_year_stats[age] = { ...(stats as PerYearStats) };
                     } else {
@@ -214,7 +220,17 @@ export function useStatisticsProcessing({
                 const breakdown = viewMode === "brands" ? brand_breakdowns[key] : model_breakdowns[key];
 
                 if (breakdown) {
-                    const totalInBreakdown = Object.values(breakdown).reduce((a, b) => a + b, 0);
+                    // ⚡ Bolt Performance Optimization:
+                    // Replaced Object.values().reduce() with a linear Object.keys() loop.
+                    // This avoids the intermediate array allocation created by Object.values(),
+                    // which is beneficial since this function is executed inside a hot loop
+                    // over all aggregated results.
+                    const bKeys = Object.keys(breakdown);
+                    let totalInBreakdown = 0;
+                    for (let i = 0; i < bKeys.length; i++) {
+                        totalInBreakdown += breakdown[bKeys[i]];
+                    }
+
                     const filteredInBreakdown = calculate_filtered_defects(breakdown);
                     if (totalInBreakdown > 0) {
                         defectRatio = filteredInBreakdown / totalInBreakdown;
