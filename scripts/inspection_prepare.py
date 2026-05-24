@@ -81,23 +81,27 @@ def primary_inspections_filter(inspections_lf: pl.LazyFrame) -> pl.LazyFrame:
     Returns:
         LazyFrame with only primary inspection records
     """
+    primary = inspections_lf.filter(
+        pl.col("soort_melding_ki_omschrijving").str.to_lowercase().str.strip_chars()
+        == "periodieke controle"
+    ).with_columns(
+        pl.col("meld_tijd_door_keuringsinstantie")
+        .fill_null("")
+        .str.strip_chars()
+        .str.zfill(4)
+        .alias("insp_time_normalized")
+    )
+
+    earliest = primary.group_by(["kenteken", "meld_datum_door_keuringsinstantie"]).agg(
+        pl.col("insp_time_normalized").min()
+    )
+
     return (
-        inspections_lf
-        # Filter to periodieke controle only
-        .filter(
-            pl.col("soort_melding_ki_omschrijving").str.to_lowercase().str.strip_chars()
-            == "periodieke controle"
+        primary.join(
+            earliest,
+            on=["kenteken", "meld_datum_door_keuringsinstantie", "insp_time_normalized"],
+            how="inner",
         )
-        # Normalize time field
-        .with_columns(
-            pl.col("meld_tijd_door_keuringsinstantie")
-            .fill_null("")
-            .str.strip_chars()
-            .str.zfill(4)
-            .alias("insp_time_normalized")
-        )
-        # Keep earliest inspection per vehicle per day
-        .sort(["kenteken", "meld_datum_door_keuringsinstantie", "insp_time_normalized"])
         .group_by(["kenteken", "meld_datum_door_keuringsinstantie"])
         .first()
     )

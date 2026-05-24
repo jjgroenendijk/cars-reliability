@@ -1,5 +1,25 @@
 # Todo
 
+- [x] Fix scheduled Stage 2 pipeline memory failure.
+
+  Problem: scheduled `Data Pipeline (Parquet)` runs fail in the `process` job
+  while computing inspection statistics. The step reaches
+  `Computing inspection statistics...`, then the GitHub-hosted runner receives
+  a shutdown signal. The last green process run logged roughly 15 GB RSS, so
+  the current full inspection DataFrame materialization is too close to the
+  standard runner limit.
+
+  Requirement: keep Stage 2 Polars-native and avoid collecting the full joined
+  inspection dataset. Aggregate brand/model stats, metadata totals, and defect
+  breakdown inputs from lazy plans or smaller aggregated frames.
+
+  Result: moved inspection-level joins into a reusable lazy plan, changed
+  brand/model aggregation and metadata summaries to collect only aggregated
+  frames, and updated defect breakdowns to join against the lazy inspection
+  keys. Replaced the primary-inspection global sort with a grouped earliest-time
+  join to reduce peak memory pressure. Verified with Ruff, py_compile,
+  `mypy --ignore-missing-imports`, and a synthetic Stage 2 Parquet run.
+
 - [x] Fix incomplete Dutch website translations.
 
   Problem: selecting Dutch leaves multiple visible UI strings in English.
