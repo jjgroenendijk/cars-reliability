@@ -24,7 +24,7 @@ def _build_fuel_dict(df: pl.DataFrame, key_col: str) -> dict[str, dict[str, int]
 
     # 2. Pivot to wide format so fuel types become columns
     # We use "count" as values. Missing combinations get null, which we fill with 0.
-    pivoted = counts.pivot(index=key_col, columns="fuel_type", values="count").fill_null(0)
+    pivoted = counts.pivot(index=key_col, on="fuel_type", values="count").fill_null(0)
 
     # 3. Ensure all known fuel types + "other" are present as columns
     # Sort to ensure consistent field order in the struct/dict
@@ -91,7 +91,7 @@ def build_fuel_breakdown(
     raw_stats_df = (
         fuel_with_brand_lf.group_by(["merk", "handelsbenaming", "fuel_type"])
         .agg(pl.col("kenteken").n_unique().alias("count"))
-        .collect()
+        .collect(engine="streaming")
     )
 
     # Create model_key on the aggregated result (much smaller)

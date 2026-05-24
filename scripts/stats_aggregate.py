@@ -19,20 +19,24 @@ from config import (
 
 
 def compute_per_year_stats(
-    df: pl.DataFrame, group_cols: list[str]
-) -> tuple[pl.DataFrame, int, int]:
+    inspections_lf: pl.LazyFrame, group_cols: list[str]
+) -> tuple[pl.LazyFrame, int, int]:
     """Compute statistics for each age year using native Polars.
 
     Returns:
         Tuple of (per_year_df, min_age, max_age)
     """
-    # Get min/max ages from the data
-    min_age = int(float(df["age_at_inspection"].min() or 0))  # type: ignore
-    max_age = int(float(df["age_at_inspection"].max() or 0))  # type: ignore
+    age_bounds = inspections_lf.select(
+        [
+            pl.col("age_at_inspection").min().alias("min_age"),
+            pl.col("age_at_inspection").max().alias("max_age"),
+        ]
+    ).collect(engine="streaming")
+    min_age = int(age_bounds["min_age"][0] or 0)
+    max_age = int(age_bounds["max_age"][0] or 0)
 
-    # Group by (group_cols + age) and aggregate
-    per_year_df = (
-        df.group_by(group_cols + ["age_at_inspection"])
+    per_year_lf = (
+        inspections_lf.group_by(group_cols + ["age_at_inspection"])
         .agg(
             [
                 pl.col("kenteken").n_unique().alias("vehicle_count"),
@@ -51,7 +55,7 @@ def compute_per_year_stats(
         .sort(group_cols + ["age_at_inspection"])
     )
 
-    return per_year_df, min_age, max_age
+    return per_year_lf, min_age, max_age
 
 
 def _add_per_year_stats_to_results(
@@ -68,7 +72,7 @@ def _add_per_year_stats_to_results(
 
 
 def aggregate_brand_stats(
-    inspections_df: pl.DataFrame,
+    inspections_lf: pl.LazyFrame,
 ) -> tuple[list[dict], int, int]:
     """Aggregate statistics by brand with per-year stats using native Polars.
 
@@ -76,8 +80,8 @@ def aggregate_brand_stats(
         Tuple of (brand_stats list, min_age, max_age)
     """
     # Main aggregation
-    brand_df = (
-        inspections_df.group_by(["merk", "vehicle_type_group", "primary_fuel"])
+    brand_lf = (
+        inspections_lf.group_by(["merk", "vehicle_type_group", "primary_fuel"])
         .agg(
             [
                 pl.col("kenteken").n_unique().alias("vehicle_count"),
@@ -135,24 +139,25 @@ def aggregate_brand_stats(
     )
 
     # Compute per-year stats using Polars group_by
-    per_year_df, min_age, max_age = compute_per_year_stats(
-        inspections_df, ["merk", "vehicle_type_group", "primary_fuel"]
+    per_year_lf, min_age, max_age = compute_per_year_stats(
+        inspections_lf, ["merk", "vehicle_type_group", "primary_fuel"]
     )
 
     group_cols = ["merk", "vehicle_type_group", "primary_fuel"]
 
+    per_year_lists = per_year_lf.group_by(group_cols).agg(
+        pl.col("age_at_inspection").cast(pl.String).alias("_keys"),
+        pl.struct(
+            "vehicle_count",
+            "total_inspections",
+            "total_defects",
+            "avg_defects_per_inspection",
+        ).alias("_values"),
+    )
+    brand_df = brand_lf.collect(engine="streaming")
+    per_year_df = per_year_lists.collect(engine="streaming")
     if len(per_year_df) > 0:
-        per_year_lists = per_year_df.group_by(group_cols).agg(
-            pl.col("age_at_inspection").cast(pl.String).alias("_keys"),
-            pl.struct(
-                "vehicle_count",
-                "total_inspections",
-                "total_defects",
-                "avg_defects_per_inspection",
-            ).alias("_values"),
-        )
-
-        brand_df = brand_df.join(per_year_lists, on=group_cols, how="left")
+        brand_df = brand_df.join(per_year_df, on=group_cols, how="left")
     else:
         brand_df = brand_df.with_columns(pl.lit(None).alias("_keys"), pl.lit(None).alias("_values"))
 
@@ -172,7 +177,7 @@ def aggregate_brand_stats(
 
 
 def aggregate_model_stats(
-    inspections_df: pl.DataFrame,
+    inspections_lf: pl.LazyFrame,
 ) -> tuple[list[dict], int, int]:
     """Aggregate statistics by brand + model with per-year stats using native Polars.
 
@@ -180,8 +185,8 @@ def aggregate_model_stats(
         Tuple of (model_stats list, min_age, max_age)
     """
     # Main aggregation
-    model_df = (
-        inspections_df.group_by(["merk", "handelsbenaming", "vehicle_type_group", "primary_fuel"])
+    model_lf = (
+        inspections_lf.group_by(["merk", "handelsbenaming", "vehicle_type_group", "primary_fuel"])
         .agg(
             [
                 pl.col("kenteken").n_unique().alias("vehicle_count"),
@@ -245,25 +250,26 @@ def aggregate_model_stats(
     )
 
     # Compute per-year stats using Polars group_by
-    per_year_df, min_age, max_age = compute_per_year_stats(
-        inspections_df,
+    per_year_lf, min_age, max_age = compute_per_year_stats(
+        inspections_lf,
         ["merk", "handelsbenaming", "vehicle_type_group", "primary_fuel"],
     )
 
     group_cols = ["merk", "handelsbenaming", "vehicle_type_group", "primary_fuel"]
 
+    per_year_lists = per_year_lf.group_by(group_cols).agg(
+        pl.col("age_at_inspection").cast(pl.String).alias("_keys"),
+        pl.struct(
+            "vehicle_count",
+            "total_inspections",
+            "total_defects",
+            "avg_defects_per_inspection",
+        ).alias("_values"),
+    )
+    model_df = model_lf.collect(engine="streaming")
+    per_year_df = per_year_lists.collect(engine="streaming")
     if len(per_year_df) > 0:
-        per_year_lists = per_year_df.group_by(group_cols).agg(
-            pl.col("age_at_inspection").cast(pl.String).alias("_keys"),
-            pl.struct(
-                "vehicle_count",
-                "total_inspections",
-                "total_defects",
-                "avg_defects_per_inspection",
-            ).alias("_values"),
-        )
-
-        model_df = model_df.join(per_year_lists, on=group_cols, how="left")
+        model_df = model_df.join(per_year_df, on=group_cols, how="left")
     else:
         model_df = model_df.with_columns(pl.lit(None).alias("_keys"), pl.lit(None).alias("_values"))
 

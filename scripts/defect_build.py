@@ -27,7 +27,7 @@ def build_defect_stats(
         )
         .sort("count", descending=True)
         .head(50)
-        .collect()
+        .collect(engine="streaming")
     )
 
     # Calculate total defects for percentage calculation
@@ -66,7 +66,7 @@ def build_defect_stats(
 
 def build_defect_breakdowns(
     defects_lf: pl.LazyFrame,
-    inspections_df: pl.DataFrame,
+    inspections_lf: pl.LazyFrame,
 ) -> tuple[dict[str, dict[str, int]], dict[str, dict[str, int]]]:
     """Build per-defect-code counts for each brand and model.
 
@@ -77,8 +77,7 @@ def build_defect_breakdowns(
         Tuple of (brand_defects, model_defects) where each is a dict mapping
         brand/model name to a dict of defect_code -> count
     """
-    # 1. Convert inspections to LazyFrame
-    insp_keys_lf = inspections_df.lazy().select(
+    insp_keys_lf = inspections_lf.select(
         [
             "kenteken",
             "meld_datum_door_keuringsinstantie",
@@ -127,7 +126,8 @@ def build_defect_breakdowns(
         .agg(pl.struct(["gebrek_identificatie", "count"]).alias("defects"))
     )
 
-    brand_breakdown_df, model_breakdown_df = pl.collect_all([brand_agg_lazy, model_agg_lazy])
+    brand_breakdown_df = brand_agg_lazy.collect(engine="streaming")
+    model_breakdown_df = model_agg_lazy.collect(engine="streaming")
 
     brand_defects: dict[str, dict[str, int]] = {}
     # Use iter_rows assuming column order: merk, defects

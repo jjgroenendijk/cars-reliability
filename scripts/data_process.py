@@ -8,11 +8,9 @@ Outputs processed data to data/processed/.
 Uses Polars lazy API throughout to minimize memory usage.
 """
 
-import gc
 from collections.abc import Callable
 from datetime import datetime
 
-import polars as pl
 import psutil
 
 from config import (
@@ -23,159 +21,14 @@ from config import (
 )
 from defect_build import build_defect_breakdowns, build_defect_codes, build_defect_stats
 from fuel_build import build_fuel_breakdown
-from inspection_prepare import json_save, load_dataset, primary_inspections_filter, scan_dataset
+from inspection_prepare import json_save, load_dataset, scan_dataset
+from inspection_stats import inspection_stats_build, metadata_stats_collect
 from stats_aggregate import aggregate_brand_stats, aggregate_model_stats, generate_rankings
 
 
 def memory_mb() -> float:
     """Get current process memory in MB."""
     return psutil.Process().memory_info().rss / (1024 * 1024)
-
-
-def _determine_primary_fuel(brandstof_lf: pl.LazyFrame) -> pl.LazyFrame:
-    """
-    Determine primary fuel type per license plate.
-    Logic:
-    - LPG: If any record is LPG
-    - Hybrid: If Electric AND (Benzine OR Diesel)
-    - EV: If Electric AND NOT (Benzine OR Diesel)
-    - Diesel: If Diesel
-    - Benzine: If Benzine
-    - Other: Fallback
-    """
-    # Create pivot-like indicators
-    fuel_indicators = brandstof_lf.group_by("kenteken").agg(
-        [
-            (pl.col("brandstof_omschrijving") == "Elektriciteit").any().alias("has_electric"),
-            (pl.col("brandstof_omschrijving") == "Benzine").any().alias("has_benzine"),
-            (pl.col("brandstof_omschrijving") == "Diesel").any().alias("has_diesel"),
-            (pl.col("brandstof_omschrijving") == "LPG").any().alias("has_lpg"),
-        ]
-    )
-
-    return fuel_indicators.select(
-        [
-            "kenteken",
-            pl.when(pl.col("has_lpg"))
-            .then(pl.lit("LPG"))
-            .when(pl.col("has_electric") & (pl.col("has_benzine") | pl.col("has_diesel")))
-            .then(pl.lit("Hybrid"))
-            .when(pl.col("has_electric"))
-            .then(pl.lit("Elektriciteit"))
-            .when(pl.col("has_diesel"))
-            .then(pl.lit("Diesel"))
-            .when(pl.col("has_benzine"))
-            .then(pl.lit("Benzine"))
-            .otherwise(pl.lit("Other"))
-            .alias("primary_fuel"),
-        ]
-    )
-
-
-def compute_inspection_stats(
-    inspections_lf: pl.LazyFrame,
-    vehicles_lf: pl.LazyFrame,
-    defects_lf: pl.LazyFrame,
-    brandstof_lf: pl.LazyFrame,
-) -> pl.DataFrame:
-    """Compute per-vehicle inspection statistics using Polars operations.
-
-    This replaces the Python dict-based vehicle_summaries_build.
-    """
-    # 1. Filter valid inspections
-    primary_inspections = primary_inspections_filter(inspections_lf)
-
-    # 2. Determine Primary Fuel
-    fuel_types = _determine_primary_fuel(brandstof_lf)
-
-    # 3. Join Inspections + Vehicles + Fuel
-    inspections_with_vehicles = (
-        primary_inspections.join(
-            vehicles_lf.select(
-                [
-                    "kenteken",
-                    pl.col("merk").str.to_uppercase().str.strip_chars().alias("merk"),
-                    pl.col("handelsbenaming")
-                    .str.to_uppercase()
-                    .str.strip_chars()
-                    .alias("handelsbenaming"),
-                    "datum_eerste_toelating",
-                    pl.col("catalogusprijs").cast(pl.Float64).fill_null(0).alias("catalogusprijs"),
-                    # Map vehicle type to user-facing groups
-                    pl.when(pl.col("voertuigsoort") == "Personenauto")
-                    .then(pl.lit("consumer"))
-                    .when(pl.col("voertuigsoort") == "Bedrijfsauto")
-                    .then(pl.lit("commercial"))
-                    .otherwise(pl.lit("other"))
-                    .alias("vehicle_type_group"),
-                    # Price Segments (e.g. 5000, 10000, 15000)
-                ]
-            ).filter(pl.col("vehicle_type_group").is_in(["consumer", "commercial"])),
-            on="kenteken",
-            how="inner",
-        )
-        .join(fuel_types, on="kenteken", how="left")
-        .with_columns(pl.col("primary_fuel").fill_null("Other"))
-    )
-
-    # Parse dates and calculate age at inspection
-    inspections_with_age = (
-        inspections_with_vehicles.with_columns(
-            [
-                # Parse inspection date (YYYYMMDD format)
-                pl.col("meld_datum_door_keuringsinstantie")
-                .str.slice(0, 4)
-                .cast(pl.Int32)
-                .alias("insp_year"),
-                pl.col("meld_datum_door_keuringsinstantie")
-                .str.slice(4, 2)
-                .cast(pl.Int32)
-                .alias("insp_month"),
-                pl.col("meld_datum_door_keuringsinstantie")
-                .str.slice(6, 2)
-                .cast(pl.Int32)
-                .alias("insp_day"),
-                # Parse registration date
-                pl.col("datum_eerste_toelating").str.slice(0, 4).cast(pl.Int32).alias("reg_year"),
-            ]
-        )
-        .with_columns(
-            [
-                # Calculate age in years (approximate)
-                (pl.col("insp_year") - pl.col("reg_year")).alias("age_at_inspection"),
-            ]
-        )
-        .filter(
-            # Sanity checks
-            (pl.col("age_at_inspection") >= 0) & (pl.col("age_at_inspection") <= 100)
-        )
-    )
-
-    # Count defects per inspection
-    defect_counts = defects_lf.group_by(
-        ["kenteken", "meld_datum_door_keuringsinstantie", "meld_tijd_door_keuringsinstantie"]
-    ).agg(
-        [
-            pl.col("aantal_gebreken_geconstateerd")
-            .fill_null(1)
-            .cast(pl.Int64)
-            .sum()
-            .alias("defect_count"),
-        ]
-    )
-
-    # Join defects to inspections
-    inspections_with_defects = inspections_with_age.join(
-        defect_counts,
-        on=["kenteken", "meld_datum_door_keuringsinstantie", "meld_tijd_door_keuringsinstantie"],
-        how="left",
-    ).with_columns(
-        [
-            pl.col("defect_count").fill_null(0),
-        ]
-    )
-
-    return inspections_with_defects.collect()
 
 
 def _add_fuel_and_track_ranges(
@@ -222,17 +75,15 @@ def main() -> None:
     brandstof_lf = scan_dataset("brandstof")
     print(f"Scanning datasets lazily | memory: {memory_mb():.0f} MB", flush=True)
 
-    # Compute inspection statistics (this is the main work)
-    print("Computing inspection statistics...", flush=True)
-    inspections_df = compute_inspection_stats(inspections_lf, vehicles_lf, defects_lf, brandstof_lf)
-    print(
-        f"Computed stats ({len(inspections_df):,} inspections) | memory: {memory_mb():.0f} MB",
-        flush=True,
+    print("Building lazy inspection statistics plan...", flush=True)
+    inspection_stats_lf = inspection_stats_build(
+        inspections_lf, vehicles_lf, defects_lf, brandstof_lf
     )
 
     # Aggregate by brand and model (returns stats + age range)
-    brand_stats, min_age, max_age = aggregate_brand_stats(inspections_df)
-    model_stats, _, _ = aggregate_model_stats(inspections_df)
+    print("Aggregating brand and model statistics...", flush=True)
+    brand_stats, min_age, max_age = aggregate_brand_stats(inspection_stats_lf)
+    model_stats, _, _ = aggregate_model_stats(inspection_stats_lf)
     print(
         f"Aggregated: {len(brand_stats)} brands, {len(model_stats)} models "
         f"(ages {min_age}-{max_age}) | memory: {memory_mb():.0f} MB",
@@ -260,19 +111,17 @@ def main() -> None:
     # Generate rankings
     rankings = generate_rankings(brand_stats, model_stats)
 
-    # Calculate totals
-    total_inspections = len(inspections_df)
-    total_defects = int(inspections_df["defect_count"].sum())
-    total_vehicles = inspections_df["kenteken"].n_unique()
+    print("Collecting metadata summaries...", flush=True)
+    metadata_stats = metadata_stats_collect(inspection_stats_lf)
+    total_inspections = metadata_stats["total_inspections"]
+    total_defects = metadata_stats["total_defects"]
+    total_vehicles = metadata_stats["total_vehicles"]
 
     # Calculate dynamic ranges for frontend filters
-    max_price = int(inspections_df["catalogusprijs"].max())
+    max_price = int(metadata_stats["max_price"])
     max_fleet_size = max(max_fleet_size_brand, max_fleet_size_model)
     min_inspections = min(min_inspections_brand, min_inspections_model)
     max_inspections = max(max_inspections_brand, max_inspections_model)
-
-    # Extract unique fuel types from data
-    fuel_types = sorted(inspections_df["primary_fuel"].unique().to_list())
 
     # Build metadata
     metadata = {
@@ -288,65 +137,24 @@ def main() -> None:
             "age": {"min": min_age, "max": max_age},
             "inspections": {"min": min_inspections, "max": max_inspections},
         },
-        "fuel_types": fuel_types,
+        "fuel_types": metadata_stats["fuel_types"],
         "counts": {
             "brands": len(brand_stats),
             "models": len(model_stats),
             "vehicles_processed": total_vehicles,
             "total_inspections": total_inspections,
             "total_defects": total_defects,
-            "consumer_vehicles": inspections_df.filter(pl.col("vehicle_type_group") == "consumer")
-            .select(pl.col("kenteken").n_unique())
-            .item(),
-            "commercial_vehicles": inspections_df.filter(
-                pl.col("vehicle_type_group") == "commercial"
-            )
-            .select(pl.col("kenteken").n_unique())
-            .item(),
+            "consumer_vehicles": metadata_stats["consumer_vehicles"],
+            "commercial_vehicles": metadata_stats["commercial_vehicles"],
         },
         "source": "RDW Open Data",
         "pipeline_stage": 2,
     }
 
-    zero_defect_rate = round(int((inspections_df["defect_count"] == 0).sum()) / total_inspections, 4) if total_inspections > 0 else 0.0
-
-    yearly_trend = (
-        inspections_df.group_by("insp_year")
-        .agg([
-            pl.len().alias("inspections"),
-            pl.col("defect_count").sum().alias("total_defects"),
-        ])
-        .with_columns(
-            (pl.col("total_defects") / pl.col("inspections")).round(4).alias("avg_defects_per_inspection")
-        )
-        .filter(pl.col("inspections") >= 10_000)
-        .sort("insp_year")
-        .to_dicts()
-    )
-
-    fleet_age_stats = (
-        inspections_df.group_by("age_at_inspection")
-        .agg([
-            pl.len().alias("total_inspections"),
-            pl.col("defect_count").sum().alias("total_defects"),
-            pl.col("kenteken").n_unique().alias("vehicle_count"),
-        ])
-        .with_columns(
-            (pl.col("total_defects") / pl.col("total_inspections")).round(4).alias("avg_defects_per_inspection")
-        )
-        .filter(
-            (pl.col("vehicle_count") >= 100)
-            & (pl.col("age_at_inspection") >= 1)
-            & (pl.col("age_at_inspection") <= 30)
-        )
-        .sort("age_at_inspection")
-        .to_dicts()
-    )
-
     metadata["stats"] = {
-        "zero_defect_rate": zero_defect_rate,
-        "yearly_trend": yearly_trend,
-        "fleet_age_stats": fleet_age_stats,
+        "zero_defect_rate": metadata_stats["zero_defect_rate"],
+        "yearly_trend": metadata_stats["yearly_trend"],
+        "fleet_age_stats": metadata_stats["fleet_age_stats"],
     }
 
     # Build defect stats
@@ -357,7 +165,7 @@ def main() -> None:
     # Build per-defect breakdowns for dynamic frontend filtering
     print("Building defect breakdowns...", flush=True)
     brand_defect_breakdown, model_defect_breakdown = build_defect_breakdowns(
-        defects_lf, inspections_df
+        defects_lf, inspection_stats_lf
     )
     print(
         f"Defect breakdowns: {len(brand_defect_breakdown)} brands, "
@@ -368,10 +176,6 @@ def main() -> None:
     # Build defect code index for frontend display
     defect_codes = build_defect_codes(gebreken_df)
     print(f"Defect codes: {len(defect_codes)} codes", flush=True)
-
-    # Free memory before saving
-    del inspections_df
-    gc.collect()
 
     # Save outputs - all are now dicts/lists after aggregation refactoring
     DIR_PROCESSED.mkdir(parents=True, exist_ok=True)
