@@ -43,16 +43,6 @@ KNOWN_FUEL_TYPES = {"Benzine", "Diesel", "Elektriciteit", "LPG"}
 VEHICLE_TYPE_CONSUMER = "consumer"
 VEHICLE_TYPE_COMMERCIAL = "commercial"
 
-
-# Primary fuel types for categorization
-PRIMARY_FUEL_TYPES = {
-    "Benzine",
-    "Diesel",
-    "Hybrid",
-    "EV",
-    "LPG",
-}
-
 # === Cache Validation ===
 # Minimum file sizes in bytes for cache validation
 MIN_CACHE_SIZES = {

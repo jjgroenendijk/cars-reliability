@@ -34,6 +34,8 @@ flowchart LR
 
 **Pipeline discipline**: Stages run sequentially. Stage N must succeed before Stage N+1 runs.
 
+**Stage 2 modules**: `data_process.py` orchestrates Stage 2 and delegates to the helper modules `inspection_prepare.py`, `inspection_stats.py`, `stats_aggregate.py`, `defect_build.py`, and `fuel_build.py`. Shared helpers live in `config.py`, `api_client.py`, `system_utils.py` (memory/filesystem utilities), and `cache_validate.py`.
+
 **Re-run requirement**: After modifying `data_process.py` or any script that changes JSON output, always re-run the pipeline:
 ```bash
 cd scripts && uv run data_process.py

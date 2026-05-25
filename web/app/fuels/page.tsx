@@ -23,7 +23,7 @@ export default function FuelsPage() {
   const [minPrice, setMinPrice] = useState(DEFAULTS.price.min);
   const [maxPrice, setMaxPrice] = useState(DEFAULTS.price.max);
   const [minFleetSize, setMinFleetSize] = useState(DEFAULTS.fleet.min);
-  const [maxFleetSize, setMaxFleetSize] = useState(5000);
+  const [maxFleetSize, setMaxFleetSize] = useState(DEFAULTS.fleet.max);
   const [minInspections, setMinInspections] = useState(DEFAULTS.inspections.min);
   const [maxInspections, setMaxInspections] = useState(DEFAULTS.inspections.max);
   const [showCatalogPrice, setShowCatalogPrice] = useState(false);
@@ -58,6 +58,7 @@ export default function FuelsPage() {
 
   const min_inspections_available = metadata?.ranges?.inspections?.min ?? DEFAULTS.inspections.min;
   const max_inspections_available = metadata?.ranges?.inspections?.max ?? DEFAULTS.inspections.max;
+  const max_fleet_available = metadata?.ranges?.fleet?.max ?? DEFAULTS.fleet.max;
 
   useEffect(() => {
     if (!metadata?.ranges?.inspections) return;
@@ -66,6 +67,13 @@ export default function FuelsPage() {
     }
     if (maxInspections === DEFAULTS.inspections.max) {
       setMaxInspections(metadata.ranges.inspections.max);
+    }
+  }, [metadata]);
+
+  useEffect(() => {
+    if (!metadata?.ranges?.fleet) return;
+    if (maxFleetSize === DEFAULTS.fleet.max) {
+      setMaxFleetSize(metadata.ranges.fleet.max);
     }
   }, [metadata]);
 
@@ -126,7 +134,7 @@ export default function FuelsPage() {
           setMinFleetSize={setMinFleetSize}
           maxFleetSize={maxFleetSize}
           setMaxFleetSize={setMaxFleetSize}
-          maxFleetSizeAvailable={maxFleetSize}
+          maxFleetSizeAvailable={max_fleet_available}
           minFleetSizeAvailable={0}
           minInspections={minInspections}
           maxInspections={maxInspections}

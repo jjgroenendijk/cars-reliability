@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import type { DefectStats, DefectTypeStat } from "@/app/lib/types";
 import { isReliabilityDefect } from "@/app/lib/defect_categories";
+import { DEFAULTS } from "@/app/lib/defaults";
 
 const STORAGE_KEY = "defect_reliability_overrides";
 
@@ -127,7 +128,7 @@ export function useDefectData() {
             .filter(d => d.computed_is_reliability)
             .sort((a, b) => b.count - a.count);
 
-        return reliability_defects.slice(0, 15).map((d) => ({
+        return reliability_defects.slice(0, DEFAULTS.display.reliabilityChartItems).map((d) => ({
             name: d.defect_code,
             description: d.defect_description,
             count: d.count,

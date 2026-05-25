@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
-import type { SortConfig, SortDirection } from "@/app/lib/types";
+import type { SortDirection } from "@/app/lib/types";
 import { percentage_format, number_format } from "@/app/lib/data_load";
 import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 
@@ -34,7 +34,7 @@ interface ReliabilityTableProps<T extends object> {
   onPageChange?: (page: number) => void;
 }
 
-// Ensure SortConfig uses keyof T for type safety
+// Generic sort config keyed by a column of T for type safety
 interface TableSortConfig<T> {
   key: keyof T;
   direction: SortDirection;

@@ -9,6 +9,11 @@ env/
 .venv/
 ENV/
 scripts/.venv/
+scripts/.ruff_cache/
+scripts/.mypy_cache/
+
+# Logs
+*.log
 
 # uv lockfile (tracked for reproducible builds)
 # scripts/uv.lock is intentionally tracked in git

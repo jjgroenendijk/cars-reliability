@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { Rankings, RankingEntry } from "@/app/lib/types";
 import { timestamp_format, pascal_case_format } from "@/app/lib/data_load";
+import { DEFAULTS } from "@/app/lib/defaults";
 import { Search, Car, AlertCircle, Calendar, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 
@@ -26,7 +27,6 @@ export default function HomePage() {
         const rankings_data: Rankings = await rankings_res.json();
         setRankings(rankings_data);
       } catch (err) {
-        console.error("Error loading home page data:", err);
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
         setLoading(false);
@@ -130,7 +130,7 @@ export default function HomePage() {
         <RankingCard
           title={t('home.fewest_model')}
           subtitle={t('home.lowest_defects')}
-          entries={rankings.most_reliable_models.slice(0, 10)}
+          entries={rankings.most_reliable_models.slice(0, DEFAULTS.display.topModels)}
           link_href="/data?view=models"
           link_text={t('home.view_all_models')}
           highlight_color="green"
@@ -143,7 +143,7 @@ export default function HomePage() {
         <RankingCard
           title={t('home.most_model')}
           subtitle={t('home.highest_defects')}
-          entries={rankings.least_reliable_models.slice(0, 10)}
+          entries={rankings.least_reliable_models.slice(0, DEFAULTS.display.topModels)}
           link_href="/data?view=models"
           link_text={t('home.view_all_models')}
           highlight_color="red"

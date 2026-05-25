@@ -50,15 +50,6 @@ def load_dataset(dataset_name: str, columns: list[str] | None = None) -> pl.Data
     return pl.read_parquet(parquet_path)
 
 
-def dataframe_write_json(df: pl.DataFrame, filepath: Path) -> None:
-    """Write a DataFrame directly to JSON using native Polars.
-
-    More performant than converting to dict and using json.dump.
-    """
-    filepath.parent.mkdir(parents=True, exist_ok=True)
-    df.write_json(filepath)
-
-
 def json_save(data: Any, filepath: Path) -> None:
     """Save data to a JSON file.
 
@@ -70,38 +61,3 @@ def json_save(data: Any, filepath: Path) -> None:
     else:
         with open(filepath, "w", encoding="utf-8") as file_handle:
             json.dump(data, file_handle, ensure_ascii=False, indent=2)
-
-
-def primary_inspections_filter(inspections_lf: pl.LazyFrame) -> pl.LazyFrame:
-    """Filter to primary APK inspections only (one per vehicle per day, earliest time).
-
-    Args:
-        inspections_lf: LazyFrame of meldingen data
-
-    Returns:
-        LazyFrame with only primary inspection records
-    """
-    primary = inspections_lf.filter(
-        pl.col("soort_melding_ki_omschrijving").str.to_lowercase().str.strip_chars()
-        == "periodieke controle"
-    ).with_columns(
-        pl.col("meld_tijd_door_keuringsinstantie")
-        .fill_null("")
-        .str.strip_chars()
-        .str.zfill(4)
-        .alias("insp_time_normalized")
-    )
-
-    earliest = primary.group_by(["kenteken", "meld_datum_door_keuringsinstantie"]).agg(
-        pl.col("insp_time_normalized").min()
-    )
-
-    return (
-        primary.join(
-            earliest,
-            on=["kenteken", "meld_datum_door_keuringsinstantie", "insp_time_normalized"],
-            how="inner",
-        )
-        .group_by(["kenteken", "meld_datum_door_keuringsinstantie"])
-        .first()
-    )

@@ -58,19 +58,6 @@ def compute_per_year_stats(
     return per_year_lf, min_age, max_age
 
 
-def _add_per_year_stats_to_results(
-    result: list[dict], lookup: dict[str, dict[str, dict]], group_cols: list[str]
-) -> None:
-    """Add per_year_stats to each result row from lookup."""
-    for row in result:
-        if len(group_cols) == 1:
-            group_key = row[group_cols[0]]
-        else:
-            group_key = "|".join(str(row[c]) for c in group_cols)
-
-        row["per_year_stats"] = lookup.get(group_key, {})
-
-
 def aggregate_brand_stats(
     inspections_lf: pl.LazyFrame,
 ) -> tuple[list[dict], int, int]:

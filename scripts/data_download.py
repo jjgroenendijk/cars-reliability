@@ -21,7 +21,6 @@ Datasets:
 import argparse
 import io
 import json
-import os
 import shutil
 import sys
 import tempfile
@@ -32,7 +31,6 @@ from datetime import datetime
 from pathlib import Path
 
 import polars as pl
-import psutil
 import requests
 
 from api_client import (
@@ -43,6 +41,7 @@ from api_client import (
     session_create,
 )
 from config import DATASETS, DIR_PARQUET
+from system_utils import memory_mb, path_size_mb
 
 # Metadata file path
 METADATA_FILE = DIR_PARQUET / ".download_metadata.json"
@@ -74,17 +73,6 @@ def last_download_date_set(dataset_id: str, date_str: str) -> None:
     metadata[dataset_id]["last_date"] = date_str
     metadata[dataset_id]["updated_at"] = datetime.now().isoformat()
     metadata_save(metadata)
-
-
-def memory_usage_mb() -> float:
-    """Get current process memory usage in MB."""
-    process = psutil.Process(os.getpid())
-    return process.memory_info().rss / (1024 * 1024)
-
-
-def path_size_mb(path: Path) -> float:
-    """Get file size in MB."""
-    return path.stat().st_size / (1024 * 1024)
 
 
 def temp_schema_collect(temp_paths: list[Path]) -> dict[str, pl.DataType]:
@@ -159,7 +147,7 @@ def dataset_download_sharded(
                     elapsed = now - start
                     pct = (shards_done / total_shards * 100) if total_shards > 0 else 0
                     speed = rows_written / elapsed if elapsed > 0 else 0
-                    mem = memory_usage_mb()
+                    mem = memory_mb()
                     print(
                         f"  [{output_name}] {pct:.1f}% | {shards_done}/{total_shards} "
                         f"shards | {rows_written:,} rows | {speed:.0f} rows/s | {mem:.0f} MB",
@@ -182,7 +170,7 @@ def dataset_download_sharded(
         raise
 
     download_time = time.time() - start
-    mem_after_download = memory_usage_mb()
+    mem_after_download = memory_mb()
     rows_per_sec = rows_written / download_time if download_time > 0 else 0
 
     print(
@@ -208,7 +196,7 @@ def dataset_download_sharded(
     ).sink_parquet(output_path, compression="zstd")
 
     merge_time = time.time() - merge_start
-    mem_after_merge = memory_usage_mb()
+    mem_after_merge = memory_mb()
 
     shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -241,7 +229,7 @@ def dataset_download_to_parquet(
     """
     output_path = DIR_PARQUET / f"{output_name}.parquet"
 
-    mem_start = memory_usage_mb()
+    mem_start = memory_mb()
     print(f"[{output_name}] fetching row count... | memory: {mem_start:.1f} MB", flush=True)
     total_rows = row_count_get(session, dataset_id)
 

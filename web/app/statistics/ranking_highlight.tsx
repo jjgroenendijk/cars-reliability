@@ -1,5 +1,6 @@
 "use client";
 
+import { decimal_format } from "@/app/lib/data_load";
 import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 
 interface RankingHighlightProps {
@@ -7,10 +8,6 @@ interface RankingHighlightProps {
     name: string;
     value: number | undefined;
     positive?: boolean;
-}
-
-function decimal_format(value: number, precision = 2): string {
-    return value.toLocaleString("nl-NL", { minimumFractionDigits: precision, maximumFractionDigits: precision });
 }
 
 export function RankingHighlight({ title, name, value, positive }: RankingHighlightProps) {

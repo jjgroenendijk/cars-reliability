@@ -10,13 +10,9 @@ Uses Polars lazy API throughout to minimize memory usage.
 
 import ctypes
 import gc
-import shutil
 from collections.abc import Callable
 from datetime import datetime
-from pathlib import Path
 from time import monotonic
-
-import psutil
 
 from config import (
     DIR_PROCESSED,
@@ -32,11 +28,7 @@ from inspection_stats import (
     metadata_stats_collect,
 )
 from stats_aggregate import aggregate_brand_stats, aggregate_model_stats, generate_rankings
-
-
-def memory_mb() -> float:
-    """Get current process memory in MB."""
-    return psutil.Process().memory_info().rss / (1024 * 1024)
+from system_utils import memory_mb, path_remove, path_size_mb
 
 
 def memory_release() -> None:
@@ -62,23 +54,6 @@ def phase_done(name: str, started: float, detail: str = "") -> None:
         f"Stage2 phase done: {name} in {elapsed:.0f}s | memory: {memory_mb():.0f} MB{suffix}",
         flush=True,
     )
-
-
-def path_size_mb(path: Path) -> float:
-    """Return a file or directory size in MB."""
-    if path.is_dir():
-        size = sum(child.stat().st_size for child in path.rglob("*") if child.is_file())
-    else:
-        size = path.stat().st_size
-    return size / (1024 * 1024)
-
-
-def path_remove(path: Path) -> None:
-    """Remove a file or directory if it exists."""
-    if path.is_dir():
-        shutil.rmtree(path)
-    elif path.exists():
-        path.unlink()
 
 
 def _add_fuel_and_track_ranges(
