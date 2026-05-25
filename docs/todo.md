@@ -1,5 +1,26 @@
 # Todo
 
+- [ ] Fix post-merge Stage 2 pipeline termination.
+
+  Problem: the merged Stage 2 memory fix still failed on the push-to-main run
+  for `d56f4b6`. The `process` job reached the `Process data` step, emitted no
+  script logs for roughly 45 minutes, then ended with the step still marked
+  in progress. This points to the large inspection lazy plan doing too much
+  repeated work before the first durable checkpoint.
+
+  Requirement: keep the Stage 2 implementation Polars-native and streaming,
+  but persist the expensive inspection-level join once to an intermediate
+  Parquet file, then scan that file for brand/model, metadata, and breakdown
+  aggregations. Add progress checkpoints around each expensive step so future
+  CI failures identify the stalled phase.
+
+  Local result: added a streaming inspection-stats checkpoint, switched paired
+  repeated aggregations to `pl.collect_all(...)`, added explicit Stage 2 phase
+  logs with elapsed seconds and memory usage, and configured the workflow to run
+  Stage 2 with unbuffered Python output. Verified with Ruff, py_compile,
+  `mypy --ignore-missing-imports`, and a synthetic Stage 2 Parquet run that
+  confirms the intermediate file is removed before artifacts are uploaded.
+
 - [x] Fix scheduled Stage 2 pipeline memory failure.
 
   Problem: scheduled `Data Pipeline (Parquet)` runs fail in the `process` job

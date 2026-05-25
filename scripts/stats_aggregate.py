@@ -154,8 +154,7 @@ def aggregate_brand_stats(
             "avg_defects_per_inspection",
         ).alias("_values"),
     )
-    brand_df = brand_lf.collect(engine="streaming")
-    per_year_df = per_year_lists.collect(engine="streaming")
+    brand_df, per_year_df = pl.collect_all([brand_lf, per_year_lists], engine="streaming")
     if len(per_year_df) > 0:
         brand_df = brand_df.join(per_year_df, on=group_cols, how="left")
     else:
@@ -266,8 +265,7 @@ def aggregate_model_stats(
             "avg_defects_per_inspection",
         ).alias("_values"),
     )
-    model_df = model_lf.collect(engine="streaming")
-    per_year_df = per_year_lists.collect(engine="streaming")
+    model_df, per_year_df = pl.collect_all([model_lf, per_year_lists], engine="streaming")
     if len(per_year_df) > 0:
         model_df = model_df.join(per_year_df, on=group_cols, how="left")
     else:

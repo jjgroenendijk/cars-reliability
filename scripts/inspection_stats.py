@@ -5,6 +5,7 @@ The functions here intentionally return LazyFrames or small collected metadata.
 They must not materialize the full inspection-level dataset.
 """
 
+from pathlib import Path
 from typing import Any
 
 import polars as pl
@@ -102,6 +103,21 @@ def inspection_stats_build(
     ).with_columns(pl.col("defect_count").fill_null(0))
 
 
+def inspection_stats_persist(inspections_lf: pl.LazyFrame, output_path: Path) -> pl.LazyFrame:
+    """Persist the expensive inspection stats plan and return a lazy scan of it."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    if output_path.exists():
+        output_path.unlink()
+
+    inspections_lf.sink_parquet(
+        output_path,
+        compression="zstd",
+        maintain_order=False,
+        engine="streaming",
+    )
+    return pl.scan_parquet(output_path)
+
+
 def metadata_stats_collect(inspections_lf: pl.LazyFrame) -> dict[str, Any]:
     """Collect small metadata summaries from the lazy inspection stats plan."""
     summary_lf = inspections_lf.select(
@@ -163,10 +179,10 @@ def metadata_stats_collect(inspections_lf: pl.LazyFrame) -> dict[str, Any]:
         .sort("age_at_inspection")
     )
 
-    summary_df = summary_lf.collect(engine="streaming")
-    fuel_types_df = fuel_types_lf.collect(engine="streaming")
-    yearly_trend_df = yearly_trend_lf.collect(engine="streaming")
-    fleet_age_df = fleet_age_lf.collect(engine="streaming")
+    summary_df, fuel_types_df, yearly_trend_df, fleet_age_df = pl.collect_all(
+        [summary_lf, fuel_types_lf, yearly_trend_lf, fleet_age_lf],
+        engine="streaming",
+    )
     summary = summary_df.to_dicts()[0]
     total_inspections = summary["total_inspections"]
 
