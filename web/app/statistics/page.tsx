@@ -14,7 +14,8 @@ import {
     Wrench,
 } from "lucide-react";
 import type { BrandStats, DefectStats, Metadata, ModelStats, Rankings } from "@/app/lib/types";
-import { number_format, pascal_case_format, percentage_format, timestamp_format } from "@/app/lib/data_load";
+import { decimal_format, number_format, pascal_case_format, percentage_format, timestamp_format } from "@/app/lib/data_load";
+import { DEFAULTS } from "@/app/lib/defaults";
 import { AgeChart } from "./age_chart";
 import { TrendChart } from "./trend_chart";
 import { useLanguage } from "@/app/lib/i18n/LanguageContext";
@@ -26,10 +27,6 @@ interface StatisticsData {
     rankings: Rankings | null;
     metadata: Partial<Metadata>;
     defect_stats: DefectStats | null;
-}
-
-function decimal_format(value: number, precision = 2): string {
-    return value.toLocaleString("nl-NL", { minimumFractionDigits: precision, maximumFractionDigits: precision });
 }
 
 interface InsightCardProps {
@@ -287,7 +284,7 @@ export default function StatisticsPage() {
                         <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">{t("statistics.fuel_mix")}</h2>
                     </div>
                     <div className="mt-5 space-y-4">
-                        {statistics.fuel_shares.slice(0, 6).map((item) => (
+                        {statistics.fuel_shares.slice(0, DEFAULTS.display.topFuelShares).map((item) => (
                             <div key={item.fuel}>
                                 <div className="flex items-center justify-between gap-4 text-sm">
                                     <span className="font-medium text-zinc-800 dark:text-zinc-100">{pascal_case_format(item.fuel)}</span>
@@ -317,7 +314,7 @@ export default function StatisticsPage() {
                             <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">{t("statistics.top_defects")}</h2>
                         </div>
                         <ol className="mt-5 space-y-4">
-                            {data.defect_stats.top_defects.slice(0, 5).map((defect, idx) => (
+                            {data.defect_stats.top_defects.slice(0, DEFAULTS.display.topDefects).map((defect, idx) => (
                                 <li key={defect.defect_code} className="flex gap-3">
                                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-medium text-zinc-600 dark:text-zinc-300">
                                         {idx + 1}

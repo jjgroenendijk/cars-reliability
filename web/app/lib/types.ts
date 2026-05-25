@@ -11,14 +11,6 @@ export interface PerYearStats {
   avg_defects_per_inspection: number;
 }
 
-/** @deprecated Use PerYearStats instead - kept for backward compatibility */
-export interface AgeBracketStats {
-  vehicle_count: number;
-  total_inspections: number;
-  total_defects: number;
-  avg_defects_per_inspection: number;
-}
-
 /** Fuel type breakdown counts */
 export interface FuelBreakdown {
   Benzine: number;
@@ -52,13 +44,6 @@ export interface BrandStats {
   fuel_breakdown: FuelBreakdown;
   /** Per-year statistics keyed by age (e.g., "4", "5", "10") */
   per_year_stats: Record<string, PerYearStats>;
-  /** @deprecated Use per_year_stats instead */
-  age_brackets?: {
-    "4_7": AgeBracketStats | null;
-    "8_12": AgeBracketStats | null;
-    "13_20": AgeBracketStats | null;
-    "5_15": AgeBracketStats | null;
-  };
 }
 
 export interface ModelStats {
@@ -86,13 +71,6 @@ export interface ModelStats {
   fuel_breakdown: FuelBreakdown;
   /** Per-year statistics keyed by age (e.g., "4", "5", "10") */
   per_year_stats: Record<string, PerYearStats>;
-  /** @deprecated Use per_year_stats instead */
-  age_brackets?: {
-    "4_7": AgeBracketStats | null;
-    "8_12": AgeBracketStats | null;
-    "13_20": AgeBracketStats | null;
-    "5_15": AgeBracketStats | null;
-  };
 }
 
 export interface RankingEntry {
@@ -108,13 +86,6 @@ export interface Rankings {
   least_reliable_brands: RankingEntry[];
   most_reliable_models: RankingEntry[];
   least_reliable_models: RankingEntry[];
-  generated_at: string;
-}
-
-export interface DataSet {
-  brand_stats: BrandStats[];
-  model_stats: ModelStats[];
-  rankings: Rankings;
   generated_at: string;
 }
 
@@ -150,11 +121,6 @@ export interface DefectStats {
 }
 
 export type SortDirection = "asc" | "desc";
-
-export interface SortConfig {
-  key: string;
-  direction: SortDirection;
-}
 
 // RDW API types for license plate lookup
 export interface RdwVehicle {

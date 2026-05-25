@@ -5,11 +5,12 @@ The functions here intentionally return LazyFrames or small collected metadata.
 They must not materialize the full inspection-level dataset.
 """
 
-import shutil
 from pathlib import Path
 from typing import Any
 
 import polars as pl
+
+from system_utils import path_remove
 
 
 def _determine_primary_fuel(brandstof_lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -202,18 +203,10 @@ def inspection_stats_build(
     return _inspection_stats_join(primary_inspections, vehicle_columns, defect_counts, fuel_types)
 
 
-def _path_remove(path: Path) -> None:
-    """Remove a file or directory if it exists."""
-    if path.is_dir():
-        shutil.rmtree(path)
-    elif path.exists():
-        path.unlink()
-
-
 def _lazyframe_persist(lazy_frame: pl.LazyFrame, output_path: Path) -> pl.LazyFrame:
     """Persist a lazy frame as Parquet and return a lazy scan of the file."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    _path_remove(output_path)
+    path_remove(output_path)
 
     lazy_frame.sink_parquet(
         output_path,
@@ -243,7 +236,7 @@ def inspection_stats_persist(
     vehicle_path = _checkpoint_path(output_path, "vehicle_attributes")
 
     for path in (primary_path, defect_path, fuel_path, vehicle_path, output_path):
-        _path_remove(path)
+        path_remove(path)
 
     print("Stage2 checkpoint start: primary inspections", flush=True)
     primary_inspections = _lazyframe_persist(_primary_inspection_keys(inspections_lf), primary_path)
@@ -287,7 +280,7 @@ def inspection_stats_persist(
     print("Stage2 checkpoint done: inspection stats", flush=True)
 
     for path in (primary_path, defect_path, fuel_path, vehicle_path):
-        _path_remove(path)
+        path_remove(path)
 
     return result
 

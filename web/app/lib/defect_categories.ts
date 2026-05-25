@@ -160,7 +160,7 @@ const WEAR_AND_TEAR_CODES: Set<string> = new Set(
 /**
  * Check if a defect code represents wear-and-tear rather than reliability.
  */
-export function isWearAndTearDefect(defectCode: string): boolean {
+function isWearAndTearDefect(defectCode: string): boolean {
     const code = defectCode.trim().toUpperCase();
 
     if (WEAR_AND_TEAR_CODES.has(code)) {
@@ -181,26 +181,4 @@ export function isWearAndTearDefect(defectCode: string): boolean {
  */
 export function isReliabilityDefect(defectCode: string): boolean {
     return !isWearAndTearDefect(defectCode);
-}
-
-/**
- * Categorize a defect code as reliability or wear-and-tear.
- */
-export function categorizeDefect(defectCode: string): "reliability" | "wear_and_tear" {
-    return isWearAndTearDefect(defectCode) ? "wear_and_tear" : "reliability";
-}
-
-/**
- * Get all wear-and-tear codes (sorted) for display or configuration.
- */
-export function getDefaultWearAndTearCodes(): string[] {
-    return Array.from(WEAR_AND_TEAR_CODES).sort();
-}
-
-/**
- * Get the wear-and-tear category breakdown for documentation or UI display.
- * Returns each category with its label and associated defect codes.
- */
-export function getWearAndTearCategories(): readonly CategoryInfo[] {
-    return CATEGORIES;
 }

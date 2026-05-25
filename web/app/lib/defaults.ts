@@ -26,4 +26,11 @@ export const DEFAULTS = {
     },
     /** Pagination */
     pageSize: 50,
+    /** Display limits for ranked/top-N lists (UI choices, not data-derived) */
+    display: {
+        topModels: 10,
+        topFuelShares: 6,
+        topDefects: 5,
+        reliabilityChartItems: 15,
+    },
 };
