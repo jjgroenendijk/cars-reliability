@@ -1,5 +1,19 @@
 # Todo
 
+- [x] Lower meldingen cache validation size threshold.
+
+  Problem: a fresh `sgfe-77wx` download on 2026-05-25 produced a readable
+  `meldingen.parquet` with 24,825,567 rows and 11 columns, matching the live
+  downloader row count, but Zstd compression produced a 291,698,961 byte file.
+  The current 300,000,000 byte cache validation threshold rejects that valid
+  file.
+
+  Requirement: lower the `meldingen` minimum cache size enough to keep the
+  corruption guard useful without rejecting current valid downloads.
+
+  Result: lowered `MIN_CACHE_SIZES["meldingen"]` to 250,000,000 bytes.
+  Verified with `uv run python cache_validate.py ../data/parquet/meldingen.parquet`.
+
 - [x] Fix scheduled Stage 2 pipeline memory failure.
 
   Problem: scheduled `Data Pipeline (Parquet)` runs fail in the `process` job
