@@ -1,6 +1,6 @@
-# AI Assistant Rules
+# Automation Contributor Rules
 
-> Dense guidance for Claude, Copilot, and other AI assistants.
+> Dense guidance for automated coding contributors.
 
 ## Critical Rule
 
@@ -81,6 +81,10 @@ cd ../web && npm run dev  # JSON files sync automatically via predev hook
 - Python: type hints + docstrings required; format with Ruff before commit
 - TypeScript: strict mode, no `any`, no `console.log` in production
 - No emojis, no mock data, minimal logging (no timestamps)
+- No tool attribution: do not include assistant/tool branding, model names,
+  automation signatures, or generated-by language in branch names, commit
+  messages, PR titles/bodies, code, docs, comments, UI text, or generated
+  artifacts. Use human-readable task names only.
 
 ## Boundaries
 
@@ -115,7 +119,7 @@ Base URL: `https://opendata.rdw.nl/resource/{id}.json`
 
 ## Documentation
 
-- `docs/ai-rules.md` — This file: AI guidance, architecture, commands
+- `docs/ai-rules.md` — This file: automation guidance, architecture, commands
 - `docs/api-limits.md` — RDW rate limits and pagination
 - `docs/data_mapping.md` — RDW field names and pipeline output formats
 - `docs/metrics.md` — Defect metrics, age brackets, thresholds
