@@ -126,8 +126,10 @@ def build_defect_breakdowns(
         .agg(pl.struct(["gebrek_identificatie", "count"]).alias("defects"))
     )
 
-    brand_breakdown_df = brand_agg_lazy.collect(engine="streaming")
-    model_breakdown_df = model_agg_lazy.collect(engine="streaming")
+    brand_breakdown_df, model_breakdown_df = pl.collect_all(
+        [brand_agg_lazy, model_agg_lazy],
+        engine="streaming",
+    )
 
     brand_defects: dict[str, dict[str, int]] = {}
     # Use iter_rows assuming column order: merk, defects

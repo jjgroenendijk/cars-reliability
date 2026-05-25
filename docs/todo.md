@@ -14,6 +14,29 @@
   Result: lowered `MIN_CACHE_SIZES["meldingen"]` to 250,000,000 bytes.
   Verified with `uv run python cache_validate.py ../data/parquet/meldingen.parquet`.
 
+- [x] Fix post-merge Stage 2 pipeline termination.
+
+  Problem: the merged Stage 2 memory fix still failed on the push-to-main run
+  for `d56f4b6`. The `process` job reached the `Process data` step, emitted no
+  script logs for roughly 45 minutes, then ended with the step still marked
+  in progress. A full local rerun of PR 155 then reproduced an exit 137 while
+  writing `_inspection_stats.parquet`, before downstream aggregation started.
+  The single checkpoint still executed primary-inspection reduction, defect
+  aggregation, fuel aggregation, and large joins in one plan.
+
+  Requirement: keep the Stage 2 implementation Polars-native and streaming,
+  persist expensive reductions as smaller intermediate Parquet checkpoints,
+  then scan the final inspection-stats checkpoint for brand/model, metadata,
+  and breakdown aggregations. Add progress checkpoints around each expensive
+  step so future CI failures identify the stalled phase.
+
+  Result: split the checkpoint writer into primary-inspection, defect-count,
+  primary-fuel, vehicle-attribute, and partitioned final inspection-stats
+  checkpoints. Switched brand/model paired aggregations back to sequential
+  collection now that the source is checkpointed. Full local Stage 2 completed
+  against the real Parquet inputs in 76 seconds, wrote all processed JSON files,
+  and removed `data/processed/_inspection_stats` before exit.
+
 - [x] Fix scheduled Stage 2 pipeline memory failure.
 
   Problem: scheduled `Data Pipeline (Parquet)` runs fail in the `process` job

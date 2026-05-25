@@ -8,8 +8,13 @@ Outputs processed data to data/processed/.
 Uses Polars lazy API throughout to minimize memory usage.
 """
 
+import ctypes
+import gc
+import shutil
 from collections.abc import Callable
 from datetime import datetime
+from pathlib import Path
+from time import monotonic
 
 import psutil
 
@@ -22,13 +27,58 @@ from config import (
 from defect_build import build_defect_breakdowns, build_defect_codes, build_defect_stats
 from fuel_build import build_fuel_breakdown
 from inspection_prepare import json_save, load_dataset, scan_dataset
-from inspection_stats import inspection_stats_build, metadata_stats_collect
+from inspection_stats import (
+    inspection_stats_persist,
+    metadata_stats_collect,
+)
 from stats_aggregate import aggregate_brand_stats, aggregate_model_stats, generate_rankings
 
 
 def memory_mb() -> float:
     """Get current process memory in MB."""
     return psutil.Process().memory_info().rss / (1024 * 1024)
+
+
+def memory_release() -> None:
+    """Release freed Python and libc memory back to the OS on Linux runners."""
+    gc.collect()
+    try:
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except OSError:
+        return
+
+
+def phase_start(name: str) -> float:
+    """Log the start of an expensive processing phase."""
+    print(f"Stage2 phase start: {name} | memory: {memory_mb():.0f} MB", flush=True)
+    return monotonic()
+
+
+def phase_done(name: str, started: float, detail: str = "") -> None:
+    """Log the completion of an expensive processing phase."""
+    suffix = f" | {detail}" if detail else ""
+    elapsed = monotonic() - started
+    print(
+        f"Stage2 phase done: {name} in {elapsed:.0f}s | memory: {memory_mb():.0f} MB{suffix}",
+        flush=True,
+    )
+
+
+def path_size_mb(path: Path) -> float:
+    """Return a file or directory size in MB."""
+    if path.is_dir():
+        size = sum(child.stat().st_size for child in path.rglob("*") if child.is_file())
+    else:
+        size = path.stat().st_size
+    return size / (1024 * 1024)
+
+
+def path_remove(path: Path) -> None:
+    """Remove a file or directory if it exists."""
+    if path.is_dir():
+        shutil.rmtree(path)
+    elif path.exists():
+        path.unlink()
 
 
 def _add_fuel_and_track_ranges(
@@ -75,29 +125,41 @@ def main() -> None:
     brandstof_lf = scan_dataset("brandstof")
     print(f"Scanning datasets lazily | memory: {memory_mb():.0f} MB", flush=True)
 
-    print("Building lazy inspection statistics plan...", flush=True)
-    inspection_stats_lf = inspection_stats_build(
-        inspections_lf, vehicles_lf, defects_lf, brandstof_lf
+    intermediate_path = DIR_PROCESSED / "_inspection_stats"
+    phase = phase_start("write inspection stats checkpoints")
+    inspection_stats_lf = inspection_stats_persist(
+        inspections_lf,
+        vehicles_lf,
+        defects_lf,
+        brandstof_lf,
+        intermediate_path,
     )
+    phase_done(
+        "write inspection stats checkpoints",
+        phase,
+        f"{intermediate_path.name}={path_size_mb(intermediate_path):.0f} MB",
+    )
+    memory_release()
 
     # Aggregate by brand and model (returns stats + age range)
-    print("Aggregating brand and model statistics...", flush=True)
+    phase = phase_start("aggregate brand statistics")
     brand_stats, min_age, max_age = aggregate_brand_stats(inspection_stats_lf)
+    phase_done("aggregate brand statistics", phase, f"brands={len(brand_stats)}")
+    memory_release()
+
+    phase = phase_start("aggregate model statistics")
     model_stats, _, _ = aggregate_model_stats(inspection_stats_lf)
-    print(
-        f"Aggregated: {len(brand_stats)} brands, {len(model_stats)} models "
-        f"(ages {min_age}-{max_age}) | memory: {memory_mb():.0f} MB",
-        flush=True,
-    )
+    phase_done("aggregate model statistics", phase, f"models={len(model_stats)}")
+    memory_release()
+    print(f"Age range: {min_age}-{max_age}", flush=True)
 
     # Build fuel breakdowns
-    print("Building fuel breakdowns...", flush=True)
+    phase = phase_start("build fuel breakdowns")
     brand_fuel, model_fuel = build_fuel_breakdown(brandstof_lf, vehicles_lf)
-    print(
-        f"Fuel breakdowns: {len(brand_fuel)} brands, {len(model_fuel)} models | "
-        f"memory: {memory_mb():.0f} MB",
-        flush=True,
+    phase_done(
+        "build fuel breakdowns", phase, f"brands={len(brand_fuel)}, models={len(model_fuel)}"
     )
+    memory_release()
 
     # Add fuel_breakdown and calculate ranges in single pass for efficiency
     max_fleet_size_brand, min_inspections_brand, max_inspections_brand = _add_fuel_and_track_ranges(
@@ -111,8 +173,10 @@ def main() -> None:
     # Generate rankings
     rankings = generate_rankings(brand_stats, model_stats)
 
-    print("Collecting metadata summaries...", flush=True)
+    phase = phase_start("collect metadata summaries")
     metadata_stats = metadata_stats_collect(inspection_stats_lf)
+    phase_done("collect metadata summaries", phase)
+    memory_release()
     total_inspections = metadata_stats["total_inspections"]
     total_defects = metadata_stats["total_defects"]
     total_vehicles = metadata_stats["total_vehicles"]
@@ -158,20 +222,22 @@ def main() -> None:
     }
 
     # Build defect stats
-    print("Building defect statistics...", flush=True)
+    phase = phase_start("build defect statistics")
     defect_stats = build_defect_stats(defects_lf, gebreken_df, total_inspections)
-    print(f"Defect stats: {len(defect_stats['top_defects'])} defect types", flush=True)
+    phase_done("build defect statistics", phase, f"defect_types={len(defect_stats['top_defects'])}")
+    memory_release()
 
     # Build per-defect breakdowns for dynamic frontend filtering
-    print("Building defect breakdowns...", flush=True)
+    phase = phase_start("build defect breakdowns")
     brand_defect_breakdown, model_defect_breakdown = build_defect_breakdowns(
         defects_lf, inspection_stats_lf
     )
-    print(
-        f"Defect breakdowns: {len(brand_defect_breakdown)} brands, "
-        f"{len(model_defect_breakdown)} models | memory: {memory_mb():.0f} MB",
-        flush=True,
+    phase_done(
+        "build defect breakdowns",
+        phase,
+        f"brands={len(brand_defect_breakdown)}, models={len(model_defect_breakdown)}",
     )
+    memory_release()
 
     # Build defect code index for frontend display
     defect_codes = build_defect_codes(gebreken_df)
@@ -180,7 +246,7 @@ def main() -> None:
     # Save outputs - all are now dicts/lists after aggregation refactoring
     DIR_PROCESSED.mkdir(parents=True, exist_ok=True)
 
-    # Use json_save for all outputs (brand_stats and model_stats are now list[dict])
+    phase = phase_start("write processed JSON")
     json_save(brand_stats, DIR_PROCESSED / "brand_stats.json")
     json_save(model_stats, DIR_PROCESSED / "model_stats.json")
 
@@ -191,6 +257,13 @@ def main() -> None:
     json_save(brand_defect_breakdown, DIR_PROCESSED / "brand_defect_breakdown.json")
     json_save(model_defect_breakdown, DIR_PROCESSED / "model_defect_breakdown.json")
     json_save(defect_codes, DIR_PROCESSED / "defect_codes.json")
+    phase_done("write processed JSON", phase)
+    memory_release()
+
+    if intermediate_path.exists():
+        phase = phase_start("remove inspection stats checkpoint")
+        path_remove(intermediate_path)
+        phase_done("remove inspection stats checkpoint", phase)
 
     elapsed = (datetime.now() - start_time).total_seconds()
     print(

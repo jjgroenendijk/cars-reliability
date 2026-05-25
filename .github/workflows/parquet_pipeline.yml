@@ -196,7 +196,18 @@ jobs:
         run: cd scripts && uv sync --frozen
 
       - name: Process data
-        run: cd scripts && uv run python data_process.py
+        env:
+          PYTHONUNBUFFERED: "1"
+        run: |
+          cd scripts
+          echo "Starting Stage 2 data process"
+          uv run python -u data_process.py
+
+      - name: Show processed data
+        if: always()
+        run: |
+          echo "Processed data files:"
+          find data/processed -maxdepth 1 -type f -printf "%f %s bytes\n" | sort || true
 
       - uses: actions/upload-artifact@v7
         with:
