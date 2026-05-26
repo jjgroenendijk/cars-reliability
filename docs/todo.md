@@ -1,5 +1,25 @@
 # Todo
 
+- [x] Add per-brand defect histograms to the statistics page.
+
+  Requirement: show two bar charts on `/statistics`, each with one bar per the X
+  most common brands (by vehicle count). Chart 1 height = average defects per
+  inspection; chart 2 height = defect-found rate (share of inspections with a
+  non-zero defect count).
+
+  Backend: add `inspections_with_defects` (count of inspections with
+  `defect_count > 0`) to `aggregate_brand_stats()` in `stats_aggregate.py` so the
+  frontend can derive the defect-found rate per brand. Frontend: new reusable
+  `brand_chart.tsx` and two new sections in `statistics/page.tsx`; X defined in
+  `lib/defaults.ts`.
+
+  Result: added the `inspections_with_defects` aggregation, re-ran Stage 2
+  (429 brands), and verified `0 <= inspections_with_defects <= total_inspections`
+  for every brand row. Added `brand_chart.tsx`, two consolidated per-brand
+  arrays in `page.tsx`, `topBrandsChart: 15` in `defaults.ts`, and EN/NL i18n
+  keys. `tsc --noEmit`, `eslint --max-warnings 0`, and `next build` all pass; the
+  existing age and trend charts are unchanged.
+
 - [x] Lower meldingen cache validation size threshold.
 
   Problem: a fresh `sgfe-77wx` download on 2026-05-25 produced a readable

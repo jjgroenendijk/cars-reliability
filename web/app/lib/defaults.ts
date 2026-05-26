@@ -32,5 +32,6 @@ export const DEFAULTS = {
         topFuelShares: 6,
         topDefects: 5,
         reliabilityChartItems: 15,
+        topBrandsChart: 15,
     },
 };
