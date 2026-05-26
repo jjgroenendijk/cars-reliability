@@ -327,6 +327,7 @@ Array of brand statistics, sorted by `avg_defects_per_inspection` ascending.
   "vehicle_count": 12345,
   "total_inspections": 23456,
   "total_defects": 5678,
+  "inspections_with_defects": 12134,
   "avg_defects_per_inspection": 0.2421,
   "avg_age_years": 8.5,
   "defects_per_year": 0.0285,
@@ -345,6 +346,10 @@ Array of brand statistics, sorted by `avg_defects_per_inspection` ascending.
   }
 }
 ```
+
+`inspections_with_defects` is the count of inspections with a non-zero defect count
+(`defect_count > 0`). The frontend sums it across a brand's segment rows and divides
+by `total_inspections` to derive the per-brand defect-found rate. See `docs/metrics.md`.
 
 ### model_stats.json
 

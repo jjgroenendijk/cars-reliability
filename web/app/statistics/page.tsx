@@ -18,6 +18,7 @@ import { decimal_format, number_format, pascal_case_format, percentage_format, t
 import { DEFAULTS } from "@/app/lib/defaults";
 import { AgeChart } from "./age_chart";
 import { TrendChart } from "./trend_chart";
+import { BrandChart, type BrandChartDatum } from "./brand_chart";
 import { useLanguage } from "@/app/lib/i18n/LanguageContext";
 import { RankingHighlight } from "./ranking_highlight";
 
@@ -101,6 +102,15 @@ export default function StatisticsPage() {
     }, []);
 
     const statistics = useMemo(() => {
+        interface BrandTotals {
+            merk: string;
+            vehicle_count: number;
+            total_inspections: number;
+            total_defects: number;
+            inspections_with_defects: number;
+        }
+        const brand_totals = new Map<string, BrandTotals>();
+
         const totals = data.brand_stats.reduce(
             (acc, item) => {
                 acc.vehicles += item.vehicle_count;
@@ -108,6 +118,21 @@ export default function StatisticsPage() {
                 acc.defects += item.total_defects;
                 acc.vehicle_years += item.total_vehicle_years;
                 acc.fuel_counts.set(item.primary_fuel, (acc.fuel_counts.get(item.primary_fuel) ?? 0) + item.vehicle_count);
+
+                // Consolidate brand segment rows (split by vehicle type + fuel) per merk.
+                const brand = brand_totals.get(item.merk) ?? {
+                    merk: item.merk,
+                    vehicle_count: 0,
+                    total_inspections: 0,
+                    total_defects: 0,
+                    inspections_with_defects: 0,
+                };
+                brand.vehicle_count += item.vehicle_count;
+                brand.total_inspections += item.total_inspections;
+                brand.total_defects += item.total_defects;
+                brand.inspections_with_defects += item.inspections_with_defects ?? 0;
+                brand_totals.set(item.merk, brand);
+
                 return acc;
             },
             {
@@ -118,6 +143,28 @@ export default function StatisticsPage() {
                 fuel_counts: new Map<string, number>(),
             }
         );
+
+        // Top X most common brands (by vehicle count), used for both histograms.
+        const top_brands = Array.from(brand_totals.values())
+            .filter((b) => b.total_inspections > 0)
+            .sort((a, b) => b.vehicle_count - a.vehicle_count)
+            .slice(0, DEFAULTS.display.topBrandsChart);
+
+        const brand_avg_defects: BrandChartDatum[] = top_brands
+            .map((b) => ({
+                merk: b.merk,
+                value: b.total_defects / b.total_inspections,
+                vehicle_count: b.vehicle_count,
+            }))
+            .sort((a, b) => b.value - a.value);
+
+        const brand_defect_found_rate: BrandChartDatum[] = top_brands
+            .map((b) => ({
+                merk: b.merk,
+                value: b.inspections_with_defects / b.total_inspections,
+                vehicle_count: b.vehicle_count,
+            }))
+            .sort((a, b) => b.value - a.value);
 
         const fuel_shares: FuelShare[] = Array.from(totals.fuel_counts.entries())
             .map(([fuel, count]) => ({
@@ -151,6 +198,8 @@ export default function StatisticsPage() {
             reliability_ratio,
             top_defect,
             fleet_size,
+            brand_avg_defects,
+            brand_defect_found_rate,
         };
     }, [data]);
 
@@ -272,6 +321,44 @@ export default function StatisticsPage() {
                             {t("statistics.trend_note")}
                         </p>
                         <TrendChart data={yearly_trend} />
+                    </section>
+                )}
+            </div>
+
+            {/* Per-brand defect charts */}
+            <div className="grid gap-6 lg:grid-cols-2">
+                {statistics.brand_avg_defects.length > 0 && (
+                    <section className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
+                        <div className="flex items-center gap-2 mb-1">
+                            <BarChart3 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">{t("statistics.brand_avg_defects")}</h2>
+                        </div>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-5">
+                            {t("statistics.brand_avg_defects_note")}
+                        </p>
+                        <BrandChart
+                            data={statistics.brand_avg_defects}
+                            valueFormat={(v) => decimal_format(v, 2)}
+                            valueLabel={t("statistics.brand_avg_defects_unit")}
+                        />
+                    </section>
+                )}
+
+                {statistics.brand_defect_found_rate.length > 0 && (
+                    <section className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
+                        <div className="flex items-center gap-2 mb-1">
+                            <AlertTriangle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">{t("statistics.brand_defect_found_rate")}</h2>
+                        </div>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-5">
+                            {t("statistics.brand_defect_found_rate_note")}
+                        </p>
+                        <BrandChart
+                            data={statistics.brand_defect_found_rate}
+                            valueFormat={(v) => percentage_format(v)}
+                            valueLabel={t("statistics.brand_defect_found_rate_unit")}
+                            barColor="#f59e0b"
+                        />
                     </section>
                 )}
             </div>

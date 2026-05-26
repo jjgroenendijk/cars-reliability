@@ -74,6 +74,9 @@ def aggregate_brand_stats(
                 pl.col("kenteken").n_unique().alias("vehicle_count"),
                 pl.len().alias("total_inspections"),
                 pl.col("defect_count").sum().cast(pl.Float64).alias("total_defects"),
+                # Inspections with a non-zero defect count (frontend aggregation
+                # numerator for the per-brand defect-found rate)
+                (pl.col("defect_count") > 0).sum().alias("inspections_with_defects"),
                 pl.col("defect_count")
                 .std()
                 .fill_nan(None)

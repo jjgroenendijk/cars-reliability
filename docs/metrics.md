@@ -79,6 +79,31 @@ avg_defects_per_inspection = total_defects / total_inspections
 
 ---
 
+### Defect-Found Rate
+
+A secondary metric showing the share of a brand's inspections that found at least one
+defect. It is the per-brand complement of the global zero-defect (pass) rate.
+
+**Formula:**
+
+```text
+defect_found_rate = inspections_with_defects / total_inspections
+
+where:
+  inspections_with_defects = count of inspections with defect_count > 0
+```
+
+**Interpretation:**
+
+- A value of 0.52 means 52% of that brand's inspections found one or more defects
+- Range: 0.0 to 1.0
+- Unlike `avg_defects_per_inspection`, it ignores how many defects were found, only
+  whether any were found at all
+- The backend stores the raw `inspections_with_defects` count per brand segment; the
+  frontend sums it across segments before dividing by `total_inspections`
+
+---
+
 ### Standard Deviation
 
 Both metrics include standard deviation to indicate statistical uncertainty:

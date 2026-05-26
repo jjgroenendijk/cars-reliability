@@ -28,6 +28,8 @@ export interface BrandStats {
   vehicle_count: number;
   total_inspections: number;
   total_defects: number;
+  /** Count of inspections with a non-zero defect count (defect_count > 0) */
+  inspections_with_defects?: number;
   total_reliability_defects?: number;
   total_vehicle_years: number;
   avg_defects_per_inspection: number | null;
