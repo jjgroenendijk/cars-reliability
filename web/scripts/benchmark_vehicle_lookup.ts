@@ -15,7 +15,7 @@ async function runSequential() {
     }
 
     const start = performance.now();
-    for (const batch of batches) {
+    for (let i = 0; i < batches.length; i++) {
         await mockFetch();
     }
     const end = performance.now();
@@ -29,7 +29,7 @@ async function runParallel() {
     }
 
     const start = performance.now();
-    await Promise.all(batches.map(async (batch) => {
+    await Promise.all(batches.map(async () => {
         await mockFetch();
     }));
     const end = performance.now();

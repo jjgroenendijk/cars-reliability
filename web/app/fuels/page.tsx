@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { timestamp_format } from "@/app/lib/data_load";
 import FilterBar from "@/app/components/filter_bar";
 import { DefectFilterPanel } from "@/app/components/defect_filter_panel";
@@ -60,22 +60,26 @@ export default function FuelsPage() {
   const max_inspections_available = metadata?.ranges?.inspections?.max ?? DEFAULTS.inspections.max;
   const max_fleet_available = metadata?.ranges?.fleet?.max ?? DEFAULTS.fleet.max;
 
-  useEffect(() => {
-    if (!metadata?.ranges?.inspections) return;
-    if (minInspections === DEFAULTS.inspections.min) {
-      setMinInspections(metadata.ranges.inspections.min);
+  // Snap the inspection/fleet slider bounds to the real data ranges once metadata
+  // loads. Adjusting state during render (rather than in an effect) avoids the
+  // cascading re-render warned about by react-hooks/set-state-in-effect.
+  const [prev_metadata, set_prev_metadata] = useState(metadata);
+  if (metadata !== prev_metadata) {
+    set_prev_metadata(metadata);
+    if (metadata?.ranges?.inspections) {
+      if (minInspections === DEFAULTS.inspections.min) {
+        setMinInspections(metadata.ranges.inspections.min);
+      }
+      if (maxInspections === DEFAULTS.inspections.max) {
+        setMaxInspections(metadata.ranges.inspections.max);
+      }
     }
-    if (maxInspections === DEFAULTS.inspections.max) {
-      setMaxInspections(metadata.ranges.inspections.max);
+    if (metadata?.ranges?.fleet) {
+      if (maxFleetSize === DEFAULTS.fleet.max) {
+        setMaxFleetSize(metadata.ranges.fleet.max);
+      }
     }
-  }, [metadata]);
-
-  useEffect(() => {
-    if (!metadata?.ranges?.fleet) return;
-    if (maxFleetSize === DEFAULTS.fleet.max) {
-      setMaxFleetSize(metadata.ranges.fleet.max);
-    }
-  }, [metadata]);
+  }
 
 
   if (error) {

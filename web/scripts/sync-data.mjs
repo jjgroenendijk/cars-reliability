@@ -1,6 +1,9 @@
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const SOURCE = path.resolve(__dirname, '../../data/processed');
 const TARGET = path.resolve(__dirname, '../public/data');
@@ -55,7 +58,7 @@ function syncData() {
   if (fs.existsSync(CHECKSUM_FILE)) {
     try {
       targetChecksum = fs.readFileSync(CHECKSUM_FILE, 'utf8').trim();
-    } catch (err) {
+    } catch {
       // If checksum file is corrupt, regenerate
       targetChecksum = '';
     }
