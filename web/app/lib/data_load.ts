@@ -8,12 +8,32 @@
  * @param precision - Number of decimal places (default 2)
  * @returns Formatted decimal string
  */
-export function decimal_format(value: number, precision = 2): string {
-  return value.toLocaleString("nl-NL", {
-    minimumFractionDigits: precision,
-    maximumFractionDigits: precision,
-  });
+// Cache formatters for performance
+const numberFormatters = new Map<number, Intl.NumberFormat>();
+
+function getDecimalFormatter(precision: number): Intl.NumberFormat {
+  let formatter = numberFormatters.get(precision);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat("nl-NL", {
+      minimumFractionDigits: precision,
+      maximumFractionDigits: precision,
+    });
+    numberFormatters.set(precision, formatter);
+  }
+  return formatter;
 }
+
+export function decimal_format(value: number, precision = 2): string {
+  return getDecimalFormatter(precision).format(value);
+}
+
+const timestampFormatter = new Intl.DateTimeFormat("nl-NL", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 /**
  * Format timestamp for display.
@@ -23,13 +43,7 @@ export function decimal_format(value: number, precision = 2): string {
 export function timestamp_format(timestamp: string): string {
   try {
     const date = new Date(timestamp);
-    return date.toLocaleDateString("nl-NL", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return timestampFormatter.format(date);
   } catch {
     return timestamp;
   }
@@ -44,13 +58,15 @@ export function percentage_format(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
 }
 
+const largeNumberFormatter = new Intl.NumberFormat("nl-NL");
+
 /**
  * Format large numbers with thousand separators.
  * @param value - Number to format
  * @returns Formatted number string
  */
 export function number_format(value: number): string {
-  return value.toLocaleString("nl-NL").replace(/\./g, " ");
+  return largeNumberFormatter.format(value).replace(/\./g, " ");
 }
 
 /**
@@ -59,6 +75,7 @@ export function number_format(value: number): string {
  * @returns Pascal Case string (e.g., "Volkswagen" or "Golf Variant")
  */
 export function pascal_case_format(value: string): string {
+  if (!value) return "";
   return value
     .toLowerCase()
     .split(" ")
