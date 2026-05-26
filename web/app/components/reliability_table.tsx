@@ -110,8 +110,8 @@ export function ReliabilityTable<T extends object>({
 
     // Sort
     result.sort((a, b) => {
-      const aVal = a[sortConfig.key] as any;
-      const bVal = b[sortConfig.key] as any;
+      const aVal = a[sortConfig.key];
+      const bVal = b[sortConfig.key];
 
       if (aVal === bVal) return 0;
 

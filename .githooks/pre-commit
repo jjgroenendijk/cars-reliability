@@ -1,0 +1,25 @@
+#!/bin/sh
+# Pre-commit hook: lint the web app before allowing a commit.
+#
+# Auto-wired via the web package.json "prepare" script
+# (git config core.hooksPath .githooks). core.hooksPath resolves relative to
+# the worktree root, so paths below are repo-root-relative.
+#
+# Behavior:
+#   - Skips quickly when no staged changes touch web/.
+#   - Skips with a notice (exit 0) when web/node_modules is missing, so
+#     contributors who have not run `npm ci` are not blocked.
+#   - Otherwise runs `npm run lint` (eslint --max-warnings 0) and blocks the
+#     commit on any error or warning. CI enforces the same check.
+
+if ! git diff --cached --name-only | grep -q '^web/'; then
+    exit 0
+fi
+
+if [ ! -d web/node_modules ]; then
+    echo "pre-commit: web/node_modules missing; skipping lint. Run 'npm ci' in web/ to enable it."
+    exit 0
+fi
+
+echo "pre-commit: linting web/"
+cd web && npm run lint

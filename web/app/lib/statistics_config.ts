@@ -23,6 +23,14 @@ export interface ModelStatsFiltered extends ModelStats {
 // -- Column Factory --
 export type StatsFiltered = BrandStatsFiltered | ModelStatsFiltered;
 
+/**
+ * Row shape used by the statistics table columns: every key that can appear in
+ * either brand or model views. `handelsbenaming` only exists on model rows, so
+ * it is optional here (a plain `BrandStatsFiltered | ModelStatsFiltered` union
+ * would expose only the keys common to both).
+ */
+export type StatsTableRow = BrandStatsFiltered & { handelsbenaming?: string };
+
 interface ColumnConfig {
     showStdDev: boolean;
 }
@@ -38,14 +46,12 @@ function format_age_years(value: unknown): string {
 }
 
 /** Build table columns based on view mode */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function columns_build(viewMode: "brands" | "models", config?: ColumnConfig): Column<any>[] {
+export function columns_build(viewMode: "brands" | "models", config?: ColumnConfig): Column<StatsTableRow>[] {
     const numeric_cell_class = "font-mono tabular-nums text-right";
     const numeric_header_class = "text-right";
     const std_dev_cell_class = "font-mono tabular-nums text-right text-zinc-500 dark:text-zinc-400";
     const std_dev_header_class = "text-right";
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cols: Column<any>[] = [
+    const cols: Column<StatsTableRow>[] = [
         { key: "merk", label: "Brand", format: (v) => pascal_case_format(String(v)) },
     ];
 
@@ -70,7 +76,7 @@ export function columns_build(viewMode: "brands" | "models", config?: ColumnConf
                 format: (v) => format_decimal(v, 2),
                 cellClassName: std_dev_cell_class,
                 headerClassName: `${std_dev_header_class} whitespace-normal text-[11px] leading-4`
-            } as Column<any>]
+            } as Column<StatsTableRow>]
             : []),
         {
             key: "avg_age_years",
@@ -93,7 +99,7 @@ export function columns_build(viewMode: "brands" | "models", config?: ColumnConf
                 format: (v) => format_decimal(v, 2),
                 cellClassName: std_dev_cell_class,
                 headerClassName: `${std_dev_header_class} whitespace-normal text-[11px] leading-4`
-            } as Column<any>]
+            } as Column<StatsTableRow>]
             : []),
     );
 

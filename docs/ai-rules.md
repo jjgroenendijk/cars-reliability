@@ -88,6 +88,24 @@ cd ../web && npm run dev  # JSON files sync automatically via predev hook
   messages, PR titles/bodies, code, docs, comments, UI text, or generated
   artifacts. Use human-readable task names only.
 
+## Linting & Git Hooks
+
+`web/` enforces a clean lint state — **0 errors, 0 warnings**. Fix the underlying
+code; never disable rules, add `eslint-disable` comments, or loosen config.
+
+- **Command**: `npm run lint` in `web/` runs `eslint --max-warnings 0`, so any
+  warning fails just like an error.
+- **CI**: `.github/workflows/lint_web.yml` runs `npm run lint` on every pull
+  request and on pushes to `main`. It is a dedicated job (no data sync, no build),
+  so it stays fast.
+- **Local pre-commit hook**: `.githooks/pre-commit` runs the same `npm run lint`
+  before each commit. It is auto-wired with zero extra dependencies via the
+  `prepare` script in `web/package.json` (`git config core.hooksPath .githooks`),
+  which runs on `npm install`/`npm ci`. The hook:
+  - skips when no staged files touch `web/`;
+  - skips with a notice (does not block) when `web/node_modules` is missing;
+  - otherwise blocks the commit on any lint error or warning.
+
 ## Boundaries
 
 **Always:**

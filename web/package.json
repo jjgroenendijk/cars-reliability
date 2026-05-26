@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node scripts/sync-data.js",
+    "predev": "node scripts/sync-data.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/sync-data.js",
+    "prebuild": "node scripts/sync-data.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "sync": "node scripts/sync-data.js",
+    "lint": "eslint --max-warnings 0",
+    "sync": "node scripts/sync-data.mjs",
+    "prepare": "git config core.hooksPath .githooks || true",
     "test:e2e": "playwright test -c playwright.config.ts"
   },
   "dependencies": {

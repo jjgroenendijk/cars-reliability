@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo, useEffect } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { ReliabilityTable } from "@/app/components/reliability_table";
 import { DefectFilterPanel } from "@/app/components/defect_filter_panel";
 import FilterBar from "@/app/components/filter_bar";
@@ -88,8 +88,12 @@ function DataContent() {
         defectFilter: { brand_breakdowns, model_breakdowns, calculate_filtered_defects, mode }
     });
 
-    // Handle Metadata -> State updates (Moved here from page logic/old hook)
-    useEffect(() => {
+    // Apply metadata-derived defaults once metadata loads. Adjusting state during
+    // render (tracking the previous metadata) rather than in an effect avoids the
+    // cascading re-render flagged by react-hooks/set-state-in-effect.
+    const [prev_metadata, set_prev_metadata] = useState(metadata);
+    if (metadata !== prev_metadata) {
+        set_prev_metadata(metadata);
         if (metadata?.ranges) {
             state.setMaxPrice(metadata.ranges.price.max);
             state.setMaxFleetSize(metadata.ranges.fleet.max);
@@ -105,7 +109,7 @@ function DataContent() {
         } else if (metadata?.age_range) {
             state.setAgeRange([metadata.age_range.min, metadata.age_range.max]);
         }
-    }, [metadata]);
+    }
 
 
     // Memoize columns

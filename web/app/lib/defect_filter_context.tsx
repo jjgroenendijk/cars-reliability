@@ -19,11 +19,6 @@ import { isReliabilityDefect } from "./defect_categories";
 
 const STORAGE_KEY = "defect_filter_state";
 
-interface DefectFilterState {
-    mode: DefectFilterMode;
-    excluded_codes: Set<string>;
-}
-
 interface DefectFilterContextType {
     /** Current filter mode */
     mode: DefectFilterMode;

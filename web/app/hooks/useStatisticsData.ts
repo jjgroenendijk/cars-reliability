@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import type { BrandStats, ModelStats, Rankings, Metadata } from "@/app/lib/types";
 
 export function useStatisticsData() {

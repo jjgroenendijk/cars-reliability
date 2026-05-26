@@ -1,6 +1,6 @@
 import { useDeferredValue, useMemo } from "react";
 import type { BrandStats, ModelStats, Metadata, PerYearStats } from "@/app/lib/types";
-import { aggregateAgeRange, type BrandStatsFiltered, type ModelStatsFiltered } from "@/app/lib/statistics_config";
+import { aggregateAgeRange, type StatsTableRow } from "@/app/lib/statistics_config";
 
 interface FilterState {
     viewMode: "brands" | "models";
@@ -97,8 +97,7 @@ export function useStatisticsProcessing({
 
         // 3. Aggregate Rows by Key (Brand or Brand+Model)
         const groupBy = (item: BrandStats | ModelStats) => viewMode === "brands" ? item.merk : `${item.merk} ${(item as ModelStats).handelsbenaming}`;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const aggregatedMap = new Map<string, any>();
+        const aggregatedMap = new Map<string, StatsTableRow>();
 
         for (const item of filtered) {
             const key = groupBy(item);
@@ -108,7 +107,7 @@ export function useStatisticsProcessing({
                 // Replaced `structuredClone` with a manual spread for deep cloning `per_year_stats`.
                 // In micro-benchmarks, this manual approach is >7x faster (40ms vs 282ms per 50,000 iterations),
                 // significantly reducing CPU overhead during large dataset aggregations in this hot loop.
-                const cloned_stats: Record<string, any> = {};
+                const cloned_stats: Record<string, PerYearStats> = {};
                 for (const age in item.per_year_stats) {
                     if (Object.prototype.hasOwnProperty.call(item.per_year_stats, age)) {
                         cloned_stats[age] = { ...item.per_year_stats[age] };
@@ -120,7 +119,8 @@ export function useStatisticsProcessing({
                     per_year_stats: cloned_stats
                 });
             } else {
-                const existing = aggregatedMap.get(key);
+                // Key was checked with has() above, so the entry exists.
+                const existing = aggregatedMap.get(key)!;
                 existing.vehicle_count += item.vehicle_count;
                 existing.total_inspections += item.total_inspections;
                 existing.total_defects += item.total_defects;
@@ -174,7 +174,7 @@ export function useStatisticsProcessing({
         // ⚡ Bolt Performance Optimization:
         // Combined multiple `.map()` and `.filter()` calls into a single loop to avoid multiple iterations and
         // intermediate array allocations. Also extracted `aggregateAgeRange` to run only once per iteration instead of up to 3 times.
-        const finalResults = [];
+        const finalResults: StatsTableRow[] = [];
 
         for (const item of results) {
             // Calculate Std Dev for Defects per Vehicle Year (from rates)
@@ -277,7 +277,7 @@ export function useStatisticsProcessing({
             results = results.filter((item) => {
                 if (viewMode === "brands") return item.merk.toLowerCase().includes(q);
                 return (
-                    item.merk.toLowerCase().includes(q) || item.handelsbenaming.toLowerCase().includes(q)
+                    item.merk.toLowerCase().includes(q) || (item.handelsbenaming?.toLowerCase().includes(q) ?? false)
                 );
             });
         }
@@ -285,10 +285,10 @@ export function useStatisticsProcessing({
         // 8. Sort
         return results.sort((a, b) => (a.filtered_defects_per_vehicle_year || 0) - (b.filtered_defects_per_vehicle_year || 0));
 
-    }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial, selectedFuels, minPrice, maxPrice, minFleetSize, maxFleetSize, minInspections, maxInspections, searchQuery, ageRange, isAgeFilterActive, mode, brand_breakdowns, model_breakdowns, calculate_filtered_defects, maxPriceAvailable, maxInspectionsAvailable, selectedBrands, metadata]);
+    }, [brand_stats, model_stats, viewMode, showConsumer, showCommercial, selectedFuels, minPrice, maxPrice, minFleetSize, maxFleetSize, minInspections, maxInspections, searchQuery, ageRange, isAgeFilterActive, mode, brand_breakdowns, model_breakdowns, calculate_filtered_defects, maxPriceAvailable, maxInspectionsAvailable, selectedBrands]);
 
     return {
-        processed_data: processed_data as (BrandStatsFiltered | ModelStatsFiltered)[],
+        processed_data,
         isAgeFilterActive
     };
 }

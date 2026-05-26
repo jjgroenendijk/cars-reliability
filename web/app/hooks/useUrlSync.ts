@@ -12,24 +12,47 @@ export function useUrlSync({ metadata }: UseUrlSyncProps) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
+    // Seed initial state from the URL query so filters survive reload/sharing.
+    // Reading in the useState initializers (instead of a mount effect) avoids the
+    // cascading re-render flagged by react-hooks/set-state-in-effect. The /data
+    // route renders this behind a Suspense boundary, so there is no server-rendered
+    // markup to mismatch against during hydration.
+    const param_number = (key: string, fallback: number) => {
+        const raw = searchParams?.get(key);
+        return raw ? Number(raw) : fallback;
+    };
+
     // State Variables
-    const [viewMode, setViewMode] = useState<"brands" | "models">("brands");
-    const [showStdDev, setShowStdDev] = useState(false);
-    const [showCatalogPrice, setShowCatalogPrice] = useState(false);
-    const [pageSize, setPageSize] = useState(DEFAULTS.pageSize);
+    const [viewMode, setViewMode] = useState<"brands" | "models">(() => {
+        const v = searchParams?.get("view");
+        return v === "brands" || v === "models" ? v : "brands";
+    });
+    const [showStdDev, setShowStdDev] = useState(() => searchParams?.get("stdDev") === "true");
+    const [showCatalogPrice, setShowCatalogPrice] = useState(() => searchParams?.get("catPrice") === "true");
+    const [pageSize, setPageSize] = useState(() => param_number("pageSize", DEFAULTS.pageSize));
     const [currentPage, setCurrentPage] = useState(1);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+    const [searchQuery, setSearchQuery] = useState(() => searchParams?.get("q") ?? "");
+    const [selectedBrands, setSelectedBrands] = useState<string[]>(() => {
+        const b = searchParams?.get("brands");
+        return b ? b.split(",") : [];
+    });
     const [showConsumer, setShowConsumer] = useState(true);
     const [showCommercial, setShowCommercial] = useState(false);
-    const [selectedFuels, setSelectedFuels] = useState<string[]>([]);
-    const [minPrice, setMinPrice] = useState(DEFAULTS.price.min);
-    const [maxPrice, setMaxPrice] = useState(DEFAULTS.price.max);
-    const [ageRange, setAgeRange] = useState<[number, number]>([DEFAULTS.age.min, DEFAULTS.age.max]);
-    const [minFleetSize, setMinFleetSize] = useState(DEFAULTS.fleet.min);
-    const [maxFleetSize, setMaxFleetSize] = useState(DEFAULTS.fleet.max);
-    const [minInspections, setMinInspections] = useState(DEFAULTS.inspections.min);
-    const [maxInspections, setMaxInspections] = useState(DEFAULTS.inspections.max);
+    const [selectedFuels, setSelectedFuels] = useState<string[]>(() => {
+        const f = searchParams?.get("fuels");
+        return f ? f.split(",") : [];
+    });
+    const [minPrice, setMinPrice] = useState(() => param_number("minPrice", DEFAULTS.price.min));
+    const [maxPrice, setMaxPrice] = useState(() => param_number("maxPrice", DEFAULTS.price.max));
+    const [ageRange, setAgeRange] = useState<[number, number]>(() => {
+        const aMin = searchParams?.get("ageMin");
+        const aMax = searchParams?.get("ageMax");
+        return aMin && aMax ? [Number(aMin), Number(aMax)] : [DEFAULTS.age.min, DEFAULTS.age.max];
+    });
+    const [minFleetSize, setMinFleetSize] = useState(() => param_number("fleetMin", DEFAULTS.fleet.min));
+    const [maxFleetSize, setMaxFleetSize] = useState(() => param_number("fleetMax", DEFAULTS.fleet.max));
+    const [minInspections, setMinInspections] = useState(() => param_number("inspMin", DEFAULTS.inspections.min));
+    const [maxInspections, setMaxInspections] = useState(() => param_number("inspMax", DEFAULTS.inspections.max));
 
     // Derived max values for sync logic
     const maxFleetSizeAvailable = useMemo(() => {
@@ -47,74 +70,19 @@ export function useUrlSync({ metadata }: UseUrlSyncProps) {
         return DEFAULTS.inspections.max;
     }, [metadata]);
 
-    // Hydrate from URL
-    useEffect(() => {
-        if (!searchParams) return;
-
-        const pView = searchParams.get("view");
-        if (pView === "brands" || pView === "models") setViewMode(pView);
-
-        const pBrands = searchParams.get("brands");
-        if (pBrands) setSelectedBrands(pBrands.split(","));
-
-        const pFuels = searchParams.get("fuels");
-        if (pFuels) setSelectedFuels(pFuels.split(","));
-
-        const pMinPrice = searchParams.get("minPrice");
-        if (pMinPrice) setMinPrice(Number(pMinPrice));
-
-        const pMaxPrice = searchParams.get("maxPrice");
-        if (pMaxPrice) setMaxPrice(Number(pMaxPrice));
-
-        const pAgeMin = searchParams.get("ageMin");
-        const pAgeMax = searchParams.get("ageMax");
-        if (pAgeMin && pAgeMax) setAgeRange([Number(pAgeMin), Number(pAgeMax)]);
-
-        const pFleetMin = searchParams.get("fleetMin");
-        if (pFleetMin) setMinFleetSize(Number(pFleetMin));
-
-        const pFleetMax = searchParams.get("fleetMax");
-        if (pFleetMax) setMaxFleetSize(Number(pFleetMax));
-
-        const pInspMin = searchParams.get("inspMin");
-        if (pInspMin) setMinInspections(Number(pInspMin));
-
-        const pInspMax = searchParams.get("inspMax");
-        if (pInspMax) setMaxInspections(Number(pInspMax));
-
-        const pSearch = searchParams.get("q");
-        if (pSearch) setSearchQuery(pSearch);
-
-        const pStdDev = searchParams.get("stdDev");
-        if (pStdDev === "true") setShowStdDev(true);
-
-        const pCatPrice = searchParams.get("catPrice");
-        if (pCatPrice === "true") setShowCatalogPrice(true);
-
-        const pPageSize = searchParams.get("pageSize");
-        if (pPageSize) setPageSize(Number(pPageSize));
-
-        const pPage = searchParams.get("page");
-        if (pPage) setCurrentPage(Number(pPage));
-
-    }, [searchParams]);
-
-    // Apply metadata defaults if not set by URL
-    useEffect(() => {
-        if (metadata.ranges) {
-            // Only update if these haven't been touched by URL hydration or user interaction?
-            // Actually, best to update max value defaults if they are standard bounds.
-            // But we must be careful not to overwrite user selection.
-            // This logic existed in the original file (lines 238-249).
-            // It uses setMaxPrice etc. directly.
-            // We'll trust the component to handle initial mounting state correctly.
-        }
-    }, [metadata]);
-
-    // Reset pagination on filter change
-    useEffect(() => {
+    // Reset pagination whenever a filter changes. Tracking the previous filter
+    // signature and resetting during render (rather than in an effect) avoids the
+    // cascading re-render flagged by react-hooks/set-state-in-effect.
+    const filter_signature = JSON.stringify([
+        viewMode, searchQuery, selectedBrands, selectedFuels, minPrice, maxPrice,
+        ageRange, minFleetSize, maxFleetSize, minInspections, maxInspections,
+        showConsumer, showCommercial,
+    ]);
+    const [prev_filter_signature, setPrevFilterSignature] = useState(filter_signature);
+    if (filter_signature !== prev_filter_signature) {
+        setPrevFilterSignature(filter_signature);
         setCurrentPage(1);
-    }, [viewMode, searchQuery, selectedBrands, selectedFuels, minPrice, maxPrice, ageRange, minFleetSize, maxFleetSize, minInspections, maxInspections, showConsumer, showCommercial]);
+    }
 
     // Sync to URL
     const createQueryString = useCallback(
