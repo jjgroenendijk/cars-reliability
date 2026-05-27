@@ -5,14 +5,11 @@ const NUM_BRANDS = 5000;
 const NUM_SELECTED = 1000;
 const ITERATIONS = 1000;
 
-console.log(`\n======================================================`);
-console.log(`Brand Filter Performance Benchmark`);
-console.log(`======================================================`);
+console.log(`\nBrand Filter Performance Benchmark`);
 console.log(`Parameters:`);
 console.log(`- Brands: ${NUM_BRANDS}`);
 console.log(`- Selected Brands: ${NUM_SELECTED}`);
-console.log(`- Render Iterations: ${ITERATIONS}`);
-console.log(`------------------------------------------------------\n`);
+console.log(`- Render Iterations: ${ITERATIONS}\n`);
 
 // 1. Setup Data
 const brands = Array.from({ length: NUM_BRANDS }, (_, i) => ({
@@ -55,6 +52,4 @@ console.log(`Optimized Duration: ${optimizedDuration.toFixed(2)}ms`);
 
 // 4. Results
 const improvement = baselineDuration / optimizedDuration;
-console.log(`\n------------------------------------------------------`);
-console.log(`Speedup: ${improvement.toFixed(2)}x faster`);
-console.log(`======================================================\n`);
+console.log(`\nSpeedup: ${improvement.toFixed(2)}x faster\n`);

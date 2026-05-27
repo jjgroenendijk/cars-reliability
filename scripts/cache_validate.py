@@ -57,7 +57,7 @@ def main() -> None:
     args = parser.parse_args()
 
     valid, message = parquet_validate(args.file)
-    print(f"{'✓' if valid else '✗'} {args.file.name}: {message}")
+    print(f"{'OK' if valid else 'FAIL'} {args.file.name}: {message}")
     sys.exit(0 if valid else 1)
 
 

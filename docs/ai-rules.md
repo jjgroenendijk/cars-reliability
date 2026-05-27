@@ -78,7 +78,7 @@ cd ../web && npm run dev  # JSON files sync automatically via predev hook
 
 ### Rules
 
-- File size: hard cap 400 LOC; split early
+- File size: hard cap 500 LOC; split early
 - Language: English everywhere except RDW field names (stay Dutch, exactly as provided)
 - Python: type hints + docstrings required; format with Ruff before commit
 - TypeScript: strict mode, no `any`, no `console.log` in production
@@ -90,21 +90,40 @@ cd ../web && npm run dev  # JSON files sync automatically via predev hook
 
 ## Linting & Git Hooks
 
-`web/` enforces a clean lint state — **0 errors, 0 warnings**. Fix the underlying
+Contributor rules are enforced twice: by **local git hooks** (fast feedback before
+commit) and by the **`.github/workflows/checks.yml`** CI workflow (the gate on every
+pull request and push to `main`). Each check is one script under `ci/`, invoked
+identically by the hooks and by CI, so the two never drift. Fix the underlying
 code; never disable rules, add `eslint-disable` comments, or loosen config.
 
-- **Command**: `npm run lint` in `web/` runs `eslint --max-warnings 0`, so any
-  warning fails just like an error.
-- **CI**: `.github/workflows/lint_web.yml` runs `npm run lint` on every pull
-  request and on pushes to `main`. It is a dedicated job (no data sync, no build),
-  so it stays fast.
-- **Local pre-commit hook**: `.githooks/pre-commit` runs the same `npm run lint`
-  before each commit. It is auto-wired with zero extra dependencies via the
-  `prepare` script in `web/package.json` (`git config core.hooksPath .githooks`),
-  which runs on `npm install`/`npm ci`. The hook:
-  - skips when no staged files touch `web/`;
-  - skips with a notice (does not block) when `web/node_modules` is missing;
-  - otherwise blocks the commit on any lint error or warning.
+Hooks are auto-wired with zero extra dependencies via the `prepare` script in
+`web/package.json` (`git config core.hooksPath .githooks`), which runs on
+`npm install`/`npm ci`. As with all client-side hooks, `--no-verify` bypasses them;
+CI is the backstop.
+
+**Checks (each runs locally and in CI):**
+
+- **Web lint**: `npm run lint` in `web/` runs `eslint --max-warnings 0`, so any warning
+  fails like an error. Local `pre-commit` runs it only when staged files touch `web/`
+  (and skips with a notice when `web/node_modules` is missing); CI's `web-lint` job runs
+  it when the PR/push changes `web/`.
+- **Python lint + format**: `ruff check` and `ruff format` over `scripts/`. The
+  `pre-commit` hook auto-formats and re-stages staged `.py` files, then blocks on any
+  remaining lint error (skips with a notice when `uv`/`scripts/.venv` is missing); CI's
+  `python-lint` job runs `ruff check .` and `ruff format --check .` (check-only, never
+  rewrites).
+- **File size**: `loc-check.sh` fails any tracked `.py`/`.ts`/`.tsx`/`.js`/`.mjs` over
+  the 500-line cap.
+- **Charset**: `charset-check.sh` blocks emoji/pictographs across all tracked files and
+  ASCII decoration (runs of 4+ repeated separators) in every tracked file except `*.md`
+  (Markdown is exempt from the decoration check so tables and rule rows stay easy to
+  write). Latin accents and currency symbols are always allowed.
+- **No attribution**: `.githooks/commit-msg` and `.githooks/pre-push` reject any commit
+  message that references an AI tool or adds a co-authoring credit; CI's `repo-checks`
+  job scans the same over the PR/push commit range **and** the PR title and body. The
+  shared case-insensitive block-list lives in `ci/attribution-check.sh`
+  (claude, codex, copilot, chatgpt, gpt-N, openai, anthropic, gemini, jules, cursor,
+  `co-authored-by`, `generated with/by`, the robot emoji).
 
 ## Boundaries
 
@@ -113,7 +132,7 @@ code; never disable rules, add `eslint-disable` comments, or loosen config.
 - Preserve RDW column names exactly
 - Update `docs/data_mapping.md` when using new fields
 - Run formatter before commit
-- Keep files under 400 LOC
+- Keep files under 500 LOC
 
 **Ask First:**
 - Adding new dependencies

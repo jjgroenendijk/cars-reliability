@@ -1,0 +1,12 @@
+#!/bin/sh
+# commit-msg hook: reject commit messages that credit an AI tool or add
+# co-authoring text. Wired via core.hooksPath .githooks (see web/package.json
+# "prepare"). Shares its block-list (ci/attribution-check.sh) with the pre-push
+# hook and the checks.yml CI workflow. Paths are repo-root-relative because
+# core.hooksPath resolves against the worktree root.
+
+. ci/attribution-check.sh
+
+# $1 is the path to the file holding the commit message. Drop comment lines
+# (templates, verbose-diff comments) before scanning.
+grep -v '^#' "$1" | ai_attribution_scan "commit message" || exit 1
