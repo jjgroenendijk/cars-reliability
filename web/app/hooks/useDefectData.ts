@@ -18,19 +18,21 @@ export function useDefectData() {
     const [sort_direction, setSortDirection] = useState<"asc" | "desc">("desc");
     const [category_filter, setCategoryFilter] = useState<"all" | "reliability">("reliability");
     const [show_config, setShowConfig] = useState(false);
-    const [reliability_overrides, setReliabilityOverrides] = useState<Record<string, boolean>>({});
 
-    // Load overrides from localStorage on mount
-    useEffect(() => {
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                setReliabilityOverrides(JSON.parse(saved));
+    // Initialize state directly from localStorage if available to avoid setState in effect
+    const [reliability_overrides, setReliabilityOverrides] = useState<Record<string, boolean>>(() => {
+        if (typeof window !== "undefined") {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    return JSON.parse(saved);
+                }
+            } catch {
+                // Ignore localStorage errors
             }
-        } catch {
-            // Ignore localStorage errors
         }
-    }, []);
+        return {};
+    });
 
     // Save overrides to localStorage when they change
     useEffect(() => {
