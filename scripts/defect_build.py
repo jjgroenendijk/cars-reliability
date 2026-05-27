@@ -131,15 +131,25 @@ def build_defect_breakdowns(
         engine="streaming",
     )
 
-    brand_defects: dict[str, dict[str, int]] = {}
-    # Use iter_rows assuming column order: merk, defects
-    for brand, defects_structs in brand_breakdown_df.iter_rows():
-        brand_defects[brand] = {d["gebrek_identificatie"]: d["count"] for d in defects_structs}
+    brand_defects: dict[str, dict[str, int]] = dict(
+        zip(
+            brand_breakdown_df.get_column("merk"),
+            (
+                {d["gebrek_identificatie"]: d["count"] for d in defects}
+                for defects in brand_breakdown_df.get_column("defects")
+            ),
+        )
+    )
 
-    model_defects: dict[str, dict[str, int]] = {}
-    # Use iter_rows assuming column order: model_key, defects
-    for model_key, defects_structs in model_breakdown_df.iter_rows():
-        model_defects[model_key] = {d["gebrek_identificatie"]: d["count"] for d in defects_structs}
+    model_defects: dict[str, dict[str, int]] = dict(
+        zip(
+            model_breakdown_df.get_column("model_key"),
+            (
+                {d["gebrek_identificatie"]: d["count"] for d in defects}
+                for defects in model_breakdown_df.get_column("defects")
+            ),
+        )
+    )
 
     return brand_defects, model_defects
 
