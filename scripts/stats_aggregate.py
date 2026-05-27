@@ -152,16 +152,15 @@ def aggregate_brand_stats(
         brand_df = brand_df.with_columns(pl.lit(None).alias("_keys"), pl.lit(None).alias("_values"))
 
     # Convert main stats to list of dicts
-    result = brand_df.to_dicts()
+    keys_list = brand_df["_keys"].to_list()
+    values_list = brand_df["_values"].to_list()
+    result = brand_df.drop("_keys", "_values").to_dicts()
 
-    for row in result:
-        keys = row.get("_keys")
+    for row, keys, values in zip(result, keys_list, values_list):
         if keys is not None:
-            row["per_year_stats"] = dict(zip(keys, row.get("_values", [])))
+            row["per_year_stats"] = dict(zip(keys, values))
         else:
             row["per_year_stats"] = {}
-        row.pop("_keys", None)
-        row.pop("_values", None)
 
     return result, min_age, max_age
 
@@ -264,16 +263,15 @@ def aggregate_model_stats(
         model_df = model_df.with_columns(pl.lit(None).alias("_keys"), pl.lit(None).alias("_values"))
 
     # Convert main stats to list of dicts
-    result = model_df.to_dicts()
+    keys_list = model_df["_keys"].to_list()
+    values_list = model_df["_values"].to_list()
+    result = model_df.drop("_keys", "_values").to_dicts()
 
-    for row in result:
-        keys = row.get("_keys")
+    for row, keys, values in zip(result, keys_list, values_list):
         if keys is not None:
-            row["per_year_stats"] = dict(zip(keys, row.get("_values", [])))
+            row["per_year_stats"] = dict(zip(keys, values))
         else:
             row["per_year_stats"] = {}
-        row.pop("_keys", None)
-        row.pop("_values", None)
 
     return result, min_age, max_age
 
