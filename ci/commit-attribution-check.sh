@@ -13,8 +13,17 @@ if [ -z "$range" ]; then
     exit 2
 fi
 
+# Resolve the range up front so an unresolvable range fails loudly instead of
+# silently scanning nothing (which would let attribution slip through, e.g. when
+# a push's before-sha was orphaned by a force-push). The caller is responsible
+# for passing a range whose endpoints exist.
+shas=$(git rev-list "$range" 2>/dev/null) || {
+    echo "commit-attribution-check: cannot resolve git range '$range'." >&2
+    exit 2
+}
+
 status=0
-for sha in $(git rev-list "$range"); do
+for sha in $shas; do
     if ! git log -1 --format=%B "$sha" | ai_attribution_scan "commit $sha"; then
         status=1
     fi
