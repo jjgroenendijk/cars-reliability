@@ -102,11 +102,10 @@ export function useStatisticsProcessing({
         for (const item of filtered) {
             const key = groupBy(item);
             if (!aggregatedMap.has(key)) {
-                // Deep clone per_year_stats to enable merging
-                // ⚡ Bolt Performance Optimization:
-                // Replaced `structuredClone` with a manual spread for deep cloning `per_year_stats`.
-                // In micro-benchmarks, this manual approach is >7x faster (40ms vs 282ms per 50,000 iterations),
-                // significantly reducing CPU overhead during large dataset aggregations in this hot loop.
+                // Deep clone per_year_stats to enable merging.
+                // Manual spread instead of structuredClone: ~7x faster in
+                // micro-benchmarks (40ms vs 282ms per 50,000 iterations),
+                // reducing CPU overhead in this hot aggregation loop.
                 const cloned_stats: Record<string, PerYearStats> = {};
                 for (const age in item.per_year_stats) {
                     if (Object.prototype.hasOwnProperty.call(item.per_year_stats, age)) {
@@ -170,10 +169,9 @@ export function useStatisticsProcessing({
 
         let results = Array.from(aggregatedMap.values());
 
-        // 4-6. Calculate Derived Metrics, Apply Filters, and Collect Valid Results in a Single Pass
-        // ⚡ Bolt Performance Optimization:
-        // Combined multiple `.map()` and `.filter()` calls into a single loop to avoid multiple iterations and
-        // intermediate array allocations. Also extracted `aggregateAgeRange` to run only once per iteration instead of up to 3 times.
+        // 4-6. Calculate derived metrics, apply filters, and collect valid results in a single pass.
+        // Combined the .map()/.filter() calls into one loop to avoid intermediate
+        // array allocations, and hoisted aggregateAgeRange to run once per iteration.
         const finalResults: StatsTableRow[] = [];
 
         for (const item of results) {

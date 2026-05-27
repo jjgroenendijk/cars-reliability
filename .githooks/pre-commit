@@ -1,25 +1,49 @@
 #!/bin/sh
-# Pre-commit hook: lint the web app before allowing a commit.
+# Pre-commit hook: enforce contributor rules before allowing a commit.
 #
 # Auto-wired via the web package.json "prepare" script
 # (git config core.hooksPath .githooks). core.hooksPath resolves relative to
-# the worktree root, so paths below are repo-root-relative.
+# the worktree root, so paths below are repo-root-relative. CI (checks.yml)
+# enforces the same checks via the same scripts under ci/.
 #
 # Behavior:
-#   - Skips quickly when no staged changes touch web/.
-#   - Skips with a notice (exit 0) when web/node_modules is missing, so
-#     contributors who have not run `npm ci` are not blocked.
-#   - Otherwise runs `npm run lint` (eslint --max-warnings 0) and blocks the
-#     commit on any error or warning. CI enforces the same check.
+#   - Always runs the dependency-free repo checks (LOC cap, charset).
+#   - Auto-formats staged Python with Ruff when uv/.venv is available, then
+#     re-stages and blocks on any remaining lint error; skips with a notice
+#     when uv/.venv is missing.
+#   - Lints web/ when staged changes touch it; skips with a notice when
+#     web/node_modules is missing.
 
-if ! git diff --cached --name-only | grep -q '^web/'; then
-    exit 0
+# Repo-wide, dependency-free checks (fast bash, no toolchain needed).
+ci/loc-check.sh || exit 1
+ci/charset-check.sh || exit 1
+
+# Ruff: format + lint staged Python. Auto-rewrite is intentional here. Note:
+# re-staging is exact for fully-staged files; with partial staging (git add -p)
+# it may stage formatting of the unstaged remainder of those files.
+staged_py=$(git diff --cached --name-only --diff-filter=ACM -- '*.py')
+if [ -n "$staged_py" ]; then
+    if command -v uv >/dev/null 2>&1 && [ -d scripts/.venv ]; then
+        echo "pre-commit: ruff format + lint (scripts/)"
+        files=$(printf '../%s ' $staged_py)
+        ( cd scripts && uv run --frozen --extra dev ruff format -- $files ) || exit 1
+        ( cd scripts && uv run --frozen --extra dev ruff check --fix -- $files ) || true
+        # shellcheck disable=SC2086
+        git add -- $staged_py
+        ( cd scripts && uv run --frozen --extra dev ruff check -- $files ) || exit 1
+    else
+        echo "pre-commit: uv or scripts/.venv missing; skipping Ruff. Run 'uv sync' in scripts/ to enable it."
+    fi
 fi
 
-if [ ! -d web/node_modules ]; then
-    echo "pre-commit: web/node_modules missing; skipping lint. Run 'npm ci' in web/ to enable it."
-    exit 0
+# Web lint, only when staged changes touch web/.
+if git diff --cached --name-only | grep -q '^web/'; then
+    if [ ! -d web/node_modules ]; then
+        echo "pre-commit: web/node_modules missing; skipping lint. Run 'npm ci' in web/ to enable it."
+        exit 0
+    fi
+    echo "pre-commit: linting web/"
+    ( cd web && npm run lint ) || exit 1
 fi
 
-echo "pre-commit: linting web/"
-cd web && npm run lint
+exit 0

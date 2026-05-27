@@ -108,14 +108,14 @@ jobs:
           FILE="data/parquet/${{ matrix.name }}.parquet"
           if [ -f "$FILE" ]; then
             SIZE=$(stat -c%s "$FILE")
-            echo "✓ Dataset available: $((SIZE / 1024 / 1024)) MB"
+            echo "OK Dataset available: $((SIZE / 1024 / 1024)) MB"
             if [ "${{ steps.validate.outcome }}" = "success" ]; then
-              echo "✓ Using validated cache - download was skipped"
+              echo "OK Using validated cache - download was skipped"
             elif [ "${{ steps.download.outcome }}" = "failure" ]; then
-              echo "⚠️ Fresh download failed, using cached data from previous run"
+              echo "WARN Fresh download failed, using cached data from previous run"
             fi
           else
-            echo "✗ ERROR: No dataset available - download failed and no cache exists"
+            echo "ERROR: No dataset available - download failed and no cache exists"
             exit 1
           fi
 
