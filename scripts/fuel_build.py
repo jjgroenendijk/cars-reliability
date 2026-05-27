@@ -13,20 +13,17 @@ def _build_fuel_dict(df: pl.DataFrame, key_col: str) -> dict[str, dict[str, int]
     """Build fuel dictionary using Polars struct aggregation.
 
     Args:
-        df: DataFrame containing at least key_col, "fuel_type", and "kenteken".
+        df: DataFrame containing at least key_col, "fuel_type", and "count".
         key_col: The column name to group by (e.g., "merk" or "model_key").
 
     Returns:
         Dictionary mapping key_col values to fuel breakdown dicts.
     """
-    # 1. Aggregate counts by key and fuel type
-    counts = df.group_by([key_col, "fuel_type"]).agg(pl.col("kenteken").n_unique().alias("count"))
-
-    # 2. Pivot to wide format so fuel types become columns
+    # 1. Pivot to wide format so fuel types become columns
     # We use "count" as values. Missing combinations get null, which we fill with 0.
-    pivoted = counts.pivot(index=key_col, on="fuel_type", values="count").fill_null(0)
+    pivoted = df.pivot(index=key_col, on="fuel_type", values="count").fill_null(0)
 
-    # 3. Ensure all known fuel types + "other" are present as columns
+    # 2. Ensure all known fuel types + "other" are present as columns
     # Sort to ensure consistent field order in the struct/dict
     expected_cols = sorted(list(KNOWN_FUEL_TYPES)) + ["other"]
     existing_cols = set(pivoted.columns)
@@ -36,11 +33,11 @@ def _build_fuel_dict(df: pl.DataFrame, key_col: str) -> dict[str, dict[str, int]
     if missing_cols:
         pivoted = pivoted.with_columns([pl.lit(0).alias(col) for col in missing_cols])
 
-    # 4. Create struct column with all fuel counts
+    # 3. Create struct column with all fuel counts
     # The struct fields will follow the order in expected_cols
     struct_df = pivoted.select(pl.col(key_col), pl.struct(expected_cols).alias("fuel_breakdown"))
 
-    # 5. Convert directly to dictionary
+    # 4. Convert directly to dictionary
     # to_list() on a struct column returns a list of dictionaries
     return dict(zip(struct_df[key_col], struct_df["fuel_breakdown"].to_list()))
 
@@ -100,38 +97,12 @@ def build_fuel_breakdown(
     )
 
     # Aggregate by brand from the materialized stats
-    brand_fuel_df = (
-        model_fuel_stats_df.group_by(["merk", "fuel_type"]).agg(pl.col("count").sum()).to_dicts()
-    )
+    brand_fuel_df = model_fuel_stats_df.group_by(["merk", "fuel_type"]).agg(pl.col("count").sum())
 
     # Model stats is already aggregated
-    model_fuel_df = model_fuel_stats_df.select(["model_key", "fuel_type", "count"]).to_dicts()
+    model_fuel_df = model_fuel_stats_df.select(["model_key", "fuel_type", "count"])
 
-    # Initialize empty FuelBreakdown for each brand
-    empty_breakdown = {
-        "Benzine": 0,
-        "Diesel": 0,
-        "Elektriciteit": 0,
-        "LPG": 0,
-        "other": 0,
-    }
-
-    brand_fuel: dict[str, dict[str, int]] = {}
-    for row in brand_fuel_df:
-        brand = row["merk"]
-        fuel = row["fuel_type"]
-        count = row["count"]
-        if brand not in brand_fuel:
-            brand_fuel[brand] = empty_breakdown.copy()
-        brand_fuel[brand][fuel] = count
-
-    model_fuel: dict[str, dict[str, int]] = {}
-    for row in model_fuel_df:
-        model = row["model_key"]
-        fuel = row["fuel_type"]
-        count = row["count"]
-        if model not in model_fuel:
-            model_fuel[model] = empty_breakdown.copy()
-        model_fuel[model][fuel] = count
+    brand_fuel = _build_fuel_dict(brand_fuel_df, "merk")
+    model_fuel = _build_fuel_dict(model_fuel_df, "model_key")
 
     return brand_fuel, model_fuel

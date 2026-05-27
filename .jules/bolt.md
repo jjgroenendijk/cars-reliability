@@ -1,0 +1,3 @@
+## 2025-05-27 - Use Polars pivoting for dictionary construction
+**Learning:** Polars `.to_dicts()` conversion combined with manual Python dictionary iteration represents a significant performance bottleneck, especially on large aggregated DataFrames where complex objects (like dictionaries within dictionaries) are constructed row-by-row.
+**Action:** When building nested lookup structures (such as fuel breakdowns by brand), leverage native Polars `.pivot()` followed by struct packing (e.g. `pl.struct()`) and bulk `zip` over `.to_list()` instead of iterating over Python rows. This avoids allocating temporary arrays and executes primarily in Rust.
