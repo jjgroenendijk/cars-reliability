@@ -46,8 +46,9 @@ jobs:
           else
             base="$PUSH_BEFORE"; head="$PUSH_AFTER"
           fi
-          # No usable base (new branch / unknown): scan everything.
-          if [ -z "$base" ] || echo "$base" | grep -qE '^0+$'; then
+          # No usable base -- new branch, all-zero sha, or a base that no longer
+          # exists (e.g. orphaned by a force-push): scan everything.
+          if [ -z "$base" ] || echo "$base" | grep -qE '^0+$' || ! git cat-file -e "${base}^{commit}" 2>/dev/null; then
             echo "web=true" >> "$GITHUB_OUTPUT"
             echo "py=true" >> "$GITHUB_OUTPUT"
             exit 0
@@ -131,7 +132,8 @@ jobs:
         run: |
           if [ "$EVENT" = "pull_request" ]; then
             range="$PR_BASE..$PR_HEAD"
-          elif [ -z "$PUSH_BEFORE" ] || echo "$PUSH_BEFORE" | grep -qE '^0+$'; then
+          elif [ -z "$PUSH_BEFORE" ] || echo "$PUSH_BEFORE" | grep -qE '^0+$' || ! git cat-file -e "${PUSH_BEFORE}^{commit}" 2>/dev/null; then
+            # New branch, or a before-sha orphaned by a force-push: scan the new tip.
             range="$PUSH_AFTER~1..$PUSH_AFTER"
           else
             range="$PUSH_BEFORE..$PUSH_AFTER"
