@@ -1,0 +1,3 @@
+## 2024-05-27 - Polars Native Dictionary Conversion
+**Learning:** Python `for` loops using `.iter_rows()` to iterate over Polars DataFrames and build dictionaries are significantly slower than natively zipping columns via `dict(zip(...))`. This avoids the overhead of tuple unpacking for every row.
+**Action:** When converting Polars DataFrames to Python dictionaries, always extract columns by name and combine them using `dict(zip(df["key_col"], df["val_col"]))`. If the value is a nested dictionary derived from a struct column, use a list comprehension over the struct column within the `zip` function.
