@@ -1,5 +1,21 @@
 # Todo
 
+- [x] Enforce contributor rules via git hooks and CI.
+
+  Requirement: the AI-attribution check (previously local-only) plus other
+  mechanically checkable rules (Ruff lint + format, per-file LOC cap, no
+  emojis/pictographs, no ASCII decoration) must run both as local git hooks and
+  as GitHub Actions checks, using shared scripts so the two never drift.
+
+  Result: added shared `ci/` check scripts (`loc-check.sh`, `charset-check.sh`,
+  `attribution-check.sh`, `commit-attribution-check.sh`) invoked identically by the
+  `.githooks` hooks and CI; extended `.githooks/pre-commit` to run them and
+  to auto-format staged Python with Ruff; consolidated `lint_web.yml` into
+  `.github/workflows/checks.yml` (web-lint, python-lint, repo-checks jobs); raised
+  the documented LOC cap to 500; and removed pre-existing emoji from
+  `cache_validate.py`, `useStatisticsProcessing.ts`, `parquet_pipeline.yml`, and
+  the attribution block-list source.
+
 - [x] Add per-brand defect histograms to the statistics page.
 
   Requirement: show two bar charts on `/statistics`, each with one bar per the X
