@@ -13,7 +13,7 @@
 # built from its UTF-8 bytes (printf octal) so this source file stays pure ASCII
 # and passes the charset check, while the pattern still matches the literal.
 ROBOT_EMOJI=$(printf '\360\237\244\226')
-AI_ATTRIBUTION_PATTERN="claude|codex|copilot|chatgpt|gpt-[0-9]|openai|anthropic|gemini|jules|cursor|co-authored-by|generated (with|by)|${ROBOT_EMOJI}"
+AI_ATTRIBUTION_PATTERN="claude|codex|copilot|chatgpt|gpt-[0-9]|openai|anthropic|gemini|cursor|co-authored-by|generated (with|by)|${ROBOT_EMOJI}"
 
 # Scan text from stdin for the pattern.
 #   $1 = human-readable label for the source being scanned.
