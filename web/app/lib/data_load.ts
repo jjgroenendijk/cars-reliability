@@ -2,6 +2,18 @@
  * Formatting helpers for displaying data values in the UI.
  */
 
+// Cache formatters to avoid the high overhead of instantiating Intl formatters
+// repeatedly inside hot loops (like mapping thousands of rows in UI tables).
+const numberFormatterCache = new Map<number, Intl.NumberFormat>();
+const timestampFormatter = new Intl.DateTimeFormat("nl-NL", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+const baseNumberFormatter = new Intl.NumberFormat("nl-NL");
+
 /**
  * Format a number with a fixed number of decimal places using the Dutch locale.
  * @param value - Number to format
@@ -9,10 +21,15 @@
  * @returns Formatted decimal string
  */
 export function decimal_format(value: number, precision = 2): string {
-  return value.toLocaleString("nl-NL", {
-    minimumFractionDigits: precision,
-    maximumFractionDigits: precision,
-  });
+  let formatter = numberFormatterCache.get(precision);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat("nl-NL", {
+      minimumFractionDigits: precision,
+      maximumFractionDigits: precision,
+    });
+    numberFormatterCache.set(precision, formatter);
+  }
+  return formatter.format(value);
 }
 
 /**
@@ -23,13 +40,7 @@ export function decimal_format(value: number, precision = 2): string {
 export function timestamp_format(timestamp: string): string {
   try {
     const date = new Date(timestamp);
-    return date.toLocaleDateString("nl-NL", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return timestampFormatter.format(date);
   } catch {
     return timestamp;
   }
@@ -50,7 +61,7 @@ export function percentage_format(value: number): string {
  * @returns Formatted number string
  */
 export function number_format(value: number): string {
-  return value.toLocaleString("nl-NL").replace(/\./g, " ");
+  return baseNumberFormatter.format(value).replace(/\./g, " ");
 }
 
 /**
@@ -58,7 +69,8 @@ export function number_format(value: number): string {
  * @param value - String to format (e.g., "VOLKSWAGEN" or "GOLF VARIANT")
  * @returns Pascal Case string (e.g., "Volkswagen" or "Golf Variant")
  */
-export function pascal_case_format(value: string): string {
+export function pascal_case_format(value: string | null | undefined): string {
+  if (!value) return "";
   return value
     .toLowerCase()
     .split(" ")
