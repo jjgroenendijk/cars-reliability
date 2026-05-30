@@ -153,10 +153,7 @@ export function useStatisticsProcessing({
                 existing.std_defects_per_vehicle_year = null;
 
                 // Merge Per Year Stats
-                const ageKeys = Object.keys(item.per_year_stats);
-                for (let i = 0; i < ageKeys.length; i++) {
-                    const age = ageKeys[i];
-                    const stats = item.per_year_stats[age];
+                for (const [age, stats] of Object.entries(item.per_year_stats)) {
                     if (!existing.per_year_stats[age]) {
                         existing.per_year_stats[age] = { ...(stats as PerYearStats) };
                     } else {
@@ -215,12 +212,7 @@ export function useStatisticsProcessing({
                 const breakdown = viewMode === "brands" ? brand_breakdowns[key] : model_breakdowns[key];
 
                 if (breakdown) {
-                    let totalInBreakdown = 0;
-                    const bKeys = Object.keys(breakdown);
-                    for (let i = 0; i < bKeys.length; i++) {
-                        totalInBreakdown += breakdown[bKeys[i]];
-                    }
-
+                    const totalInBreakdown = Object.values(breakdown).reduce((a, b) => a + b, 0);
                     const filteredInBreakdown = calculate_filtered_defects(breakdown);
                     if (totalInBreakdown > 0) {
                         defectRatio = filteredInBreakdown / totalInBreakdown;

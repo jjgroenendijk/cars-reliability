@@ -2,6 +2,17 @@
  * Formatting helpers for displaying data values in the UI.
  */
 
+// Cache Intl formatters to avoid repeated instantiation overhead in hot loops
+const formatterCache = new Map<number, Intl.NumberFormat>();
+const largeNumberFormatter = new Intl.NumberFormat("nl-NL");
+const timestampFormatter = new Intl.DateTimeFormat("nl-NL", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 /**
  * Format a number with a fixed number of decimal places using the Dutch locale.
  * @param value - Number to format
@@ -9,10 +20,15 @@
  * @returns Formatted decimal string
  */
 export function decimal_format(value: number, precision = 2): string {
-  return value.toLocaleString("nl-NL", {
-    minimumFractionDigits: precision,
-    maximumFractionDigits: precision,
-  });
+  let formatter = formatterCache.get(precision);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat("nl-NL", {
+      minimumFractionDigits: precision,
+      maximumFractionDigits: precision,
+    });
+    formatterCache.set(precision, formatter);
+  }
+  return formatter.format(value);
 }
 
 /**
@@ -23,13 +39,7 @@ export function decimal_format(value: number, precision = 2): string {
 export function timestamp_format(timestamp: string): string {
   try {
     const date = new Date(timestamp);
-    return date.toLocaleDateString("nl-NL", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return timestampFormatter.format(date);
   } catch {
     return timestamp;
   }
@@ -50,7 +60,7 @@ export function percentage_format(value: number): string {
  * @returns Formatted number string
  */
 export function number_format(value: number): string {
-  return value.toLocaleString("nl-NL").replace(/\./g, " ");
+  return largeNumberFormatter.format(value).replace(/\./g, " ");
 }
 
 /**
