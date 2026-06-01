@@ -1,5 +1,17 @@
 # Todo
 
+- [x] Fix PostCSS security update resolution.
+
+  Requirement: resolve the Dependabot security-update failure for `postcss`
+  without downgrading or making a broad Next.js upgrade. The vulnerable path is
+  the nested `postcss@8.4.31` dependency installed under `next@16.2.6`; the
+  rest of the app already resolves a patched PostCSS version.
+
+  Result: added an npm override so `next@16.2.6` resolves its nested PostCSS
+  dependency to `8.5.10`, then regenerated `package-lock.json`. Verified the
+  production audit is clean, `npm ls postcss` shows the patched nested version,
+  and the web lint and production build pass.
+
 - [x] Fix Dependabot CI failures for generated release notes and ESLint 10.
 
   Requirement: keep the attribution guard active for human-authored commit and
