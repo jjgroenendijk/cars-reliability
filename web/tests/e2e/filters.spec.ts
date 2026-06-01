@@ -22,6 +22,6 @@ test.describe('Filters', () => {
         await expect(page.getByPlaceholder('Search brands...')).toBeVisible();
 
         // Check for Filters button
-        await expect(page.getByRole('button', { name: 'Filters' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Filters' }).first()).toBeVisible();
     });
 });
