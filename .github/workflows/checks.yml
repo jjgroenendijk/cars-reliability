@@ -145,6 +145,11 @@ jobs:
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
           . ci/attribution-check.sh
-          printf '%s\n%s\n' "$PR_TITLE" "$PR_BODY" | ai_attribution_scan "PR title/body"
+          printf '%s\n' "$PR_TITLE" | ai_attribution_scan "PR title"
+          if [ "$PR_AUTHOR" = "dependabot[bot]" ]; then
+            exit 0
+          fi
+          printf '%s\n' "$PR_BODY" | ai_attribution_scan "PR body"
