@@ -1,5 +1,19 @@
 # Todo
 
+- [x] Fix Dependabot CI failures for generated release notes and ESLint 10.
+
+  Requirement: keep the attribution guard active for human-authored commit and
+  PR text, but do not fail Dependabot PRs because generated upstream release
+  notes mention blocked tool names. Prevent future ESLint 10 update PRs until
+  the current Next lint stack supports that major version without plugin
+  crashes.
+
+  Result: changed the PR attribution workflow to scan every PR title, scan
+  non-Dependabot PR bodies, and skip only generated Dependabot PR bodies.
+  Added a Dependabot ignore rule for major `eslint` updates while keeping
+  minor and patch updates eligible. Verified the repo checks and shell-level
+  attribution scan behavior locally.
+
 - [x] Fix RDW lookup defect-description query escaping.
 
   Requirement: escape defect IDs before placing them in the RDW `$where`
