@@ -38,6 +38,10 @@ const INITIAL_STATE: LookupState = {
 // Global cache to prevent duplicate fetching across vehicle lookups
 const defectDescriptionsCache = new Map<string, string>();
 
+export function soql_string_escape(value: string): string {
+  return value.replace(/'/g, "''");
+}
+
 export function useVehicleLookup(license_plate: string) {
   const [state, setState] = useState<LookupState>(INITIAL_STATE);
 
@@ -123,7 +127,9 @@ export function useVehicleLookup(license_plate: string) {
 
         await Promise.all(
           batches.map(async (batch) => {
-            const query = batch.map((id) => `gebrek_identificatie='${id}'`).join(" OR ");
+            const query = batch
+              .map((id) => `gebrek_identificatie='${soql_string_escape(id)}'`)
+              .join(" OR ");
             const desc_response = await fetch(
               `${ENDPOINTS.defect_descriptions}?$where=${encodeURIComponent(query)}`
             );

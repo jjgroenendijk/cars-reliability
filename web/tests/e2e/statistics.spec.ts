@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Data Page', () => {
     test.beforeEach(async ({ page }) => {
+        await page.addInitScript(() => window.localStorage.setItem('language', 'en'));
         await page.goto('/data');
     });
 
@@ -52,19 +53,12 @@ test.describe('Data Page', () => {
         const table = page.getByRole('table');
         await expect(table).toBeVisible({ timeout: 15000 });
 
-        const headers = table.locator('thead th');
-        const headerCount = await headers.count();
-        let avgAgeIndex = -1;
-
-        for (let i = 0; i < headerCount; i += 1) {
-            const headerText = (await headers.nth(i).innerText()).replace(/\s+/g, ' ').trim();
-            if (headerText.includes('Avg Age')) {
-                avgAgeIndex = i;
-                break;
-            }
-        }
-
-        expect(avgAgeIndex).toBeGreaterThanOrEqual(0);
+        const avgAgeHeader = table.getByRole('columnheader', { name: 'Avg Age' });
+        await expect(avgAgeHeader).toBeVisible();
+        const avgAgeIndex = await avgAgeHeader.evaluate((header) => {
+            const row = header.parentElement;
+            return row ? Array.from(row.children).indexOf(header) : -1;
+        });
 
         const avgAgeCells = table.locator(`tbody tr td:nth-child(${avgAgeIndex + 1})`);
         await expect(avgAgeCells.first()).toBeVisible();
@@ -98,11 +92,12 @@ test.describe('Data Page', () => {
 
 test.describe('Statistics Page', () => {
     test('shows aggregate statistics', async ({ page }) => {
+        await page.addInitScript(() => window.localStorage.setItem('language', 'en'));
         await page.goto('/statistics');
 
         await expect(page.getByRole('heading', { name: 'Statistics' })).toBeVisible({ timeout: 15000 });
-        await expect(page.getByText('Vehicles', { exact: true })).toBeVisible();
-        await expect(page.getByText('APK Inspections', { exact: true })).toBeVisible();
+        await expect(page.getByText('Vehicles tracked', { exact: true })).toBeVisible();
+        await expect(page.getByText('Pass with zero defects', { exact: true })).toBeVisible();
         await expect(page.getByRole('heading', { name: 'Fuel Mix' })).toBeVisible();
         await expect(page.getByRole('heading', { name: 'Standout Rankings' })).toBeVisible();
     });
