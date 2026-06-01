@@ -123,7 +123,8 @@ export function useVehicleLookup(license_plate: string) {
 
         await Promise.all(
           batches.map(async (batch) => {
-            const query = batch.map((id) => `gebrek_identificatie='${id}'`).join(" OR ");
+            // Sanitize IDs by escaping single quotes to prevent injection
+            const query = batch.map((id) => `gebrek_identificatie='${id.replace(/'/g, "''")}'`).join(" OR ");
             const desc_response = await fetch(
               `${ENDPOINTS.defect_descriptions}?$where=${encodeURIComponent(query)}`
             );
