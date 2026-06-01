@@ -2,12 +2,12 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Homepage', () => {
     test.beforeEach(async ({ page }) => {
+        await page.addInitScript(() => window.localStorage.setItem('language', 'en'));
         await page.goto('/');
     });
 
     test('has title', async ({ page }) => {
-        // Expect a title "to contain" a substring.
-        await expect(page).toHaveTitle(/Reliability/);
+        await expect(page).toHaveTitle(/apkstat\.nl/);
     });
 
     test('displays main sections', async ({ page }) => {
@@ -37,26 +37,26 @@ test.describe('Homepage', () => {
 
     test('top 10 links navigate to data views', async ({ page }) => {
         await page.getByTestId('ranking-most-reliable-brands')
-            .getByRole('link', { name: 'View all brands' })
+            .locator('a[href="/data"]')
             .click();
         await expect(page).toHaveURL(/.*data/);
 
         await page.goto('/');
         await page.getByTestId('ranking-least-reliable-brands')
-            .getByRole('link', { name: 'View all brands' })
+            .locator('a[href="/data"]')
             .click();
         await expect(page).toHaveURL(/.*data/);
 
         await page.goto('/');
         await page.getByTestId('ranking-most-reliable-models')
-            .getByRole('link', { name: 'View all models' })
+            .locator('a[href="/data?view=models"]')
             .click();
         await page.waitForURL('**/data?view=models');
         await expect(page).toHaveURL(/\/data\?view=models$/);
 
         await page.goto('/');
         await page.getByTestId('ranking-least-reliable-models')
-            .getByRole('link', { name: 'View all models' })
+            .locator('a[href="/data?view=models"]')
             .click();
         await page.waitForURL('**/data?view=models');
         await expect(page).toHaveURL(/\/data\?view=models$/);

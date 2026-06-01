@@ -2,13 +2,12 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Filters', () => {
     test.beforeEach(async ({ page }) => {
+        await page.addInitScript(() => window.localStorage.setItem('language', 'en'));
         await page.goto('/');
     });
 
     test('can navigate to data page and see filters', async ({ page }) => {
-        // Navigate to Data page via "View All Brands"
-        // This link is in the Hero section
-        const brandsLink = page.getByRole('link', { name: 'View All Brands' }).first();
+        const brandsLink = page.locator('a[href="/data"]').first();
 
         await brandsLink.click();
 

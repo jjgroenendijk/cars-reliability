@@ -1,5 +1,19 @@
 # Todo
 
+- [x] Fix RDW lookup defect-description query escaping.
+
+  Requirement: escape defect IDs before placing them in the RDW `$where`
+  expression used by the license-plate lookup flow, so a quote in
+  `gebrek_identificatie` stays inside the string literal instead of changing the
+  query. Add focused coverage for quote escaping and verify the web checks.
+
+  Result: added a SoQL string-literal escape helper for defect IDs in
+  `vehicle_lookup_use.ts` and an e2e regression that stubs RDW lookup responses
+  with a quoted defect ID, then verifies the outgoing description `$where`
+  parameter uses doubled quotes. Updated stale e2e expectations for the current
+  apkstat.nl UI and pinned e2e language setup to English. Verified with web
+  lint, TypeScript, all Playwright e2e tests, and production build.
+
 - [x] Enforce contributor rules via git hooks and CI.
 
   Requirement: the AI-attribution check (previously local-only) plus other
