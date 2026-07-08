@@ -57,7 +57,7 @@ jobs:
 
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Calculate cache key
         id: cache-key
@@ -69,7 +69,7 @@ jobs:
       - name: Restore dataset cache
         id: cache
         if: github.event.inputs.force_refresh != 'true'
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: data/parquet/${{ matrix.name }}.parquet
           key: ${{ steps.cache-key.outputs.dataset-key }}
@@ -121,7 +121,7 @@ jobs:
 
       - name: Save dataset cache
         if: steps.download.outcome == 'success'
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: data/parquet/${{ matrix.name }}.parquet
           key: ${{ steps.cache-key.outputs.dataset-key }}
@@ -130,7 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [download]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Get week number
         id: date
@@ -139,35 +139,35 @@ jobs:
           echo "script-hash=$(sha256sum scripts/data_download.py scripts/api_client.py scripts/config.py | sha256sum | cut -c1-8)" >> $GITHUB_OUTPUT
 
       - name: Restore voertuigen cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: data/parquet/voertuigen.parquet
           key: parquet-voertuigen-${{ steps.date.outputs.week }}-${{ steps.date.outputs.script-hash }}
           fail-on-cache-miss: true
 
       - name: Restore meldingen cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: data/parquet/meldingen.parquet
           key: parquet-meldingen-${{ steps.date.outputs.week }}-${{ steps.date.outputs.script-hash }}
           fail-on-cache-miss: true
 
       - name: Restore geconstateerde_gebreken cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: data/parquet/geconstateerde_gebreken.parquet
           key: parquet-geconstateerde_gebreken-${{ steps.date.outputs.week }}-${{ steps.date.outputs.script-hash }}
           fail-on-cache-miss: true
 
       - name: Restore gebreken cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: data/parquet/gebreken.parquet
           key: parquet-gebreken-${{ steps.date.outputs.week }}-${{ steps.date.outputs.script-hash }}
           fail-on-cache-miss: true
 
       - name: Restore brandstof cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: data/parquet/brandstof.parquet
           key: parquet-brandstof-${{ steps.date.outputs.week }}-${{ steps.date.outputs.script-hash }}
@@ -220,7 +220,7 @@ jobs:
     needs: [process]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Download processed data
         uses: actions/download-artifact@v8
